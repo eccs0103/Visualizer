@@ -28,6 +28,8 @@ canvas.addEventListener(`click`, (event) => {
 	}
 });
 
+console.log(`https://github.com/eccs0103/Visualizer/blob/main/resources/Pandocrator%20-%20Ethernal%20(Demo).mp3?raw=true}`);
+
 inputLoader.addEventListener(`change`, (event) => {
 	if (!inputLoader.files) {
 		throw new ReferenceError(`Files list is empty.`);
