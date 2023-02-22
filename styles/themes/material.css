@@ -1,21 +1,10 @@
 /* Main */
 
-@media (prefers-color-scheme: light) {
-	:root {
-		--color-foreground: rgb(255, 255, 255);
-		--color-background: rgb(225, 225, 225);
-		--color-text: rgb(50, 50, 50);
-		--color-text-description: rgb(150, 150, 150);
-	}
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--color-foreground: rgb(50, 50, 50);
-		--color-background: rgb(25, 25, 25);
-		--color-text: rgb(255, 255, 255);
-		--color-text-description: rgb(150, 150, 150);
-	}
+:root {
+	--color-foreground: rgb(50, 50, 50);
+	--color-background: rgb(25, 25, 25);
+	--color-text: rgb(255, 255, 255);
+	--color-text-description: rgb(150, 150, 150);
 }
 
 :root {

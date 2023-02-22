@@ -37,12 +37,11 @@ inputLoader.addEventListener(`change`, (event) => {
 	audioPlayer.src = url;
 	inputLoader.disabled = true;
 	//
-	const pathGap = 2;
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
 	const source = audioContext.createMediaElementSource(audioPlayer);
 	analyser.fftSize = 512;
-	console.log(analyser.fftSize, analyser.frequencyBinCount);
+	// console.log(analyser.fftSize, analyser.frequencyBinCount);
 	source.connect(analyser);
 	analyser.connect(audioContext.destination);
 	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
@@ -53,7 +52,7 @@ inputLoader.addEventListener(`change`, (event) => {
 		requestAnimationFrame(callback);
 	});
 
-	let max = 0;
+	// let max = 0;
 	const duration = 10;
 
 	/**
@@ -61,7 +60,11 @@ inputLoader.addEventListener(`change`, (event) => {
 	 */
 	function handler(time) {
 		context.clearRect(0, 0, canvas.width, canvas.height);
-		const pathWidth = (canvas.width + pathGap) / frequencyData.length - pathGap;
+		const [pathWidth, pathGap] = (() => {
+			const gapTemp = canvas.width / (frequencyData.length * 5 - 1);
+			const widthTemp = gapTemp * 4;
+			return [widthTemp, gapTemp];
+		})();
 		frequencyData.forEach((data, index) => {
 			const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
 			const color = Color.viaHSV(index / frequencyData.length * 360 + (time % (duration * 1000)) / (duration * 1000) * 360, 100, 100).toString();
@@ -74,10 +77,10 @@ inputLoader.addEventListener(`change`, (event) => {
 			const pathY = canvas.height - pathHeight;
 			context.fillRect(pathX, pathY, pathWidth, pathHeight);
 		});
-		const index = frequencyData.findLastIndex(value => value != 0);
-		if (index > max) {
-			max = index;
-			console.log(max);
-		}
+		// const index = frequencyData.findLastIndex(value => value != 0);
+		// if (index > max) {
+		// 	max = index;
+		// 	console.log(max);
+		// }
 	}
 });
