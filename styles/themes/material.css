@@ -1,0 +1,184 @@
+/* Main */
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--color-foreground: rgb(255, 255, 255);
+		--color-background: rgb(225, 225, 225);
+		--color-text: rgb(50, 50, 50);
+		--color-text-description: rgb(150, 150, 150);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-foreground: rgb(50, 50, 50);
+		--color-background: rgb(25, 25, 25);
+		--color-text: rgb(255, 255, 255);
+		--color-text-description: rgb(150, 150, 150);
+	}
+}
+
+:root {
+	--time-duration: 100ms;
+	--color-highlight: hsl(200deg, 100%, 50%);
+	--color-warn: hsl(60deg, 100%, 50%);
+	--color-error: hsl(0deg, 100%, 75%);
+	--color-shadow: rgba(50, 50, 50, 0.5);
+}
+
+/* Global */
+
+body {
+	background-color: var(--color-background);
+	color: var(--color-text);
+}
+
+body * {
+	background-color: initial;
+	color: inherit;
+}
+
+body *::placeholder {
+	color: var(--color-text-description);
+	filter: brightness(0.75);
+}
+
+*.layer {
+	background-color: var(--color-foreground);
+	border-radius: var(--size-gap);
+}
+
+*.depth {
+	background-color: var(--color-background);
+	border-radius: var(--size-gap);
+}
+
+*.rounded {
+	border-radius: var(--size-gap);
+}
+
+*.layer.in-top,
+*.depth.in-top {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+
+*.layer.in-right,
+*.depth.in-right {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+*.layer.in-bottom,
+*.depth.in-bottom {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+*.layer.in-left,
+*.depth.in-left {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+*.transparent {
+	background-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+	img.icon {
+		filter: invert(1);
+	}
+}
+
+button,
+*[role="button"] {
+	color: var(--color-highlight);
+}
+
+*[role="combobox"][aria-checked="true"],
+input[type="checkbox"]:checked + label[role="checkbox"] {
+	background-color: var(--color-highlight);
+	transition: var(--time-duration);
+}
+
+button:hover,
+*[role="button"]:hover,
+input[type="checkbox"]:hover + label[role="checkbox"],
+*[role="combobox"]:not([aria-checked="true"]):hover {
+	filter: invert(0.1);
+	transition: var(--time-duration);
+}
+
+button:active,
+*[role="button"]:active,
+input[type="checkbox"]:active + label[role="checkbox"],
+*[role="combobox"]:not([aria-checked="true"]):active {
+	filter: invert(0.2);
+	transition: var(--time-duration);
+}
+
+button:disabled,
+*[role="button"][aria-disabled="true"],
+input:disabled,
+input[type="checkbox"]:disabled + label[role="checkbox"],
+*[role="combobox"][aria-disabled="true"],
+select:disabled {
+	pointer-events: none;
+	filter: opacity(0.5);
+	transition: var(--time-duration);
+}
+
+input:invalid,
+select:invalid {
+	outline: solid var(--color-error);
+}
+
+input:invalid.layer,
+input:invalid.depth,
+select:invalid.layer,
+select:invalid.depth {
+	background-color: var(--color-error);
+}
+
+dialog::backdrop {
+	background-color: rgba(0, 0, 0, 50%);
+}
+
+a {
+	text-decoration: none;
+}
+
+*.highlight,
+a:any-link {
+	color: var(--color-highlight);
+}
+
+mark,
+*.warn,
+*.mark {
+	color: var(--color-warn);
+}
+
+*.alert {
+	color: var(--color-error);
+}
+
+hr {
+	border-color: var(--color-background);
+}
+
+dfn,
+time {
+	color: var(--color-text-description);
+}
+
+::-webkit-scrollbar {
+	background-color: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: var(--color-highlight);
+}
+
+/* Local */
