@@ -74,10 +74,8 @@ body *::placeholder {
 	background-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-	img.icon {
-		filter: invert(1);
-	}
+img.icon {
+	filter: invert(1);
 }
 
 button,

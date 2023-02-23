@@ -222,3 +222,14 @@ code > span::before {
 }
 
 /* Local */
+audio#player.-paused ~ div#interface img.-status {
+	content: url(../resources/play.png);
+	opacity: 1;
+	transition: 0.2s;
+}
+
+audio#player.-playing ~ div#interface img.-status {
+	content: url(../resources/pause.png);
+	opacity: 0;
+	transition: 1s;
+}
