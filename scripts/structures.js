@@ -22,7 +22,7 @@ class Engine {
 	/** @readonly */ get time() {
 		return this.#time;
 	}
-	/** @type {Boolean} */ #launched = false;
+	/** @type {Boolean} */ #launched = true;
 	get launched() {
 		return this.#launched;
 	}

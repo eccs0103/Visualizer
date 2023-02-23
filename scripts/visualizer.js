@@ -104,18 +104,18 @@ try {
 				context.fillStyle = gradient;
 				context.fillRect(pathX, pathY, pathWidth, pathHeight);
 			});
-			const index = frequencyData.findLastIndex(value => value != 0);
+			// const index = frequencyData.findLastIndex(value => value != 0);
 			// if (index > max) {
 			// 	max = index;
 			// 	console.log(max);
 			// }
 		});
-		audioPlayer.addEventListener(`play`, (event) => {
-			engine.launched = true;
-		});
-		audioPlayer.addEventListener(`pause`, (event) => {
-			engine.launched = false;
-		});
+		// audioPlayer.addEventListener(`play`, (event) => {
+		// 	engine.launched = true;
+		// });
+		// audioPlayer.addEventListener(`pause`, (event) => {
+		// 	engine.launched = false;
+		// });
 		//#endregion
 	});
 	//#endregion
