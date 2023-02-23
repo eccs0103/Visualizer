@@ -169,3 +169,6 @@ time {
 }
 
 /* Local */
+div.-status {
+	background-color: var(--color-shadow);
+}

@@ -6,15 +6,30 @@ class Engine {
 	 */
 	constructor(handler) {
 		const instance = this;
+		this.#time = 0;
+		this.#launched = true;
+		let previous = 0;
 		requestAnimationFrame(function callback(time) {
-			instance.#time = time;
-			handler();
+			let current = time;
+			const difference = current - previous;
+			if (instance.#launched) {
+				instance.#time += difference;
+				handler();
+			}
+			previous = current;
 			requestAnimationFrame(callback);
 		});
 	}
 	/** @type {DOMHighResTimeStamp} */ #time;
 	/** @readonly */ get time() {
 		return this.#time;
+	}
+	/** @type {Boolean} */ #launched;
+	get launched() {
+		return this.#launched;
+	}
+	set launched(value) {
+		this.#launched = value;
 	}
 }
 //#endregion

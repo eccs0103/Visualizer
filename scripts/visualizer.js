@@ -64,12 +64,13 @@ try {
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
 	analyser.fftSize = 512;
-	// console.log(analyser.fftSize, analyser.frequencyBinCount);
 	audioContext.createMediaElementSource(audioPlayer).connect(analyser);;
 	analyser.connect(audioContext.destination);
 	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
+	// console.log(frequencyData.length);
 	//#region File exists
 	inputLoader.addEventListener(`change`, (event) => {
+		//#region Uploading
 		if (!inputLoader.files) {
 			throw new ReferenceError(`Files list is empty.`);
 		}
@@ -77,48 +78,49 @@ try {
 		const url = URL.createObjectURL(file);
 		audioPlayer.src = url;
 		audioContext.resume();
-		//
-		requestAnimationFrame(function callback(time) {
-			analyser.getByteFrequencyData(frequencyData);
-			handler(time);
-			requestAnimationFrame(callback);
-		});
-
+		//#endregion
+		//#region Rendering
 		// let max = 0;
 		const duration = 10;
-
-		/**
-		 * @param {DOMHighResTimeStamp} time 
-		 */
-		function handler(time) {
+		const engine = new Engine(() => {
+			analyser.getByteFrequencyData(frequencyData);
 			context.clearRect(0, 0, canvas.width, canvas.height);
 			const [pathWidth, pathGap] = (() => {
 				const gapTemp = canvas.width / (frequencyData.length * 5 - 1);
 				const widthTemp = gapTemp * 4;
 				return [widthTemp, gapTemp];
 			})();
+			const timeCoefficent = (engine.time % (duration * 1000)) / (duration * 1000);
 			frequencyData.forEach((data, index) => {
-				const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-				const perentage = index / frequencyData.length;
-				const color = Color.viaHSV(perentage * 360 + (time % (duration * 1000)) / (duration * 1000) * 360, 100, 100).toString();
-				gradient.addColorStop(0, color);
-				gradient.addColorStop(audioPlayer.currentTime / audioPlayer.duration > perentage ? 2 / 3 : 1 / 3, color);
-				gradient.addColorStop(1, Color.black.toString());
-				context.fillStyle = gradient;
 				const pathX = (pathWidth + pathGap) * index;
 				const pathHeight = canvas.height * (data / 255);
 				const pathY = canvas.height - pathHeight;
+				const pathCoefficent = index / frequencyData.length;
+				const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
+				const color = Color.viaHSV((pathCoefficent + timeCoefficent) * 360, 100, audioPlayer.currentTime / audioPlayer.duration > pathCoefficent ? 100 : 50).toString();
+				gradient.addColorStop(0, color);
+				gradient.addColorStop(2 / 3, color);
+				gradient.addColorStop(1, Color.black.toString());
+				context.fillStyle = gradient;
 				context.fillRect(pathX, pathY, pathWidth, pathHeight);
 			});
-			// const index = frequencyData.findLastIndex(value => value != 0);
+			const index = frequencyData.findLastIndex(value => value != 0);
 			// if (index > max) {
 			// 	max = index;
 			// 	console.log(max);
 			// }
-		}
+		});
+		audioPlayer.addEventListener(`play`, (event) => {
+			engine.launched = true;
+		});
+		audioPlayer.addEventListener(`pause`, (event) => {
+			engine.launched = false;
+		});
+		//#endregion
 	});
 	//#endregion
 	//#endregion
+	
 	console.log(`https://github.com/eccs0103/Visualizer/blob/main/resources/Pandocrator%20-%20Ethernal%20(Demo).mp3?raw=true`);
 } catch (exception) {
 	Application.prevent(exception);
