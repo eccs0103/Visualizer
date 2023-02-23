@@ -6,8 +6,6 @@ class Engine {
 	 */
 	constructor(handler) {
 		const instance = this;
-		this.#time = 0;
-		this.#launched = true;
 		let previous = 0;
 		requestAnimationFrame(function callback(time) {
 			let current = time;
@@ -20,11 +18,11 @@ class Engine {
 			requestAnimationFrame(callback);
 		});
 	}
-	/** @type {DOMHighResTimeStamp} */ #time;
+	/** @type {DOMHighResTimeStamp} */ #time = 0;
 	/** @readonly */ get time() {
 		return this.#time;
 	}
-	/** @type {Boolean} */ #launched;
+	/** @type {Boolean} */ #launched = false;
 	get launched() {
 		return this.#launched;
 	}
