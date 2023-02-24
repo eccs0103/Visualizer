@@ -14,8 +14,8 @@
 	<script src="../scripts/settings.js" defer></script>
 </head>
 
-<body style="position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: start; align-items: center; padding: calc(var(--size-gap) * 2) 0;">
-	<div class="layer" style="min-width: var(--size-increased-standard); max-width: calc(100vmin - 4 * var(--size-gap)); width: fit-content; min-height: 1em; height: fit-content; padding: calc(var(--size-gap) * 2);">
+<body style="display: grid; place-items: start center; padding: calc(var(--size-gap) * 2); overflow-y: auto;">
+	<div class="layer" style="min-width: var(--size-increased-standard); max-width: calc(100vmin - 4 * var(--size-gap)); width: fit-content; height: fit-content; display: grid; padding: calc(var(--size-gap) * 2);">
 		<h1>Settings</h1>
 		<section class="option">
 			<p class="title">Fast Fourier transform size</p>

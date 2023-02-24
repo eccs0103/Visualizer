@@ -83,10 +83,10 @@ class Settings {
 	 */
 	static import(source) {
 		const result = new Settings();
-		if (source.FFTSize) result.FFTSize = source.FFTSize;
-		if (source.type) result.type = source.type;
-		if (source.highlightCycleTime) result.highlightCycleTime = source.highlightCycleTime;
-		if (source.gapPercentage) result.gapPercentage = source.gapPercentage;
+		if (source.FFTSize !== undefined) result.FFTSize = source.FFTSize;
+		if (source.type !== undefined) result.type = source.type;
+		if (source.highlightCycleTime !== undefined) result.highlightCycleTime = source.highlightCycleTime;
+		if (source.gapPercentage !== undefined) result.gapPercentage = source.gapPercentage;
 		return result;
 	}
 	/**
