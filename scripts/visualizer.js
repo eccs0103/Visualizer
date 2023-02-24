@@ -66,9 +66,10 @@ try {
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
 	analyser.fftSize = settings.FFTSize;
-	audioContext.createMediaElementSource(audioPlayer).connect(analyser);
+	const source = audioContext.createMediaElementSource(audioPlayer);
+	source.connect(analyser);
 	analyser.connect(audioContext.destination);
-	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
+	const frequencyData = new Uint8Array(analyser.frequencyBinCount);
 	//#region File exists
 	inputLoader.addEventListener(`change`, (event) => {
 		//#region Uploading
@@ -82,6 +83,7 @@ try {
 		//#endregion
 		//#region Rendering
 		// let max = 0;
+		// console.log(frequencyData.length);
 		const duration = settings.highlightCycleTime;
 		const engine = new Engine(() => {
 			analyser.getByteFrequencyData(frequencyData);
@@ -93,7 +95,7 @@ try {
 			const bottomColor = Color.black.toString();
 			frequencyData.forEach((data, index) => {
 				const pathX = (pathWidth + pathGap) * index;
-				const pathHeight = canvas.height * (data / 255);
+				const pathHeight = canvas.height * (data / 256);
 				const pathY = canvas.height - pathHeight;
 				const pathCoefficent = index / frequencyData.length;
 				const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
