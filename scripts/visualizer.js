@@ -1,5 +1,7 @@
 "use strict";
 try {
+	const settings = Settings.import(archiveSettings.data);
+
 	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
 	const audioPlayer = (/** @type {HTMLAudioElement} */ (document.querySelector(`audio#player`)));
 	const canvas = (/** @type {HTMLCanvasElement} */ (document.querySelector(`canvas#visualizer`)));
@@ -63,11 +65,10 @@ try {
 	//#region Analysys
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
-	analyser.fftSize = 512;
-	audioContext.createMediaElementSource(audioPlayer).connect(analyser);;
+	analyser.fftSize = settings.FFTSize;
+	audioContext.createMediaElementSource(audioPlayer).connect(analyser);
 	analyser.connect(audioContext.destination);
 	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
-	// console.log(frequencyData.length);
 	//#region File exists
 	inputLoader.addEventListener(`change`, (event) => {
 		//#region Uploading
@@ -81,26 +82,24 @@ try {
 		//#endregion
 		//#region Rendering
 		// let max = 0;
-		const duration = 10;
+		const duration = settings.highlightCycleTime;
 		const engine = new Engine(() => {
 			analyser.getByteFrequencyData(frequencyData);
 			context.clearRect(0, 0, canvas.width, canvas.height);
-			const [pathWidth, pathGap] = (() => {
-				const gapTemp = canvas.width / (frequencyData.length * 5 - 1);
-				const widthTemp = gapTemp * 4;
-				return [widthTemp, gapTemp];
-			})();
+			const gapPercentage = settings.gapPercentage;
+			const pathWidth = canvas.width / (frequencyData.length * (1 + gapPercentage) - gapPercentage);
+			const pathGap = pathWidth * gapPercentage;
 			const timeCoefficent = (engine.time % (duration * 1000)) / (duration * 1000);
+			const bottomColor = Color.black.toString();
 			frequencyData.forEach((data, index) => {
 				const pathX = (pathWidth + pathGap) * index;
 				const pathHeight = canvas.height * (data / 255);
 				const pathY = canvas.height - pathHeight;
 				const pathCoefficent = index / frequencyData.length;
 				const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
-				const color = Color.viaHSV((pathCoefficent + timeCoefficent) * 360, 100, audioPlayer.currentTime / audioPlayer.duration > pathCoefficent ? 100 : 50).toString();
-				gradient.addColorStop(0, color);
-				gradient.addColorStop(2 / 3, color);
-				gradient.addColorStop(1, Color.black.toString());
+				const topColor = Color.viaHSV((pathCoefficent + timeCoefficent) * 360, 100, audioPlayer.currentTime / audioPlayer.duration > pathCoefficent ? 100 : 50).toString();
+				gradient.addColorStop(2 / 3, topColor);
+				gradient.addColorStop(1, bottomColor);
 				context.fillStyle = gradient;
 				context.fillRect(pathX, pathY, pathWidth, pathHeight);
 			});
@@ -110,17 +109,17 @@ try {
 			// 	console.log(max);
 			// }
 		});
-		// audioPlayer.addEventListener(`play`, (event) => {
-		// 	engine.launched = true;
-		// });
-		// audioPlayer.addEventListener(`pause`, (event) => {
-		// 	engine.launched = false;
-		// });
+		audioPlayer.addEventListener(`play`, (event) => {
+			engine.launched = true;
+		});
+		audioPlayer.addEventListener(`pause`, (event) => {
+			engine.launched = false;
+		});
 		//#endregion
 	});
 	//#endregion
 	//#endregion
-	
+
 	console.log(`https://github.com/eccs0103/Visualizer/blob/main/resources/Pandocrator%20-%20Ethernal%20(Demo).mp3?raw=true`);
 } catch (exception) {
 	Application.prevent(exception);

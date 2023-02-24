@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Visualizer - Settings</title>
+	<link rel="stylesheet" href="../styles/style.css">
+	<link rel="stylesheet" href="../styles/themes/material.css">
+	<link rel="shortcut icon" href="../resources/settings.png" media="(prefers-color-scheme: light)">
+	<link rel="shortcut icon" href="../resources/settings (inverted).png" media="(prefers-color-scheme: dark)">
+	<script src="../scripts/modules.js" defer></script>
+	<script src="../scripts/structures.js" defer></script>
+	<script src="../scripts/settings.js" defer></script>
+</head>
+
+<body style="position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: start; align-items: center; padding: calc(var(--size-gap) * 2) 0;">
+	<div class="layer" style="min-width: var(--size-increased-standard); max-width: calc(100vmin - 4 * var(--size-gap)); width: fit-content; min-height: 1em; height: fit-content; padding: calc(var(--size-gap) * 2);">
+		<h1>Settings</h1>
+		<section class="option">
+			<p class="title">Fast Fourier transform size</p>
+			<dfn class="definition">A fast Fourier transform (FFT) is an algorithm that computes the discrete Fourier transform of a sequence, or its inverse. Fourier analysis converts a signal from its original domain (often time or space) to a representation in the frequency domain and vice versa.<br><address>Source: <a href="https://en.wikipedia.org/wiki/Fast_Fourier_transform" target="_blank">Wikipedia</a></address></dfn>
+			<select id="FFT-size" class="depth value" required>
+				<option value="32">32</option>
+				<option value="64">64</option>
+				<option value="128">128</option>
+				<option value="256">256</option>
+				<option value="512">512</option>
+				<option value="1024">1024</option>
+				<option value="2048">2048</option>
+				<option value="4096">4096</option>
+				<option value="8192">8192</option>
+				<option value="16384">16384</option>
+				<option value="32768">32768</option>
+			</select>
+		</section>
+		<section class="option">
+			<p class="title">Visualizer type</p>
+			<dfn class="definition">The visualizer type. Appearance, animations, rendering when playing music.</dfn>
+			<select id="visualizer-type" class="depth value" required>
+				<option value="classic">Classic</option>
+			</select>
+		</section>
+		<section class="option">
+			<p class="title">Highlight cycle time</p>
+			<dfn class="definition">The time it takes for the background highlight to make one complete circle in the color palette.</dfn>
+			<input id="highlight-cycle-time" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
+		</section>
+		<section class="option">
+			<p class="title">Gap percentage</p>
+			<dfn class="definition">Calculates the size of the gap relative to the line size.</dfn>
+			<input id="gap-percentage" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
+		</section>
+		<section class="option">
+			<button id="reset-settings" class="layer grid-line" style="width: fit-content; justify-self: center;">Reset settings</button>
+		</section>
+	</div>
+</body>
+
+</html>

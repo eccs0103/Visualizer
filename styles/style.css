@@ -222,6 +222,10 @@ code > span::before {
 }
 
 /* Local */
+:root {
+	--size-increased-standard: calc(var(--size-standart) * 4);
+}
+
 audio#player.-paused ~ div#interface div.-status {
 	opacity: 1;
 	transition: 0.2s;
