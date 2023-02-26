@@ -10,19 +10,22 @@
 	<link rel="shortcut icon" href="../resources/eye.png" media="(prefers-color-scheme: light)">
 	<link rel="shortcut icon" href="../resources/eye (inverted).png" media="(prefers-color-scheme: dark)">
 	<script src="../scripts/modules.js" defer></script>
-	<script src="../scripts/structures.js" defer></script>
+	<script src="../scripts/structure.js" defer></script>
 	<script src="../scripts/visualizer.js" defer></script>
 </head>
 
 <body style="position: fixed; inset: 0;">
-	<input id="loader" type="file" accept="audio/*" hidden>
 	<audio id="player" autoplay hidden></audio>
 	<canvas id="visualizer" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
 	<div id="interface" role="button" style="position: absolute; inset: 0; display: grid; place-items: center;">
-		<div class="flex -status" style="position: absolute; inset: auto; padding: calc(var(--size-gap) * 2); border-radius: 50%;">
-			<img src="../resources/upload.png" class="icon" style="height: calc(var(--size-increased-standard) * 0.75);">
+		<a role="button" href="./settings.html" class="layer transparent flex" style="position: absolute; top: var(--size-gap); right: var(--size-gap);">
+			<img src="../resources/settings.png" class="icon">
+		</a>
+		<div class="flex -status" style="position: absolute; inset: auto; padding: var(--size-large-gap); border-radius: 50%;">
+			<img src="../resources/upload.png" class="icon" style="height: calc(var(--size-large-standart) * 1.5);">
 		</div>
 	</div>
+	<input id="loader" type="file" accept="audio/*" hidden>
 </body>
 
 </html>

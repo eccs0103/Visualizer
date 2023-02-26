@@ -31,28 +31,6 @@ class Engine {
 	}
 }
 //#endregion
-//#region Application
-class Application {
-	/** @type {String} */ static #developer = `Adaptive Core`;
-	/** @readonly */ static get developer() {
-		return this.#developer;
-	}
-	/** @type {String} */ static #project = `Visualizer`;
-	/** @readonly */ static get project() {
-		return this.#project;
-	}
-	static #locked = true;
-	/**
-	 * @param {any} exception 
-	 */
-	static prevent(exception) {
-		if (this.#locked) {
-			window.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`);
-			location.reload();
-		} else console.error(exception);
-	}
-}
-//#endregion
 //#region Settings
 /** @enum {Number} */ const FFTSize = {
 	/** @readonly */ x32: 32,
@@ -74,8 +52,9 @@ class Application {
  * @typedef SettingsNotation
  * @property {FFTSize | undefined} FFTSize
  * @property {VisualizerType | undefined} type
- * @property {Number} highlightCycleTime
- * @property {Number} gapPercentage
+ * @property {Number | undefined} highlightCycleTime
+ * @property {Number | undefined} gapPercentage
+ * @property {Boolean | undefined} loop
  */
 class Settings {
 	/**
@@ -87,6 +66,7 @@ class Settings {
 		if (source.type !== undefined) result.type = source.type;
 		if (source.highlightCycleTime !== undefined) result.highlightCycleTime = source.highlightCycleTime;
 		if (source.gapPercentage !== undefined) result.gapPercentage = source.gapPercentage;
+		if (source.loop !== undefined) result.loop = source.loop;
 		return result;
 	}
 	/**
@@ -98,6 +78,7 @@ class Settings {
 		result.type = source.type;
 		result.highlightCycleTime = source.highlightCycleTime;
 		result.gapPercentage = source.gapPercentage;
+		result.loop = source.loop;
 		return result;
 	}
 	/** @type {Number} */ static #minHighlightCycleTime = 1;
@@ -121,6 +102,7 @@ class Settings {
 		this.type = VisualizerType.classic;
 		this.highlightCycleTime = 10;
 		this.gapPercentage = 0.25;
+		this.loop = true;
 	}
 	FFTSize;
 	type;
@@ -146,8 +128,43 @@ class Settings {
 			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#minGapPercentage} to ${Settings.#maxGapPercentage} inclusive.`);
 		}
 	}
+	loop;
+}
+//#endregion
+//#region Memory
+/**
+ * @typedef MemoryNotation
+ * @property {String} text
+ * @property {String} type
+ * @property {Number} time
+ */
+class Memory {
+	/**
+	 * @param {MemoryNotation} source 
+	 */
+	static import(source) {
+		const result = new Memory();
+		result.text = source.text;
+		result.type = source.type;
+		result.time = source.time;
+		return result;
+	}
+	/**
+	 * @param {Memory} source 
+	 */
+	static export(source) {
+		const result = (/** @type {MemoryNotation} */ ({}));
+		result.text = source.text;
+		result.type = source.type;
+		result.time = source.time;
+		return result;
+	}
+	/** @type {String} */ text;
+	/** @type {String} */ type;
+	/** @type {Number} */ time;
 }
 //#endregion
 //#region Metadata
 const archiveSettings = new Archive(`${Application.developer}\\${Application.project}\\Settings`, Settings.export(new Settings()));
+/** @type {Archive<MemoryNotation?>} */  const archiveMemory = new Archive(`${Application.developer}\\${Application.project}\\Current`, null);
 //#endregion

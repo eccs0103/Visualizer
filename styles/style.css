@@ -44,6 +44,8 @@
 
 :root {
 	--size-gap: calc(var(--size-standart) / 4);
+	--size-large-standart: calc(var(--size-standart) * 2);
+	--size-large-gap: calc(var(--size-gap) * 2);
 	--size-serpator: 0.25vmin;
 }
 
@@ -222,22 +224,36 @@ code > span::before {
 }
 
 /* Local */
-:root {
-	--size-increased-standard: calc(var(--size-standart) * 4);
+@keyframes -show-interface {
+	0% {
+		pointer-events: none;
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
 }
 
-audio#player.-paused ~ div#interface div.-status {
-	opacity: 1;
-	transition: 0.2s;
+audio#player.-paused ~ div#interface {
+	animation: -show-interface 0.1s ease-in 0s 1 both;
 }
 
 audio#player.-paused ~ div#interface div.-status img {
 	content: url(../resources/play.png);
 }
 
-audio#player.-playing ~ div#interface div.-status {
-	opacity: 0;
-	transition: 1s;
+@keyframes -hide-interface {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+audio#player.-playing ~ div#interface {
+	animation: -hide-interface 0.5s ease-out 0s 1 both;
 }
 
 audio#player.-playing ~ div#interface div.-status img {

@@ -40,6 +40,13 @@ try {
 		settings.gapPercentage = Number(inputGapPercentage.value);
 	});
 	//#endregion
+	//#region Loop audio
+	const inputToggleLoop = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-loop`)));
+	inputToggleLoop.checked = settings.loop;
+	inputToggleLoop.addEventListener(`change`, (event) => {
+		settings.loop = inputToggleLoop.checked;
+	});
+	//#endregion
 	//#region Reset settings
 	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
 	buttonResetSettings.addEventListener(`click`, (event) => {

@@ -57,11 +57,11 @@ class Random {
 class Archive {
 	/**
 	 * @param {String} path The path where the data should be stored.
-	 * @param {Notation?} initial Initial data.
+	 * @param {Notation | undefined} initial Initial data.
 	 */
-	constructor(path, initial = null) {
+	constructor(path, initial = undefined) {
 		this.#path = path;
-		if (!localStorage.getItem(path) && initial) {
+		if (localStorage.getItem(path) === null && initial !== undefined) {
 			localStorage.setItem(path, JSON.stringify(initial, undefined, `\t`));
 		}
 	}
@@ -71,11 +71,10 @@ class Archive {
 	 */
 	get data() {
 		const item = localStorage.getItem(this.#path);
-		if (item) {
-			return (/** @type {Notation} */ (JSON.parse(item)));
-		} else {
-			throw new ReferenceError(`Key '${this.#path}' is undefined.`);
+		if (item === null) {
+			throw new ReferenceError(`Key '${this.#path}' isn't defined.`);
 		}
+		return (/** @type {Notation} */ (JSON.parse(item)));
 	}
 	/**
 	 * The data stored in the archive.
@@ -112,7 +111,7 @@ class Color {
 		 * @returns 
 		 */
 		function f(n, k = (n + hue / 60) % 6) {
-			return (value / 100) - (value / 100) * (saturation / 100) * Math.max(Math.min(k, 4 - k, 1), 0);
+			return (value / 100) - (value / 100) * (saturation / 100) * Math.max(0, Math.min(k, 4 - k, 1));
 		};
 		return new Color(f(5) * 255, f(3) * 255, f(1) * 255);
 	}
@@ -180,6 +179,28 @@ class Color {
 	 */
 	toString() {
 		return `rgba(${this.#red}, ${this.#green}, ${this.#blue}, ${this.#transparence})`;
+	}
+}
+//#endregion
+//#region Application
+class Application {
+	/** @type {String} */ static #developer = `Adaptive Core`;
+	/** @readonly */ static get developer() {
+		return this.#developer;
+	}
+	/** @type {String} */ static #project = `Visualizer`;
+	/** @readonly */ static get project() {
+		return this.#project;
+	}
+	static #locked = false;
+	/**
+	 * @param {any} exception 
+	 */
+	static prevent(exception) {
+		if (this.#locked) {
+			window.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`);
+			location.reload();
+		} else console.error(exception);
 	}
 }
 //#endregion
