@@ -192,7 +192,7 @@ class Application {
 	/** @readonly */ static get project() {
 		return this.#project;
 	}
-	static #locked = false;
+	static #locked = true;
 	/**
 	 * @param {any} exception 
 	 */
