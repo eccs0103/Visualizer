@@ -65,8 +65,8 @@ try {
 	//#endregion
 	//#region Reset settings
 	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
-	buttonResetSettings.addEventListener(`click`, (event) => {
-		if (window.confirm(`The settings will be reset to factory defaults. Are you sure?`)) {
+	buttonResetSettings.addEventListener(`click`, async (event) => {
+		if (await Application.confirm(`The settings will be reset to factory defaults. Are you sure?`)) {
 			settings = new Settings();
 			inputToggleLoop.checked = settings.loop;
 			selectFFTSize.value = `${settings.FFTSize}`;

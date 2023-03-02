@@ -1,63 +1,53 @@
 "use strict";
 //#region Random
-/**
- * A class that manages with randomness.
- */
 class Random {
 	/**
-	 * Gives a random number between min and max exclusively.
-	 * @param {Number} min A minimum value.
-	 * @param {Number} max A maximum value.
-	 * @returns A random float float.
+	 * @param {Number} min 
+	 * @param {Number} max 
 	 */
 	static number(min, max) {
 		return Math.random() * (max - min) + min;
 	}
 	/**
-	 * Gives a random element from an array.
-	 * @template Type Elements type.
-	 * @param {Array<Type>} array Given array.
-	 * @returns An array element.
+	 * @template Item 
+	 * @param {Array<Item>} array 
 	 */
 	static element(array) {
 		return array[Math.floor(Random.number(0, array.length))];
 	}
 	/**
-	 * A function that returns random variant from cases.
-	 * @template Type Case type.
-	 * @param {Map<Type, Number>} cases Map of cases.
-	 * @returns Random case.
+	 * @template Item 
+	 * @param {Map<Item, Number>} cases 
+	 * @returns 
 	 */
 	static case(cases) {
-		const summary = Array.from(cases).reduce((previous, current) => previous + current[1], 0);
+		const summary = Array.from(cases).reduce((previous, [item, percentage]) => previous + percentage, 0);
 		const random = Random.number(0, summary);
 		let selection = undefined;
 		let start = 0;
-		for (const entry of cases) {
-			const end = start + entry[1];
+		for (const [item, percentage] of cases) {
+			const end = start + percentage;
 			if (start <= random && random < end) {
-				selection = entry[0];
+				selection = item;
 				break;
 			}
 			start = end;
 		}
-		if (typeof (selection) == `undefined`) {
+		if (selection === undefined) {
 			throw new ReferenceError(`Can't select value. Maybe stack is empty.`);
-		} else {
-			return selection;
 		}
+		return selection;
 	}
 }
 //#endregion
 //#region Archive
 /**
- * A class for convenient data storage in local storage.
- * @template Notation Data type stored in archive.
+ * @template Notation 
  */
 class Archive {
 	/**
-	 * @param {String} path The path where the data should be stored.
-	 * @param {Notation | undefined} initial Initial data.
+	 * @param {String} path 
+	 * @param {Notation | undefined} initial 
 	 */
 	constructor(path, initial = undefined) {
 		this.#path = path;
@@ -66,9 +56,6 @@ class Archive {
 		}
 	}
 	/** @type {String} */ #path;
-	/**
-	 * The data stored in the archive.
-	 */
 	get data() {
 		const item = localStorage.getItem(this.#path);
 		if (item === null) {
@@ -76,15 +63,11 @@ class Archive {
 		}
 		return (/** @type {Notation} */ (JSON.parse(item)));
 	}
-	/**
-	 * The data stored in the archive.
-	 */
 	set data(value) {
 		localStorage.setItem(this.#path, JSON.stringify(value, undefined, `\t`));
 	}
 	/**
-	 * Function for receiving and transmitting data. Frequent use is not recommended based on optimization.
-	 * @param {(value: Notation) => Notation} action A function that transforms the results.
+	 * @param {(value: Notation) => Notation} action 
 	 */
 	change(action) {
 		this.data = action(this.data);
@@ -92,20 +75,14 @@ class Archive {
 }
 //#endregion
 //#region Color
-/**
- * A class that represents RGB colors.
- */
 class Color {
 	/**
-	 * Instantiating a color via HSV colors.
-	 * @param {Number} hue The hue parameter.
-	 * @param {Number} saturation The saturation parameter.
-	 * @param {Number} value The value parameter.
-	 * @returns Color instance.
+	 * @param {Number} hue 
+	 * @param {Number} saturation 
+	 * @param {Number} value 
 	 */
 	static viaHSV(hue, saturation, value) {
 		/**
-		 * 
 		 * @param {Number} n 
 		 * @param {Number} k 
 		 * @returns 
@@ -115,25 +92,17 @@ class Color {
 		};
 		return new Color(f(5) * 255, f(3) * 255, f(1) * 255);
 	}
-	/**
-	 * Instance of a white color.
-	 * @readonly
-	 */
-	static get white() {
+	/** @readonly */ static get white() {
 		return new Color(255, 255, 255);
 	}
-	/**
-	 * Instance of a black color.
-	 * @readonly 
-	 */
-	static get black() {
+	/** @readonly */ static get black() {
 		return new Color(0, 0, 0);
 	}
 	/**
-	 * @param {Number} red The red parameter.
-	 * @param {Number} green The green parameter.
-	 * @param {Number} blue The blue parameter.
-	 * @param {Number} transparence The transparence parameter.
+	 * @param {Number} red 
+	 * @param {Number} green 
+	 * @param {Number} blue 
+	 * @param {Number} transparence 
 	 */
 	constructor(red, green, blue, transparence = 1) {
 		this.#red = red;
@@ -142,47 +111,32 @@ class Color {
 		this.#transparence = transparence;
 	}
 	/** @type {Number} */ #red;
-	/**
-	 * The red property.
-	 * @readonly
-	 */
-	get red() {
+	/** @readonly */ get red() {
 		return this.#red;
 	}
 	/** @type {Number} */ #green;
-	/**
-	 * The green property.
-	 * @readonly
-	 */
-	get green() {
+	/** @readonly */ get green() {
 		return this.#green;
 	}
 	/** @type {Number} */ #blue;
-	/**
-	 * The blue property.
-	 * @readonly
-	 */
-	get blue() {
+	/** @readonly */ get blue() {
 		return this.#blue;
 	}
 	/** @type {Number} */ #transparence;
-	/**
-	 * The transparence property.
-	 * @readonly
-	 */
-	get transparence() {
+	/** @readonly */ get transparence() {
 		return this.#transparence;
 	}
-	/**
-	 * Converting to a string rgba(red, green, blue, transparence) of the form.
-	 * @returns The result.
-	 */
 	toString() {
 		return `rgba(${this.#red}, ${this.#green}, ${this.#blue}, ${this.#transparence})`;
 	}
 }
 //#endregion
 //#region Application
+/** @enum {Number} */ const MessageType = {
+	/** @readonly */ log: 0,
+	/** @readonly */ warn: 1,
+	/** @readonly */ error: 2,
+};
 class Application {
 	/** @type {String} */ static #developer = `Adaptive Core`;
 	/** @readonly */ static get developer() {
@@ -196,15 +150,151 @@ class Application {
 	/** @readonly */ static get search() {
 		return new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
 			const [key, value] = item.split(`=`);
-			return [key, value ?? ``];
+			return [key, value];
 		}));;
+	}
+	/**
+	 * @param {MessageType} type 
+	 */
+	static #popup(type) {
+		const dialog = document.body.appendChild(document.createElement(`dialog`));
+		dialog.classList.add(`layer`, `pop-up`);
+		dialog.showModal();
+		{
+			const divHeader = dialog.appendChild(document.createElement(`div`));
+			divHeader.classList.add(`header`, `flex`);
+			{
+				const h3Title = divHeader.appendChild(document.createElement(`h3`));
+				switch (type) {
+					case MessageType.log: {
+						h3Title.innerText = `Message`;
+						h3Title.classList.add(`highlight`);
+					} break;
+					case MessageType.warn: {
+						h3Title.innerText = `Warning`;
+						h3Title.classList.add(`warn`);
+					} break;
+					case MessageType.error: {
+						h3Title.innerText = `Error`;
+						h3Title.classList.add(`alert`);
+					} break;
+					default: throw new TypeError(`Invalid message type.`);
+				}
+				{ }
+			}
+			const divMain = dialog.appendChild(document.createElement(`div`));
+			divMain.classList.add(`main`);
+			{ }
+			const divFooter = dialog.appendChild(document.createElement(`div`));
+			divFooter.classList.add(`footer`, `flex`);
+			{ }
+		}
+		return dialog;
+	}
+	/**
+	 * @param {String} message 
+	 * @param {MessageType} type 
+	 */
+	static async alert(message, type = MessageType.log) {
+		const dialog = this.#popup(type);
+		{
+			const divMain = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.main`)));
+			{
+				divMain.innerText = message;
+			}
+			return (/** @type {Promise<void>} */ (new Promise((resolve) => {
+				dialog.addEventListener(`click`, (event) => {
+					if (event.target == dialog) {
+						resolve();
+						dialog.remove();
+					}
+				});
+			})));
+		}
+	}
+	/**
+	 * @param {String} message 
+	 * @param {MessageType} type 
+	 */
+	static async confirm(message, type = MessageType.log) {
+		const dialog = this.#popup(type);
+		{
+			const divMain = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.main`)));
+			{
+				divMain.innerText = message;
+			}
+			const divFooter = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.footer`)));
+			{
+				const buttonAccept = divFooter.appendChild(document.createElement(`button`));
+				buttonAccept.innerText = `Accept`;
+				buttonAccept.classList.add(`layer`, `transparent`, `highlight`);
+				{ }
+				const buttonDecline = divFooter.appendChild(document.createElement(`button`));
+				buttonDecline.innerText = `Decline`;
+				buttonDecline.classList.add(`layer`, `transparent`, `alert`);
+				{ }
+				return (/** @type {Promise<Boolean>} */ (new Promise((resolve) => {
+					dialog.addEventListener(`click`, (event) => {
+						if (event.target == dialog) {
+							resolve(false);
+							dialog.remove();
+						}
+					});
+					buttonAccept.addEventListener(`click`, (event) => {
+						resolve(true);
+						dialog.remove();
+					});
+					buttonDecline.addEventListener(`click`, (event) => {
+						resolve(false);
+						dialog.remove();
+					});
+				})));
+			}
+		}
+	}
+	/**
+	 * @param {String} message 
+	 * @param {MessageType} type 
+	 */
+	static async prompt(message, type = MessageType.log) {
+		const dialog = this.#popup(type);
+		{
+			const divMain = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.main`)));
+			{
+				divMain.innerText = message;
+			}
+			const divFooter = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.footer`)));
+			{
+				const inputPrompt = divFooter.appendChild(document.createElement(`input`));
+				inputPrompt.type = `text`;
+				inputPrompt.placeholder = `Enter text`;
+				inputPrompt.classList.add(`depth`);
+				{ }
+				const buttonContinue = divFooter.appendChild(document.createElement(`button`));
+				buttonContinue.innerText = `Continue`;
+				buttonContinue.classList.add(`layer`, `transparent`, `highlight`);
+				{ }
+				return (/** @type {Promise<String?>} */ (new Promise((resolve) => {
+					dialog.addEventListener(`click`, (event) => {
+						if (event.target == dialog) {
+							resolve(null);
+							dialog.remove();
+						}
+					});
+					buttonContinue.addEventListener(`click`, (event) => {
+						resolve(inputPrompt.value);
+						dialog.remove();
+					});
+				})));
+			}
+		}
 	}
 	/**
 	 * @param {any} exception 
 	 */
-	static prevent(exception) {
+	static async prevent(exception) {
 		if (this.#locked) {
-			window.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`);
+			await Application.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`);
 			location.reload();
 		} else console.error(exception);
 	}

@@ -1,14 +1,13 @@
 "use strict";
 try {
 	const settings = Settings.import(archiveSettings.data);
-	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
 
 	//#region Media
 	//#region Analysys
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
 	analyser.fftSize = settings.FFTSize;
-	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
+	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.8);
 	const engine = new Engine(() => {
 		analyser.getByteFrequencyData(frequencyData);
 		render(frequencyData);
@@ -56,6 +55,7 @@ try {
 		}
 	});
 	const divInterface = (/** @type {HTMLDivElement} */ (document.querySelector(`div#interface`)));
+	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
 	divInterface.addEventListener(`click`, (event) => {
 		if (audioPlayer.src) {
 			if (audioPlayer.paused) {
@@ -98,7 +98,6 @@ try {
 				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
 				const pathGap = pathWidth * gapPercentage;
 				const timeCoefficent = (engine.time % (duration * 1000)) / (duration * 1000);
-				const darkness = Color.black.toString();
 				data.forEach((datul, index) => {
 					const pathX = (pathWidth + pathGap) * index;
 					const pathHeight = canvas.height * (datul / 256);
@@ -121,12 +120,6 @@ try {
 	}
 	//#endregion
 	//#endregion
-
-	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
-	aSettings.addEventListener(`click`, (event) => {
-		event.stopPropagation();
-	});
-
 	//#region Uploading
 	inputLoader.addEventListener(`change`, (event) => {
 		if (!inputLoader.files) {
@@ -137,7 +130,10 @@ try {
 	});
 	//#endregion
 
-	console.log(`https://github.com/eccs0103/Visualizer/blob/main/resources/Pandocrator%20-%20Ethernal%20(Demo).mp3?raw=true`);
+	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
+	aSettings.addEventListener(`click`, (event) => {
+		event.stopPropagation();
+	});
 } catch (exception) {
 	Application.prevent(exception);
 }
