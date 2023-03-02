@@ -83,8 +83,10 @@ try {
 	buttonShareSettings.addEventListener(`click`, (event) => {
 		const to = `eccs0103@gmail.com`;
 		const subject = `Visualizer preferred configuration`;
-		const body = JSON.stringify(Settings.export(settings), undefined, `\t`);
-		location.assign(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`);
+		const body = `${Object.entries(Settings.export(settings)).map(([key, value]) => {
+			return `${key}: ${value}`;
+		}).join(`\n`)}`;
+		location.assign(window.encodeURI(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`));
 	});
 	//#endregion
 } catch (exception) {
