@@ -50,11 +50,13 @@ class Engine {
 };
 /**
  * @typedef SettingsNotation
+ * @property {Boolean | undefined} loop
  * @property {FFTSize | undefined} FFTSize
  * @property {VisualizerType | undefined} type
- * @property {Number | undefined} highlightCycleTime
- * @property {Number | undefined} gapPercentage
- * @property {Boolean | undefined} loop
+ * @property {Boolean | undefined} classicHightlightMotion
+ * @property {Number | undefined} classicHighlightCycleTime
+ * @property {Number | undefined} classicGapPercentage
+ * @property {Boolean | undefined} classicReflection
  */
 class Settings {
 	/**
@@ -62,11 +64,13 @@ class Settings {
 	 */
 	static import(source) {
 		const result = new Settings();
+		if (source.loop !== undefined) result.loop = source.loop;
 		if (source.FFTSize !== undefined) result.FFTSize = source.FFTSize;
 		if (source.type !== undefined) result.type = source.type;
-		if (source.highlightCycleTime !== undefined) result.highlightCycleTime = source.highlightCycleTime;
-		if (source.gapPercentage !== undefined) result.gapPercentage = source.gapPercentage;
-		if (source.loop !== undefined) result.loop = source.loop;
+		if (source.classicHightlightMotion !== undefined) result.classicHightlightMotion = source.classicHightlightMotion;
+		if (source.classicHighlightCycleTime !== undefined) result.classicHighlightCycleTime = source.classicHighlightCycleTime;
+		if (source.classicGapPercentage !== undefined) result.classicGapPercentage = source.classicGapPercentage;
+		if (source.classicReflection !== undefined) result.classicReflection = source.classicReflection;
 		return result;
 	}
 	/**
@@ -74,61 +78,66 @@ class Settings {
 	 */
 	static export(source) {
 		const result = (/** @type {SettingsNotation} */ ({}));
+		result.loop = source.loop;
 		result.FFTSize = source.FFTSize;
 		result.type = source.type;
-		result.highlightCycleTime = source.highlightCycleTime;
-		result.gapPercentage = source.gapPercentage;
-		result.loop = source.loop;
+		result.classicHightlightMotion = source.classicHightlightMotion;
+		result.classicHighlightCycleTime = source.classicHighlightCycleTime;
+		result.classicGapPercentage = source.classicGapPercentage;
+		result.classicReflection = source.classicReflection;
 		return result;
 	}
-	/** @type {Number} */ static #minHighlightCycleTime = 1;
-	/** @readonly */ static get minHighlightCycleTime() {
-		return this.#minHighlightCycleTime;
+	/** @type {Number} */ static #classicMinHighlightCycleTime = 1;
+	/** @readonly */ static get classicMinHighlightCycleTime() {
+		return this.#classicMinHighlightCycleTime;
 	}
-	/** @type {Number} */ static #maxHighlightCycleTime = 20;
-	/** @readonly */ static get maxHighlightCycleTime() {
-		return this.#maxHighlightCycleTime;
+	/** @type {Number} */ static #classicMaxHighlightCycleTime = 20;
+	/** @readonly */ static get classicMaxHighlightCycleTime() {
+		return this.#classicMaxHighlightCycleTime;
 	}
-	/** @type {Number} */ static #minGapPercentage = 0;
-	/** @readonly */ static get minGapPercentage() {
-		return this.#minGapPercentage;
+	/** @type {Number} */ static #classicMinGapPercentage = 0;
+	/** @readonly */ static get classicMinGapPercentage() {
+		return this.#classicMinGapPercentage;
 	}
-	/** @type {Number} */ static #maxGapPercentage = 1;
-	/** @readonly */ static get maxGapPercentage() {
-		return this.#maxGapPercentage;
+	/** @type {Number} */ static #classicMaxGapPercentage = 1;
+	/** @readonly */ static get classicMaxGapPercentage() {
+		return this.#classicMaxGapPercentage;
 	}
 	constructor() {
-		this.FFTSize = FFTSize.x512;
-		this.type = VisualizerType.classic;
-		this.highlightCycleTime = 10;
-		this.gapPercentage = 0.25;
 		this.loop = true;
-	}
-	FFTSize;
-	type;
-	/** @type {Number} */ #highlightCycleTime;
-	get highlightCycleTime() {
-		return this.#highlightCycleTime;
-	}
-	set highlightCycleTime(value) {
-		if (Settings.#minHighlightCycleTime <= value && value <= Settings.#maxHighlightCycleTime) {
-			this.#highlightCycleTime = value;
-		} else {
-			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#minHighlightCycleTime} to ${Settings.#maxHighlightCycleTime} inclusive.`);
-		}
-	}
-	/** @type {Number} */ #gapPercentage;
-	get gapPercentage() {
-		return this.#gapPercentage;
-	}
-	set gapPercentage(value) {
-		if (Settings.#minGapPercentage <= value && value <= Settings.#maxGapPercentage) {
-			this.#gapPercentage = value;
-		} else {
-			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#minGapPercentage} to ${Settings.#maxGapPercentage} inclusive.`);
-		}
+		this.FFTSize = FFTSize.x1024;
+		this.type = VisualizerType.classic;
+		this.classicHightlightMotion = true;
+		this.classicHighlightCycleTime = 10;
+		this.classicGapPercentage = 0.25;
+		this.classicReflection = true;
 	}
 	loop;
+	FFTSize;
+	type;
+	classicHightlightMotion
+	/** @type {Number} */ #classicHighlightCycleTime;
+	get classicHighlightCycleTime() {
+		return this.#classicHighlightCycleTime;
+	}
+	set classicHighlightCycleTime(value) {
+		if (Settings.#classicMinHighlightCycleTime <= value && value <= Settings.#classicMaxHighlightCycleTime) {
+			this.#classicHighlightCycleTime = value;
+		} else {
+			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#classicMinHighlightCycleTime} to ${Settings.#classicMaxHighlightCycleTime} inclusive.`);
+		}
+	}
+	/** @type {Number} */ #classicGapPercentage;
+	get classicGapPercentage() {
+		return this.#classicGapPercentage;
+	}
+	set classicGapPercentage(value) {
+		if (Settings.#classicMinGapPercentage <= value && value <= Settings.#classicMaxGapPercentage) {
+			this.#classicGapPercentage = value;
+		} else {
+			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#classicMinGapPercentage} to ${Settings.#classicMaxGapPercentage} inclusive.`);
+		}
+	}
 }
 //#endregion
 //#region Memory

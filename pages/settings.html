@@ -14,12 +14,20 @@
 	<script src="../scripts/settings.js" defer></script>
 </head>
 
-<body style="display: grid; place-items: start center; gap: var(--size-gap); padding: var(--size-gap); overflow: hidden auto;">
+<body style="display: grid; place-items: start center; gap: var(--size-gap); padding: var(--size-large-gap); overflow: hidden auto;">
 	<a href="./visualizer.html" role="button" class="layer transparent flex" style="position: sticky; top: var(--size-gap); justify-self: left;">
 		<img src="../resources/return.png" class="icon">
 	</a>
 	<div class="layer" style="min-width: var(--size-large-standart); max-width: calc(100vmin - 2 * var(--size-large-gap)); width: fit-content; height: fit-content; display: grid; padding: var(--size-large-gap);">
 		<h1>Settings</h1>
+		<section class="option">
+			<p class="title">Loop audio</p>
+			<dfn class="definition">Enables audio repeat.</dfn>
+			<input id="toggle-loop" type="checkbox" hidden>
+			<label for="toggle-loop" role="checkbox" class="depth toggle value">
+				<span class="layer knob"></span>
+			</label>
+		</section>
 		<section class="option">
 			<p class="title">Fast Fourier transform size</p>
 			<dfn class="definition">A fast Fourier transform (FFT) is an algorithm that computes the discrete Fourier transform of a sequence, or its inverse. Fourier analysis converts a signal from its original domain (often time or space) to a representation in the frequency domain and vice versa.<br>
@@ -42,30 +50,47 @@
 		<section class="option">
 			<p class="title">Visualizer type</p>
 			<dfn class="definition">The visualizer type. Appearance, animations, rendering when playing music.</dfn>
-			<select id="visualizer-type" class="depth value" required>
+			<select id="visualizer-type" class="depth value" required disabled>
 				<option value="classic">Classic</option>
 			</select>
-		</section>
-		<section class="option">
-			<p class="title">Highlight cycle time</p>
-			<dfn class="definition">The time it takes for the background highlight to make one complete circle in the color palette.</dfn>
-			<input id="highlight-cycle-time" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
-		</section>
-		<section class="option">
-			<p class="title">Gap percentage</p>
-			<dfn class="definition">Calculates the size of the gap relative to the line size.</dfn>
-			<input id="gap-percentage" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
-		</section>
-		<section class="option">
-			<p class="title">Loop audio</p>
-			<dfn class="definition">Enables audio repeat.</dfn>
-			<input id="toggle-loop" type="checkbox" hidden>
-			<label for="toggle-loop" role="checkbox" class="depth toggle value">
-				<span class="layer knob"></span>
-			</label>
+			<!-- Region Classic -->
+			<section class="option contents -classic" style="padding: 0;">
+				<section class="option">
+					<p class="title">Highlight motion</p>
+					<dfn class="definition">Turns on/off the highlight motion.</dfn>
+					<input id="toggle-classic-hightlight-motion" type="checkbox" hidden>
+					<label for="toggle-classic-hightlight-motion" role="checkbox" class="depth toggle value">
+						<span class="layer knob"></span>
+					</label>
+					<section class="option">
+						<p class="title">Highlight cycle time</p>
+						<dfn class="definition">The time it takes for the background highlight to make one complete circle in the color palette.</dfn>
+						<input id="classic-highlight-cycle-time" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
+					</section>
+				</section>
+				<section class="option">
+					<p class="title">Gap percentage</p>
+					<dfn class="definition">Calculates the size of the gap relative to the line size.</dfn>
+					<input id="classic-gap-percentage" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
+				</section>
+				<section class="option">
+					<p class="title">Reflection</p>
+					<dfn class="definition">Creates a reflection of visual effects.</dfn>
+					<input id="toggle-classic-reflection" type="checkbox" hidden>
+					<label for="toggle-classic-reflection" role="checkbox" class="depth toggle value">
+						<span class="layer knob"></span>
+					</label>
+				</section>
+			</section>
+			<!-- Endregion Classic -->
 		</section>
 		<section class="option">
 			<button id="reset-settings" class="layer grid-line" style="width: fit-content; justify-self: center;">Reset settings</button>
+		</section>
+		<hr class="depth">
+		<section class="option">
+			<dfn class="definition">Your opinion is important to us.<br> Share your settings with us, so we can know your preferences. Perhaps in the next updates, it is your configuration that will be used by default.?</dfn>
+			<button id="share-settings" class="layer value" style="width: fit-content; justify-self: center;">Share settings</button>
 		</section>
 	</div>
 </body>

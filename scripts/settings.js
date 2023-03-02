@@ -5,6 +5,13 @@ window.addEventListener(`beforeunload`, (event) => {
 });
 
 try {
+	//#region Loop audio
+	const inputToggleLoop = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-loop`)));
+	inputToggleLoop.checked = settings.loop;
+	inputToggleLoop.addEventListener(`change`, (event) => {
+		settings.loop = inputToggleLoop.checked;
+	});
+	//#endregion
 	//#region FFT size
 	const selectFFTSize = (/** @type {HTMLSelectElement} */ (document.querySelector(`select#FFT-size`)));
 	selectFFTSize.value = `${settings.FFTSize}`;
@@ -18,45 +25,66 @@ try {
 	selectVisualizerType.addEventListener(`change`, (event) => {
 		settings.type = selectVisualizerType.value;
 	});
-	//#endregion
-	//#region Highlight cycle time
-	const inputHighlightCycleTime = (/** @type {HTMLInputElement} */ (document.querySelector(`input#highlight-cycle-time`)));
-	inputHighlightCycleTime.min = `${Settings.minHighlightCycleTime}`;
-	inputHighlightCycleTime.max = `${Settings.maxHighlightCycleTime}`;
-	inputHighlightCycleTime.placeholder = `[${Settings.minHighlightCycleTime} - ${Settings.maxHighlightCycleTime}]`;
-	inputHighlightCycleTime.value = `${settings.highlightCycleTime.toFixed(1)}`;
-	inputHighlightCycleTime.addEventListener(`change`, (event) => {
-		settings.highlightCycleTime = Number(inputHighlightCycleTime.value);
+	//#region Classic
+	//#region Highlight Motion
+	const inputToggleClassicHighlightMotion = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-classic-hightlight-motion`)));
+	inputToggleClassicHighlightMotion.checked = settings.classicHightlightMotion;
+	inputToggleClassicHighlightMotion.addEventListener(`change`, (event) => {
+		settings.classicHightlightMotion = inputToggleClassicHighlightMotion.checked;
 	});
+	//#region Highlight cycle time
+	const inputClassicHighlightCycleTime = (/** @type {HTMLInputElement} */ (document.querySelector(`input#classic-highlight-cycle-time`)));
+	inputClassicHighlightCycleTime.min = `${Settings.classicMinHighlightCycleTime}`;
+	inputClassicHighlightCycleTime.max = `${Settings.classicMaxHighlightCycleTime}`;
+	inputClassicHighlightCycleTime.placeholder = `[${Settings.classicMinHighlightCycleTime} - ${Settings.classicMaxHighlightCycleTime}]`;
+	inputClassicHighlightCycleTime.value = `${settings.classicHighlightCycleTime.toFixed(1)}`;
+	inputClassicHighlightCycleTime.addEventListener(`change`, (event) => {
+		settings.classicHighlightCycleTime = Number(inputClassicHighlightCycleTime.value);
+	});
+	//#endregion
 	//#endregion
 	//#region Gap percentage
-	const inputGapPercentage = (/** @type {HTMLInputElement} */ (document.querySelector(`input#gap-percentage`)));
-	inputGapPercentage.min = `${Settings.minGapPercentage}`;
-	inputGapPercentage.max = `${Settings.maxGapPercentage}`;
-	inputGapPercentage.step = `${(Settings.maxGapPercentage - Settings.minGapPercentage) / 100}`;
-	inputGapPercentage.placeholder = `[${Settings.minGapPercentage} - ${Settings.maxGapPercentage}]`;
-	inputGapPercentage.value = `${settings.gapPercentage}`;
-	inputGapPercentage.addEventListener(`change`, (event) => {
-		settings.gapPercentage = Number(inputGapPercentage.value);
+	const inputClassicGapPercentage = (/** @type {HTMLInputElement} */ (document.querySelector(`input#classic-gap-percentage`)));
+	inputClassicGapPercentage.min = `${Settings.classicMinGapPercentage}`;
+	inputClassicGapPercentage.max = `${Settings.classicMaxGapPercentage}`;
+	inputClassicGapPercentage.step = `${(Settings.classicMaxGapPercentage - Settings.classicMinGapPercentage) / 100}`;
+	inputClassicGapPercentage.placeholder = `[${Settings.classicMinGapPercentage} - ${Settings.classicMaxGapPercentage}]`;
+	inputClassicGapPercentage.value = `${settings.classicGapPercentage}`;
+	inputClassicGapPercentage.addEventListener(`change`, (event) => {
+		settings.classicGapPercentage = Number(inputClassicGapPercentage.value);
 	});
 	//#endregion
-	//#region Loop audio
-	const inputToggleLoop = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-loop`)));
-	inputToggleLoop.checked = settings.loop;
-	inputToggleLoop.addEventListener(`change`, (event) => {
-		settings.loop = inputToggleLoop.checked;
+	//#region Reflection
+	const inputToggleClassicReflection = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-classic-reflection`)));
+	inputToggleClassicReflection.checked = settings.classicReflection;
+	inputToggleClassicReflection.addEventListener(`change`, (event) => {
+		settings.classicReflection = inputToggleClassicReflection.checked;
 	});
+	//#endregion
+	//#endregion
 	//#endregion
 	//#region Reset settings
 	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
 	buttonResetSettings.addEventListener(`click`, (event) => {
 		if (window.confirm(`The settings will be reset to factory defaults. Are you sure?`)) {
 			settings = new Settings();
+			inputToggleLoop.checked = settings.loop;
 			selectFFTSize.value = `${settings.FFTSize}`;
 			selectVisualizerType.value = `${settings.type}`;
-			inputHighlightCycleTime.value = `${settings.highlightCycleTime.toFixed(1)}`;
-			inputGapPercentage.value = `${settings.gapPercentage}`;
+			inputToggleClassicHighlightMotion.checked = settings.classicHightlightMotion;
+			inputClassicHighlightCycleTime.value = `${settings.classicHighlightCycleTime.toFixed(1)}`;
+			inputClassicGapPercentage.value = `${settings.classicGapPercentage}`;
+			inputToggleClassicReflection.checked = settings.classicReflection;
 		}
+	});
+	//#endregion
+	//#region Share settings
+	const buttonShareSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#share-settings`)));
+	buttonShareSettings.addEventListener(`click`, (event) => {
+		const to = `eccs0103@gmail.com`;
+		const subject = `Visualizer preferred configuration`;
+		const body = JSON.stringify(Settings.export(settings), undefined, `\t`);
+		location.assign(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`);
 	});
 	//#endregion
 } catch (exception) {

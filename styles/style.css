@@ -259,3 +259,7 @@ audio#player.-playing ~ div#interface {
 audio#player.-playing ~ div#interface div.-status img {
 	content: url(../resources/pause.png);
 }
+
+select#visualizer-type:not(:has(option[value="classic"]:checked)) ~ section.-classic {
+	display: none !important;
+}
