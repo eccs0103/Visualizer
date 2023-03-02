@@ -118,10 +118,10 @@ input[type="checkbox"]:checked + label[role="checkbox"].toggle > span.knob {
 
 dialog {
 	min-width: 60vmin;
-	max-width: calc(100vmin - 4 * var(--size-gap));
+	max-width: calc(100vmin - 2 * var(--size-large-gap));
 	width: fit-content;
-	min-height: var(--size-standart);
-	max-height: calc(100vh - 4 * var(--size-gap));
+	/* min-height: var(--size-standart); */
+	max-height: calc(100vh - 2 * var(--size-large-gap));
 	height: fit-content;
 	margin: auto;
 	padding: var(--size-gap);
