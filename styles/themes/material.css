@@ -132,34 +132,6 @@ dialog::backdrop {
 	background-color: rgba(0, 0, 0, 50%);
 }
 
-dialog.pop-up {
-	display: flex;
-	flex-direction: column;
-	gap: var(--size-gap);
-}
-
-dialog.pop-up div.header {
-	justify-content: center;
-}
-
-dialog.pop-up div.header:empty {
-	display: none;
-}
-
-dialog.pop-up div.main {
-	overflow-y: auto;
-	overflow-wrap: anywhere;
-}
-
-dialog.pop-up div.footer {
-	justify-content: center;
-	gap: var(--size-gap);
-}
-
-dialog.pop-up div.footer:empty {
-	display: none;
-}
-
 a {
 	text-decoration: none;
 }
