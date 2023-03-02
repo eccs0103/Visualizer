@@ -193,6 +193,12 @@ class Application {
 		return this.#project;
 	}
 	static #locked = true;
+	/** @readonly */ static get search() {
+		return new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
+			const [key, value] = item.split(`=`);
+			return [key, value ?? ``];
+		}));;
+	}
 	/**
 	 * @param {any} exception 
 	 */

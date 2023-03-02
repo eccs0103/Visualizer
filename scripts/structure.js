@@ -165,6 +165,5 @@ class Memory {
 }
 //#endregion
 //#region Metadata
-const archiveSettings = new Archive(`${Application.developer}\\${Application.project}\\Settings`, Settings.export(new Settings()));
-/** @type {Archive<MemoryNotation?>} */  const archiveMemory = new Archive(`${Application.developer}\\${Application.project}\\Current`, null);
+/** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${Application.developer}\\${Application.project}\\Settings`, Settings.export(new Settings()));
 //#endregion

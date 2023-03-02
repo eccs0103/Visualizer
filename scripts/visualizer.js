@@ -1,5 +1,6 @@
 "use strict";
 try {
+	const isTest = Application.search.get(`test`) !== undefined;
 	const settings = Settings.import(archiveSettings.data);
 	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
 
@@ -24,9 +25,9 @@ try {
 	})();
 	//#endregion
 	//#region Render
-	// let max = 0;
-	// console.log(frequencyData.length);
+	const hightlightMotion = false;
 	const duration = settings.highlightCycleTime;
+	const anchor = isTest ? 0.8 : 1;
 	/**
 	 * @param {Uint8Array} data 
 	 * @param {Number} time
@@ -37,24 +38,22 @@ try {
 		const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
 		const pathGap = pathWidth * gapPercentage;
 		const timeCoefficent = (time % (duration * 1000)) / (duration * 1000);
-		const bottomColor = Color.black.toString();
+		const darkness = Color.black.toString();
 		data.forEach((datul, index) => {
 			const pathX = (pathWidth + pathGap) * index;
 			const pathHeight = canvas.height * (datul / 256);
-			const pathY = canvas.height - pathHeight;
+			const pathY = (canvas.height - pathHeight) * anchor;
 			const pathCoefficent = index / data.length;
 			const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
-			const topColor = Color.viaHSV((pathCoefficent + timeCoefficent) * 360, 100, audioPlayer.currentTime / audioPlayer.duration > pathCoefficent ? 100 : 50).toString();
-			gradient.addColorStop(2 / 3, topColor);
-			gradient.addColorStop(1, bottomColor);
+			const hue = (pathCoefficent + (hightlightMotion ? timeCoefficent : 0)) * 360;
+			const saturation = 100;
+			const value = audioPlayer.currentTime / audioPlayer.duration > pathCoefficent ? 100 : 50;
+			gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, Color.viaHSV(hue, saturation, value).toString());
+			gradient.addColorStop(anchor, Color.viaHSV(hue, saturation, value * 0.25).toString());
+			gradient.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, Color.viaHSV(hue, saturation, value * 0.5).toString());
 			context.fillStyle = gradient;
 			context.fillRect(pathX, pathY, pathWidth, pathHeight);
 		});
-		// const index = frequencyData.findLastIndex(value => value != 0);
-		// if (index > max) {
-		// 	max = index;
-		// 	console.log(max);
-		// }
 	}
 	//#endregion
 	//#region Analysys
@@ -126,7 +125,7 @@ try {
 	 * @param {Blob} blob 
 	 * @param {Number} time 
 	 */
-	function analysys(blob, time) {
+	async function analysys(blob, time) {
 		const url = URL.createObjectURL(blob);
 		audioPlayer.src = url;
 		audioPlayer.currentTime = time;
