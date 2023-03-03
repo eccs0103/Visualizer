@@ -294,7 +294,7 @@ class Application {
 	 */
 	static async prevent(exception) {
 		if (this.#locked) {
-			await Application.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`);
+			await Application.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`, MessageType.error);
 			location.reload();
 		} else console.error(exception);
 	}

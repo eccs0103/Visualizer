@@ -7,7 +7,7 @@ try {
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
 	analyser.fftSize = settings.FFTSize;
-	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.8);
+	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
 	const engine = new Engine(() => {
 		analyser.getByteFrequencyData(frequencyData);
 		render(frequencyData);

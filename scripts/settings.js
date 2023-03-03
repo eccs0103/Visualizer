@@ -66,7 +66,7 @@ try {
 	//#region Reset settings
 	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
 	buttonResetSettings.addEventListener(`click`, async (event) => {
-		if (await Application.confirm(`The settings will be reset to factory defaults. Are you sure?`)) {
+		if (await Application.confirm(`The settings will be reset to factory defaults. Are you sure?`, MessageType.warn)) {
 			settings = new Settings();
 			inputToggleLoop.checked = settings.loop;
 			selectFFTSize.value = `${settings.FFTSize}`;
@@ -80,13 +80,24 @@ try {
 	//#endregion
 	//#region Share settings
 	const buttonShareSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#share-settings`)));
-	buttonShareSettings.addEventListener(`click`, (event) => {
-		const to = `eccs0103@gmail.com`;
+	buttonShareSettings.addEventListener(`click`, async (event) => {
+		const addressee = `eccs0103@gmail.com`;
 		const subject = `Visualizer preferred configuration`;
-		const body = `${Object.entries(Settings.export(settings)).map(([key, value]) => {
+		const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => {
 			return `${key}: ${value}`;
 		}).join(`\n`)}`;
-		location.assign(window.encodeURI(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`));
+		// const link = location.href;
+		location.assign(window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`));
+		// if (location.href == link) {
+		// 	if (await Application.confirm(`Your browser does not support mail sharing. Do you want to share it manualy?`, MessageType.warn)) {
+		// 		navigator.share({
+		// 			title: subject,
+		// 			text: message,
+		// 		}).catch((reason) => {
+		// 			Application.prevent(reason);
+		// 		})
+		// 	}
+		// }
 	});
 	//#endregion
 } catch (exception) {
