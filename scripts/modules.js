@@ -147,11 +147,12 @@ class Application {
 		return this.#project;
 	}
 	static #locked = true;
+	static #search = new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
+		const [key, value] = item.split(`=`);
+		return [key, value];
+	}));
 	/** @readonly */ static get search() {
-		return new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
-			const [key, value] = item.split(`=`);
-			return [key, value];
-		}));;
+		return this.#search;
 	}
 	/**
 	 * @param {MessageType} type 
