@@ -114,12 +114,17 @@ try {
 					const pathY = (canvas.height - pathHeight) * anchor;
 					const pathCoefficent = index / data.length;
 					const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
-					const hue = (pathCoefficent + (settings.classicHightlightMotion ? timeCoefficent : 0)) * 360;
+					const hue = Math.floor(((pathCoefficent + (settings.classicHightlightMotion ? timeCoefficent : 0)) * 360) % 361);
 					const saturation = 100;
-					const value = audioPlayer.currentTime / audioPlayer.duration > pathCoefficent ? 100 : 50;
-					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, Color.viaHSV(hue, saturation, value).toString());
-					gradient.addColorStop(anchor, Color.viaHSV(hue, saturation, value * 0.25).toString());
-					gradient.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, Color.viaHSV(hue, saturation, value * 0.5).toString());
+					let lightness = 50;
+					if (audioPlayer.currentTime / audioPlayer.duration < pathCoefficent)
+						lightness /= 2;
+					const highlight = Color.viaHSL(hue, saturation, lightness);
+					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, highlight.toString(ColorFormat.RGB));
+					highlight.lightness /= 2;
+					gradient.addColorStop(anchor, highlight.toString(ColorFormat.RGB));
+					highlight.lightness *= 2;
+					gradient.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, highlight.toString(ColorFormat.RGB));
 					context.fillStyle = gradient;
 					context.fillRect(pathX, pathY, pathWidth, pathHeight);
 				});
