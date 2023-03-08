@@ -26,12 +26,6 @@ try {
 		settings.type = selectVisualizerType.value;
 	});
 	//#region Classic
-	//#region Highlight Motion
-	const inputToggleClassicHighlightMotion = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-classic-hightlight-motion`)));
-	inputToggleClassicHighlightMotion.checked = settings.classicHightlightMotion;
-	inputToggleClassicHighlightMotion.addEventListener(`change`, (event) => {
-		settings.classicHightlightMotion = inputToggleClassicHighlightMotion.checked;
-	});
 	//#region Highlight cycle time
 	const inputClassicHighlightCycleTime = (/** @type {HTMLInputElement} */ (document.querySelector(`input#classic-highlight-cycle-time`)));
 	inputClassicHighlightCycleTime.min = `${Settings.classicMinHighlightCycleTime}`;
@@ -41,7 +35,6 @@ try {
 	inputClassicHighlightCycleTime.addEventListener(`change`, (event) => {
 		settings.classicHighlightCycleTime = Number(inputClassicHighlightCycleTime.value);
 	});
-	//#endregion
 	//#endregion
 	//#region Gap percentage
 	const inputClassicGapPercentage = (/** @type {HTMLInputElement} */ (document.querySelector(`input#classic-gap-percentage`)));
@@ -71,7 +64,6 @@ try {
 			inputToggleLoop.checked = settings.loop;
 			selectFFTSize.value = `${settings.FFTSize}`;
 			selectVisualizerType.value = `${settings.type}`;
-			inputToggleClassicHighlightMotion.checked = settings.classicHightlightMotion;
 			inputClassicHighlightCycleTime.value = `${settings.classicHighlightCycleTime.toFixed(1)}`;
 			inputClassicGapPercentage.value = `${settings.classicGapPercentage}`;
 			inputToggleClassicReflection.checked = settings.classicReflection;

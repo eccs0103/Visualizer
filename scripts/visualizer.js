@@ -112,8 +112,9 @@ try {
 					const pathY = (canvas.height - pathHeight) * anchor;
 					const pathCoefficent = index / data.length;
 					const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
-					const highlight = Color.viaHSL(Math.floor(((pathCoefficent + (settings.classicHightlightMotion ? timeCoefficent : 0)) * 360) % 361), 100, 50);
-					if (audioPlayer.currentTime / audioPlayer.duration < pathCoefficent) {
+					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
+					const highlight = Color.viaHSL(Math.floor((pathCoefficent / 2 + timeCoefficent) * 360 % 361), 100, 50);
+					if (!isPlayed) {
 						highlight.lightness /= 2;
 					}
 					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, highlight.toString());

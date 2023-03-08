@@ -21,7 +21,6 @@
  * @property {Boolean | undefined} loop
  * @property {FFTSize | undefined} FFTSize
  * @property {VisualizerType | undefined} type
- * @property {Boolean | undefined} classicHightlightMotion
  * @property {Number | undefined} classicHighlightCycleTime
  * @property {Number | undefined} classicGapPercentage
  * @property {Boolean | undefined} classicReflection
@@ -35,7 +34,6 @@ class Settings {
 		if (source.loop !== undefined) result.loop = source.loop;
 		if (source.FFTSize !== undefined) result.FFTSize = source.FFTSize;
 		if (source.type !== undefined) result.type = source.type;
-		if (source.classicHightlightMotion !== undefined) result.classicHightlightMotion = source.classicHightlightMotion;
 		if (source.classicHighlightCycleTime !== undefined) result.classicHighlightCycleTime = source.classicHighlightCycleTime;
 		if (source.classicGapPercentage !== undefined) result.classicGapPercentage = source.classicGapPercentage;
 		if (source.classicReflection !== undefined) result.classicReflection = source.classicReflection;
@@ -49,7 +47,6 @@ class Settings {
 		result.loop = source.loop;
 		result.FFTSize = source.FFTSize;
 		result.type = source.type;
-		result.classicHightlightMotion = source.classicHightlightMotion;
 		result.classicHighlightCycleTime = source.classicHighlightCycleTime;
 		result.classicGapPercentage = source.classicGapPercentage;
 		result.classicReflection = source.classicReflection;
@@ -75,7 +72,6 @@ class Settings {
 		this.loop = true;
 		this.FFTSize = FFTSize.x1024;
 		this.type = VisualizerType.classic;
-		this.classicHightlightMotion = true;
 		this.classicHighlightCycleTime = 10;
 		this.classicGapPercentage = 0.25;
 		this.classicReflection = true;
@@ -83,7 +79,6 @@ class Settings {
 	loop;
 	FFTSize;
 	type;
-	classicHightlightMotion
 	/** @type {Number} */ #classicHighlightCycleTime;
 	get classicHighlightCycleTime() {
 		return this.#classicHighlightCycleTime;
