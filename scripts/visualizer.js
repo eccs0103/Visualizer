@@ -107,11 +107,12 @@ try {
 					const hue = Math.floor(((pathCoefficent + (settings.classicHightlightMotion ? timeCoefficent : 0)) * 360) % 361);
 					const saturation = 100;
 					let lightness = 50;
-					if (audioPlayer.currentTime / audioPlayer.duration < pathCoefficent)
+					if (audioPlayer.currentTime / audioPlayer.duration < pathCoefficent) {
 						lightness /= 2;
+					}
 					const highlight = Color.viaHSL(hue, saturation, lightness);
 					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, highlight.toString());
-					highlight.lightness /= 2;
+					highlight.lightness /= 4;
 					gradient.addColorStop(anchor, highlight.toString());
 					highlight.lightness *= 2;
 					gradient.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, highlight.toString());

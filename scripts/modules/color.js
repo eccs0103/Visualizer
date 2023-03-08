@@ -13,9 +13,9 @@ class Color {
 	 * @returns {[Number, Number, Number]} red [0 - 255], green [0 - 255], blue [0 - 255]
 	 */
 	static #HSLtoRGB(hue, saturation, lightness) {
-		hue = hue / 30;
-		saturation = saturation / 100;
-		lightness = lightness / 100;
+		hue /= 30;
+		saturation /= 100;
+		lightness /= 100;
 		function transform(/** @type {Number} */ level) {
 			const sector = (level + hue) % 12;
 			return lightness - (saturation * Math.min(lightness, 1 - lightness)) * Math.max(-1, Math.min(sector - 3, 9 - sector, 1));
@@ -29,9 +29,9 @@ class Color {
 	 * @returns {[Number, Number, Number]} hue [0 - 360], saturation [0 - 100], lightness [0 - 100]
 	 */
 	static #RGBtoHSL(red, green, blue) {
-		red = red / 255;
-		green = green / 255;
-		blue = blue / 255;
+		red /= 255;
+		green /= 255;
+		blue /= 255;
 		const value = Math.max(red, green, blue), level = value - Math.min(red, green, blue), f = (1 - Math.abs(value + value - level - 1));
 		const hue = level && ((value == red) ? (green - blue) / level : ((value == green) ? 2 + (blue - red) / level : 4 + (red - green) / level));
 		return [Math.floor(60 * (hue < 0 ? hue + 6 : hue)), Math.floor((f ? level / f : 0) * 100), Math.floor(((value + value - level) / 2) * 100)];
@@ -44,7 +44,7 @@ class Color {
 	static stringify(source, format = ColorFormat.RGB, deep = false) {
 		switch (format) {
 			case ColorFormat.RGB: return `rgb${deep ? `a` : ``}(${source.#red}, ${source.#green}, ${source.#blue}${deep ? `, ${source.#alpha}` : ``})`;
-			case ColorFormat.HSL: return `hsl${deep ? `a` : ``}(${source.#hue}, ${source.#saturation}, ${source.#lightness}${deep ? `, ${source.#alpha}` : ``})`;
+			case ColorFormat.HSL: return `hsl${deep ? `a` : ``}(${source.#hue}deg, ${source.#saturation}%, ${source.#lightness}%${deep ? `, ${source.#alpha}` : ``})`;
 			case ColorFormat.HEX: return `#${source.#red.toString(16).replace(/^(?!.{2})/, `0`)}${source.#green.toString(16).replace(/^(?!.{2})/, `0`)}${source.#blue.toString(16).replace(/^(?!.{2})/, `0`)}${deep ? (source.#alpha * 255).toString(16).replace(/^(?!.{2})/, `0`) : ``}`;
 			default: throw new TypeError(`Invalid color format: '${format}'.`);
 		}
@@ -57,7 +57,7 @@ class Color {
 	static parse(source, format = ColorFormat.RGB, deep = false) {
 		switch (format) {
 			case ColorFormat.RGB: {
-				const regex = new RegExp(`rgb\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*${deep ? `,\\s*(\\d+)\\s*` : ``}\\)`, `i`);
+				const regex = new RegExp(`rgb${deep ? `a` : ``}\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*${deep ? `,\\s*(\\d+)\\s*` : ``}\\)`, `i`);
 				const matches = regex.exec(source);
 				if (!matches) {
 					throw new SyntaxError(`Invalid ${format} format color syntax: '${source}'.`);
@@ -66,7 +66,7 @@ class Color {
 				return Color.viaRGB(red, green, blue, deep ? alpha : 1);
 			};
 			case ColorFormat.HSL: {
-				const regex = new RegExp(`hsl\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*${deep ? `,\\s*(\\d+)\\s*` : ``}\\)`, `i`);
+				const regex = new RegExp(`hsl${deep ? `a` : ``}\\(\\s*(\\d+)(?:deg)?\\s*,\\s*(\\d+)(?:%)?\\s*,\\s*(\\d+)(?:%)?\\s*${deep ? `,\\s*(\\d+)\\s*` : ``}\\)`, `i`);
 				const matches = regex.exec(source);
 				if (!matches) {
 					throw new SyntaxError(`Invalid ${format} format color syntax: '${source}'.`);
@@ -85,6 +85,21 @@ class Color {
 			};
 			default: throw new TypeError(`Invalid color format: '${format}'.`);
 		}
+	}
+	/**
+	 * @param {String} source 
+	 */
+	static tryParse(source) {
+		let result = null;
+		for (const [format, deep] of Object.keys(ColorFormat).flatMap((format) => (/** @type {Array<[String, Boolean]>} */ ([[format, false], [format, true]])))) {
+			try {
+				result = Color.parse(source, format, deep);
+				break;
+			} catch {
+				continue;
+			}
+		}
+		return result;
 	}
 	//#endregion
 	//#region Constructors
@@ -141,6 +156,37 @@ class Color {
 		[result.#red, result.#green, result.#blue] = Color.#HSLtoRGB(result.#hue, result.#saturation, result.#lightness);
 		result.#alpha = alpha;
 		return result;
+	}
+	/**
+	 * @param {Color} source
+	 */
+	static clone(source) {
+		const result = new Color();
+		result.#red = source.#red;
+		result.#green = source.#green;
+		result.#blue = source.#blue;
+		result.#hue = source.#hue;
+		result.#saturation = source.#saturation;
+		result.#lightness = source.#lightness;
+		result.#alpha = source.#alpha;
+		return result;
+	}
+	//#endregion
+	//#region Modifiers
+	/**
+	 * @param {Color} first 
+	 * @param {Color} second 
+	 * @param {Number} ratio [0 - 1]
+	 */
+	static mix(first, second, ratio = 0.5) {
+		if (ratio < 0 || ratio > 1) {
+			throw new RangeError(`Property 'ratio' out of range: ${ratio}`);
+		}
+		return Color.viaRGB(
+			first.#red + (second.#red - first.#red) * ratio,
+			first.#green + (second.#green - first.#green) * ratio,
+			first.#blue + (second.#blue - first.#blue) * ratio
+		);
 	}
 	//#endregion
 	//#region Properties
@@ -221,13 +267,26 @@ class Color {
 		this.#alpha = value;
 	}
 	//#endregion
-	//#region Modifiers
+	//#region Methods
 	/**
 	 * @param {ColorFormat} format 
 	 * @param {Boolean} deep
 	 */
 	toString(format = ColorFormat.RGB, deep = false) {
 		return Color.stringify(this, format, deep);
+	}
+	/**
+	 * 
+	 */
+	clone() {
+		return Color.clone(this);
+	}
+	/**
+	 * @param {Color} other 
+	 * @param {Number} ratio [0 - 1]
+	 */
+	mix(other, ratio = 0.5) {
+		return Color.mix(this, other, ratio);
 	}
 	//#endregion
 }
