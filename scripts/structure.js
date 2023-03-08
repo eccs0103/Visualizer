@@ -138,4 +138,10 @@ class Memory {
 //#endregion
 //#region Metadata
 /** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${Application.developer}\\${Application.title}\\Settings`, Settings.export(new Settings()));
+const theme = Application.search.get(`theme`);
+switch (theme) {
+	case `light`: {
+		document.documentElement.dataset[`theme`] = theme;
+	} break;
+}
 //#endregion

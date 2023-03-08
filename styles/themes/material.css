@@ -1,6 +1,31 @@
 /* Main */
 
-:root {
+@media (prefers-color-scheme: light) {
+	:root[data-theme="system"] {
+		--color-foreground: rgb(255, 255, 255);
+		--color-background: rgb(225, 225, 225);
+		--color-text: rgb(50, 50, 50);
+		--color-text-description: rgb(150, 150, 150);
+	}
+}
+
+:root[data-theme="light"] {
+	--color-foreground: rgb(255, 255, 255);
+	--color-background: rgb(225, 225, 225);
+	--color-text: rgb(50, 50, 50);
+	--color-text-description: rgb(150, 150, 150);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root[data-theme="system"] {
+		--color-foreground: rgb(50, 50, 50);
+		--color-background: rgb(25, 25, 25);
+		--color-text: rgb(255, 255, 255);
+		--color-text-description: rgb(150, 150, 150);
+	}
+}
+
+:root[data-theme="dark"] {
 	--color-foreground: rgb(50, 50, 50);
 	--color-background: rgb(25, 25, 25);
 	--color-text: rgb(255, 255, 255);
@@ -74,7 +99,13 @@ body *::placeholder {
 	background-color: transparent;
 }
 
-img.icon {
+@media (prefers-color-scheme: dark) {
+	:root[data-theme="system"] img.icon {
+		filter: invert(1);
+	}
+}
+
+:root[data-theme="dark"] img.icon {
 	filter: invert(1);
 }
 
