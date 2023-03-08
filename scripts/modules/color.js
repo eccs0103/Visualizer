@@ -188,6 +188,21 @@ class Color {
 			first.#blue + (second.#blue - first.#blue) * ratio
 		);
 	}
+	/**
+	 * @param {Color} source 
+	 * @param {Number} scale [0 - 1]
+	 */
+	static grayscale(source, scale) {
+		if (scale < 0 || scale > 1) {
+			throw new RangeError(`Property 'ratio' out of range: ${scale}`);
+		}
+		const grayness = (source.#red + source.#green + source.#blue) / 3;
+		return Color.viaRGB(
+			source.#red + (grayness - source.#red) * scale,
+			source.#green + (grayness - source.#green) * scale,
+			source.#blue + (grayness - source.#blue) * scale
+		);
+	}
 	//#endregion
 	//#region Properties
 	/** @type {Number} */ #red = 0;
@@ -287,6 +302,12 @@ class Color {
 	 */
 	mix(other, ratio = 0.5) {
 		return Color.mix(this, other, ratio);
+	}
+	/**
+	 * @param {Number} scale [0 - 1]
+	 */
+	grayscale(scale) {
+		return Color.grayscale(this, scale);
 	}
 	//#endregion
 }
