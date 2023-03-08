@@ -88,12 +88,20 @@ try {
 	 * @param {Uint8Array} data 
 	 */
 	function render(data) {
-		//#region Classic
 		switch (settings.type) {
+			//#region Classic
 			case VisualizerType.classic: {
 				const duration = settings.classicHighlightCycleTime;
 				const anchor = settings.classicReflection ? 0.8 : 1;
-				context.clearRect(0, 0, canvas.width, canvas.height);
+				const gradientBackground = context.createLinearGradient(canvas.width / 2, 0, canvas.width / 2, canvas.height);
+				const background = Color.parse(getComputedStyle(document.body).backgroundColor);
+				gradientBackground.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, background.toString());
+				background.lightness /= 4;
+				gradientBackground.addColorStop(anchor, background.toString());
+				background.lightness *= 2;
+				gradientBackground.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, background.toString());
+				context.fillStyle = gradientBackground;
+				context.fillRect(0, 0, canvas.width, canvas.height);
 				const gapPercentage = settings.classicGapPercentage;
 				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
 				const pathGap = pathWidth * gapPercentage;
@@ -104,13 +112,10 @@ try {
 					const pathY = (canvas.height - pathHeight) * anchor;
 					const pathCoefficent = index / data.length;
 					const gradient = context.createLinearGradient(pathX, 0, pathX + pathWidth, canvas.height);
-					const hue = Math.floor(((pathCoefficent + (settings.classicHightlightMotion ? timeCoefficent : 0)) * 360) % 361);
-					const saturation = 100;
-					let lightness = 50;
+					const highlight = Color.viaHSL(Math.floor(((pathCoefficent + (settings.classicHightlightMotion ? timeCoefficent : 0)) * 360) % 361), 100, 50);
 					if (audioPlayer.currentTime / audioPlayer.duration < pathCoefficent) {
-						lightness /= 2;
+						highlight.lightness /= 2;
 					}
-					const highlight = Color.viaHSL(hue, saturation, lightness);
 					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, highlight.toString());
 					highlight.lightness /= 4;
 					gradient.addColorStop(anchor, highlight.toString());
@@ -120,9 +125,9 @@ try {
 					context.fillRect(pathX, pathY, pathWidth, pathHeight);
 				});
 			} break;
+			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);
 		}
-		//#endregion
 	}
 	//#endregion
 	//#endregion
