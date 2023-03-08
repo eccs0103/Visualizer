@@ -84,7 +84,6 @@ try {
 	})();
 	//#endregion
 	//#region Render
-	// console.log(getComputedStyle(document.documentElement).getPropertyValue(`--color-background`));
 	/**
 	 * @param {Uint8Array} data 
 	 */
@@ -94,15 +93,6 @@ try {
 			case VisualizerType.classic: {
 				const duration = settings.classicHighlightCycleTime;
 				const anchor = settings.classicReflection ? 0.8 : 1;
-				/* const gradientBackground = context.createLinearGradient(canvas.width / 2, 0, canvas.width / 2, canvas.height);
-				const hueBackground = 0;
-				const saturationBackground = 0;
-				const valueBackground = 10;
-				gradientBackground.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, Color.viaHSV(hueBackground, saturationBackground, valueBackground).toString());
-				gradientBackground.addColorStop(anchor, Color.viaHSV(hueBackground, saturationBackground, valueBackground * 0.25).toString());
-				gradientBackground.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, Color.viaHSV(hueBackground, saturationBackground, valueBackground * 0.5).toString());
-				context.fillStyle = gradientBackground;
-				context.fillRect(0, 0, canvas.width, canvas.height); */
 				context.clearRect(0, 0, canvas.width, canvas.height);
 				const gapPercentage = settings.classicGapPercentage;
 				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
@@ -120,11 +110,11 @@ try {
 					if (audioPlayer.currentTime / audioPlayer.duration < pathCoefficent)
 						lightness /= 2;
 					const highlight = Color.viaHSL(hue, saturation, lightness);
-					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, highlight.toString(ColorFormat.RGB));
+					gradient.addColorStop(anchor - Math.abs(anchor - 0) * 1 / 3, highlight.toString());
 					highlight.lightness /= 2;
-					gradient.addColorStop(anchor, highlight.toString(ColorFormat.RGB));
+					gradient.addColorStop(anchor, highlight.toString());
 					highlight.lightness *= 2;
-					gradient.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, highlight.toString(ColorFormat.RGB));
+					gradient.addColorStop(anchor + Math.abs(anchor - 1) * 1 / 3, highlight.toString());
 					context.fillStyle = gradient;
 					context.fillRect(pathX, pathY, pathWidth, pathHeight);
 				});
