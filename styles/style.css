@@ -42,6 +42,12 @@
 	}
 }
 
+@media only screen and (min-width: 1600px) {
+	:root {
+		--size-standart: calc(3vmin);
+	}
+}
+
 :root {
 	--size-gap: calc(var(--size-standart) / 4);
 	--size-large-standart: calc(var(--size-standart) * 2);
@@ -74,16 +80,25 @@ body {
 	display: contents;
 }
 
+div#debug {
+	position: fixed;
+	inset: 0 0 auto auto;
+}
+
 button,
 *[role="button"],
 input,
 input[type="checkbox"] + label[role="checkbox"],
-*[role="combobox"]:not([aria-checked="true"]),
+*[role="combobox"],
 select {
 	cursor: pointer;
 	font-family: inherit;
 	font-size: inherit;
 	font-weight: bold;
+}
+
+*[role="combobox"][aria-checked="true"] {
+	pointer-events: none;
 }
 
 *::placeholder {
@@ -116,11 +131,23 @@ input[type="checkbox"]:checked + label[role="checkbox"].toggle > span.knob {
 	margin-right: 0;
 }
 
+input[type="range"] {
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+	appearance: none;
+	-webkit-appearance: none;
+	width: var(--size-gap);
+	height: var(--size-gap);
+	border-radius: 50vmin;
+}
+
 dialog {
 	min-width: 60vmin;
 	max-width: calc(100vmin - 2 * var(--size-large-gap));
 	width: fit-content;
-	/* min-height: var(--size-standart); */
 	max-height: calc(100vh - 2 * var(--size-large-gap));
 	height: fit-content;
 	margin: auto;

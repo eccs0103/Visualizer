@@ -114,8 +114,12 @@ button,
 	color: var(--color-highlight);
 }
 
-*[role="combobox"][aria-checked="true"],
-input[type="checkbox"]:checked + label[role="checkbox"] {
+*[role="combobox"] {
+	color: var(--color-text) !important;
+}
+
+input[type="checkbox"]:checked + label[role="checkbox"],
+*[role="combobox"][aria-checked="true"] {
 	background-color: var(--color-highlight);
 	transition: var(--time-duration);
 }
@@ -133,6 +137,11 @@ button:active,
 input[type="checkbox"]:active + label[role="checkbox"],
 *[role="combobox"]:not([aria-checked="true"]):active {
 	filter: invert(0.2);
+	transition: var(--time-duration);
+}
+
+*[role="combobox"][aria-checked="true"] {
+	pointer-events: none;
 	transition: var(--time-duration);
 }
 
@@ -159,8 +168,13 @@ select:invalid.depth {
 	background-color: var(--color-error);
 }
 
+input[type="range"]::-webkit-slider-thumb {
+	transform: scale(2);
+	background-color: var(--color-highlight);
+}
+
 dialog::backdrop {
-	background-color: rgba(0, 0, 0, 50%);
+	background-color: rgba(0, 0, 0, 0.75);
 }
 
 a {

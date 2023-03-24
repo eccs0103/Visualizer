@@ -1,11 +1,13 @@
 "use strict";
 class Engine {
 	/**
-	 * @param {() => void} handler 
 	 * @param {Boolean} launch
 	 */
-	constructor(handler, launch = false) {
+	constructor(launch = false) {
 		const instance = this;
+		instance.#handler = () => { }
+		instance.#time = 0;
+		instance.#FPS = 0;
 		instance.#launched = launch;
 		let previous = 0;
 		requestAnimationFrame(function callback(time) {
@@ -13,15 +15,27 @@ class Engine {
 			const difference = current - previous;
 			if (instance.#launched) {
 				instance.#time += difference;
-				handler();
+				instance.#FPS = 1000 / difference;
+				instance.#handler();
 			}
 			previous = current;
 			requestAnimationFrame(callback);
 		});
 	}
-	/** @type {DOMHighResTimeStamp} */ #time = 0;
+	/** @type {() => void} */ #handler;
+	/**
+	 * @param {() => void} handler 
+	 */
+	renderer(handler) {
+		this.#handler = handler;
+	}
+	/** @type {DOMHighResTimeStamp} */ #time;
 	/** @readonly */ get time() {
 		return this.#time;
+	}
+	/** @type {Number} */ #FPS;
+	/** @readonly */ get FPS() {
+		return this.#FPS;
 	}
 	/** @type {Boolean} */ #launched;
 	get launched() {

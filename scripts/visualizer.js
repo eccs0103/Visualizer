@@ -2,24 +2,9 @@
 try {
 	const settings = Settings.import(archiveSettings.data);
 
-	//#region Media
-	//#region Analysys
-	const audioContext = new AudioContext();
-	const analyser = audioContext.createAnalyser();
-	analyser.fftSize = settings.FFTSize;
-	const frequencyData = new Uint8Array(analyser.frequencyBinCount * 0.7);
-	const engine = new Engine(() => {
-		analyser.getByteFrequencyData(frequencyData);
-		render(frequencyData);
-	});
-	//#endregion
 	//#region Player
 	const audioPlayer = (/** @type {HTMLAudioElement} */ (document.querySelector(`audio#player`)));
 	audioPlayer.loop = settings.loop;
-	const source = audioContext.createMediaElementSource(audioPlayer);
-	source.connect(analyser);
-	analyser.connect(audioContext.destination);
-	//
 	audioPlayer.addEventListener(`play`, (event) => {
 		audioPlayer.classList.toggle(`-playing`, true);
 		audioPlayer.classList.toggle(`-paused`, false);
@@ -28,69 +13,64 @@ try {
 		audioPlayer.classList.toggle(`-playing`, false);
 		audioPlayer.classList.toggle(`-paused`, true);
 	});
-	audioPlayer.addEventListener(`play`, (event) => {
-		engine.launched = true;
-	});
-	audioPlayer.addEventListener(`pause`, (event) => {
-		engine.launched = false;
-	});
-	//
+	//#endregion
+	//#region Analysis
+	const audioContext = new AudioContext();
+	const analyser = audioContext.createAnalyser();
+	analyser.fftSize = settings.FFTSize;
+	const source = audioContext.createMediaElementSource(audioPlayer);
+	source.connect(analyser);
+	analyser.connect(audioContext.destination);
+	const data = new Uint8Array(analyser.frequencyBinCount * 0.7);
 	/**
 	 * @param {Blob} blob 
 	 * @param {Number} time 
 	 */
-	async function analysys(blob, time) {
+	function analysys(blob, time) {
 		const url = URL.createObjectURL(blob);
 		audioPlayer.src = url;
 		audioPlayer.currentTime = time;
 		audioContext.resume();
 	}
 	//#endregion
-	//#endregion
-	//#region Visualize
+	//#region Canvas
 	const canvas = (/** @type {HTMLCanvasElement} */ (document.querySelector(`canvas#visualizer`)));
 	canvas.addEventListener(`click`, (event) => {
 		if (audioPlayer.src) {
 			audioPlayer.pause();
 		}
 	});
-	const divInterface = (/** @type {HTMLDivElement} */ (document.querySelector(`div#interface`)));
-	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
-	divInterface.addEventListener(`click`, (event) => {
-		if (audioPlayer.src) {
-			if (audioPlayer.paused) {
-				audioPlayer.play();
-			}
-		} else {
-			inputLoader.click();
-		}
-	});
-	//#region Resize
-	function resize() {
-		const rect = canvas.getBoundingClientRect();
-		canvas.width = rect.width;
-		canvas.height = rect.height;
-	}
-	resize();
-	window.addEventListener(`resize`, resize);
-	//#endregion
-	//#region Context
-	const context = (() => {
-		const contextTemp = canvas.getContext(`2d`);
-		if (!contextTemp) {
-			throw new ReferenceError(`Element 'contextTemp' isn't defined.`);
-		}
-		return contextTemp;
-	})();
-	//#endregion
+	const animator = new Animator(canvas);
 	//#region Render
-	/**
-	 * @param {Uint8Array} data 
-	 */
-	function render(data) {
+	animator.renderer((context) => {
+		analyser.getByteFrequencyData(data);
 		switch (settings.type) {
 			//#region Classic
 			case VisualizerType.classic: {
+				const [hours, minutes, seconds] = (() => {
+					const seconds = animator.time / 1000;
+					const minutes = seconds / 60;
+					const hours = minutes / 60;
+					return [Math.floor(hours), Math.floor(minutes % 60), Math.floor(seconds % 60)];
+				})();
+				const [volume, amplitude, maxAmplitude, maxAmplitudeDecibels] = (() => {
+					let volumeSummary = 0;
+					let min = data[0], max = data[0];
+					data.forEach((datul) => {
+						volumeSummary += datul;
+						if (datul < min) {
+							min = datul;
+						}
+						if (datul > max) {
+							max = datul;
+						}
+					});
+					const volume = (volumeSummary / data.length) / 255;
+					const amplitude = (max - min) / 255;
+					const maxAmplitude = max / 255;
+					const maxAmplitudeDecibels = 20 * Math.log10(maxAmplitude / 32767);
+					return [volume, amplitude, maxAmplitude, maxAmplitudeDecibels];
+				})();
 				const duration = settings.classicHighlightCycleTime;
 				const anchor = settings.classicReflection ? 0.8 : 1;
 				const anchorTop = anchor * 2 / 3;
@@ -107,10 +87,10 @@ try {
 				const gapPercentage = settings.classicGapPercentage;
 				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
 				const pathGap = pathWidth * gapPercentage;
-				const timeCoefficent = (engine.time % (duration * 1000)) / (duration * 1000);
+				const timeCoefficent = (animator.time % (duration * 1000)) / (duration * 1000);
 				data.forEach((datul, index) => {
 					const pathX = (pathWidth + pathGap) * index;
-					const pathHeight = canvas.height * (datul / 256);
+					const pathHeight = canvas.height * (datul / 255) * amplitude;
 					const pathY = (canvas.height - pathHeight) * anchor;
 					const pathCoefficent = index / data.length;
 					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
@@ -127,14 +107,39 @@ try {
 					context.fillStyle = gradient;
 					context.fillRect(pathX, pathY, pathWidth, pathHeight);
 				});
+				// Application.debug(
+				// 	`Time: ${hours == 0 ? `` : `${hours.toFixed().replace(/^(?!.{2})/, `0`)}:`}${minutes.toFixed().replace(/^(?!.{2})/, `0`)}:${seconds.toFixed().replace(/^(?!.{2})/, `0`)}`,
+				// 	`FPS: ${animator.FPS.toFixed(2)}`,
+				// 	`Volume: ${volume.toFixed(2)}`,
+				// 	`Amplitude: ${amplitude.toFixed(2)}`,
+				// 	`Max Amplitude: ${maxAmplitude.toFixed(2)}`,
+				// 	`Max Amplitude Decibels: ${maxAmplitudeDecibels.toFixed(2)}`,
+				// );
 			} break;
 			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);
 		}
-	}
+	});
 	//#endregion
+	audioPlayer.addEventListener(`play`, (event) => {
+		animator.launched = true;
+	});
+	audioPlayer.addEventListener(`pause`, (event) => {
+		animator.launched = false;
+	});
 	//#endregion
-	//#region Uploading
+	//#region Interface
+	const divInterface = (/** @type {HTMLDivElement} */ (document.querySelector(`div#interface`)));
+	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
+	divInterface.addEventListener(`click`, (event) => {
+		if (audioPlayer.src) {
+			if (audioPlayer.paused) {
+				audioPlayer.play();
+			}
+		} else {
+			inputLoader.click();
+		}
+	});
 	inputLoader.addEventListener(`change`, (event) => {
 		if (!inputLoader.files) {
 			throw new ReferenceError(`Files list is empty.`);

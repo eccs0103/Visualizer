@@ -14,12 +14,22 @@ class Application {
 		return this.#title;
 	}
 	static #locked = true;
-	static #search = new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
-		const [key, value] = item.split(`=`);
-		return [key, value];
-	}));
 	/** @readonly */ static get search() {
-		return this.#search;
+		return new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
+			const [key, value] = item.split(`=`);
+			return [key, value];
+		}));
+	}
+	/**
+	 * @param {File} file 
+	 */
+	static download(file) {
+		const aLink = document.createElement(`a`);
+		aLink.download = file.name;
+		aLink.href = URL.createObjectURL(file);
+		aLink.click();
+		URL.revokeObjectURL(aLink.href);
+		aLink.remove();
 	}
 	/**
 	 * @param {MessageType} type 
@@ -156,6 +166,20 @@ class Application {
 				})));
 			}
 		}
+	}
+	/**
+	 * @param  {Array<any>} data 
+	 */
+	static debug(...data) {
+		const debug = (/** @type {HTMLDivElement} */ (document.querySelector(`div#debug`))) ?? (() => {
+			const result = document.body.appendChild(document.createElement(`div`));
+			result.id = `debug`;
+			return result;
+		})();
+		debug.classList.toggle(`layer`, true);
+		debug.classList.toggle(`in-top`, true);
+		debug.classList.toggle(`in-right`, true);
+		debug.innerText = data.join(`\n`);
 	}
 	/**
 	 * @param {any} exception 
