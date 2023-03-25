@@ -15,6 +15,7 @@
 };
 /** @enum {String} */ const VisualizerType = {
 	/** @readonly */ classic: `classic`,
+	/** @readonly */ next: `next`,
 };
 /**
  * @typedef SettingsNotation

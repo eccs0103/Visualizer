@@ -34,11 +34,10 @@ class Animator extends Engine {
 		this.#handler = handler;
 	}
 	/**
-	 * @param {Number} period time in seconds
-	 * @returns multiplier
+	 * @param {Number} period time in miliseconds
+	 * @returns multiplier - [0, 1]
 	 */
 	pulsar(period) {
-		period = 1000 / period;
 		return this.time % period / period;
 	}
 }

@@ -13,6 +13,9 @@ try {
 		audioPlayer.classList.toggle(`-playing`, false);
 		audioPlayer.classList.toggle(`-paused`, true);
 	});
+	audioPlayer.addEventListener(`loadeddata`, (event) => {
+		audioPlayer.pause();
+	});
 	//#endregion
 	//#region Analysis
 	const audioContext = new AudioContext();
@@ -47,6 +50,45 @@ try {
 		switch (settings.type) {
 			//#region Classic
 			case VisualizerType.classic: {
+				const duration = settings.classicHighlightCycleTime;
+				const anchor = settings.classicReflection ? 0.8 : 1;
+				const anchorTop = anchor * 2 / 3;
+				const anchorBottom = anchorTop + 1 / 3;
+				const gradientBackground = context.createLinearGradient(canvas.width / 2, 0, canvas.width / 2, canvas.height);
+				const background = Color.parse(getComputedStyle(document.body).backgroundColor);
+				gradientBackground.addColorStop(anchorTop, background.toString());
+				background.lightness /= 4;
+				gradientBackground.addColorStop(anchor, background.toString());
+				background.lightness *= 2;
+				gradientBackground.addColorStop(anchorBottom, background.toString());
+				context.fillStyle = gradientBackground;
+				context.fillRect(0, 0, canvas.width, canvas.height);
+				const gapPercentage = settings.classicGapPercentage;
+				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
+				const pathGap = pathWidth * gapPercentage;
+				data.forEach((datul, index) => {
+					const pathX = (pathWidth + pathGap) * index;
+					const pathHeight = canvas.height * (datul / 255);
+					const pathY = (canvas.height - pathHeight) * anchor;
+					const pathCoefficent = index / data.length;
+					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
+					const gradient = context.createLinearGradient(pathX, 0, pathX, canvas.height);
+					const highlight = Color.viaHSL(pathCoefficent * 360, 100, 50).rotate(-animator.pulsar(duration * 1000) * 360);
+					if (!isPlayed) {
+						highlight.lightness /= Math.sqrt(8);
+					}
+					gradient.addColorStop(anchorTop, highlight.toString());
+					highlight.lightness /= 4;
+					gradient.addColorStop(anchor, highlight.toString());
+					highlight.lightness *= 2;
+					gradient.addColorStop(anchorBottom, highlight.toString());
+					context.fillStyle = gradient;
+					context.fillRect(pathX, pathY, pathWidth, pathHeight);
+				});
+			} break;
+			//#endregion
+			//#region Next
+			case VisualizerType.next: {
 				/* const [hours, minutes, seconds] = (() => {
 					const seconds = animator.time / 1000;
 					const minutes = seconds / 60;
@@ -71,42 +113,43 @@ try {
 					const maxAmplitudeDecibels = 20 * Math.log10(maxAmplitude / 32767);
 					return [volume, amplitude, maxAmplitude, maxAmplitudeDecibels];
 				})(); */
+				/**
+				 * @typedef Coordinate
+				 * @property {Number} x
+				 * @property {Number} y
+				 */
+				const radius = Math.min(canvas.width, canvas.height) / 2;
+				const diameter = 2 * radius;
+				/** @type {Coordinate} */ const center = { x: canvas.width / 2, y: canvas.height / 2 };
+				const imageData = context.createImageData(diameter, diameter);
+				const pixels = imageData.data;
 				const duration = settings.classicHighlightCycleTime;
-				const anchor = settings.classicReflection ? 0.8 : 1;
-				const anchorTop = anchor * 2 / 3;
-				const anchorBottom = anchorTop + 1 / 3;
-				const gradientBackground = context.createLinearGradient(canvas.width / 2, 0, canvas.width / 2, canvas.height);
-				const background = Color.parse(getComputedStyle(document.body).backgroundColor);
-				gradientBackground.addColorStop(anchorTop, background.toString());
-				background.lightness /= 4;
-				gradientBackground.addColorStop(anchor, background.toString());
-				background.lightness *= 2;
-				gradientBackground.addColorStop(anchorBottom, background.toString());
-				context.fillStyle = gradientBackground;
-				context.fillRect(0, 0, canvas.width, canvas.height);
-				const gapPercentage = settings.classicGapPercentage;
-				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
-				const pathGap = pathWidth * gapPercentage;
-				const timeCoefficent = (animator.time % (duration * 1000)) / (duration * 1000);
-				data.forEach((datul, index) => {
-					const pathX = (pathWidth + pathGap) * index;
-					const pathHeight = canvas.height * (datul / 255);
-					const pathY = (canvas.height - pathHeight) * anchor;
-					const pathCoefficent = index / data.length;
-					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
-					const gradient = context.createLinearGradient(pathX, 0, pathX, canvas.height);
-					const highlight = Color.viaHSL(Math.floor((pathCoefficent / 2 + timeCoefficent) * 360 % 361), 100, 50);
-					if (!isPlayed) {
-						highlight.lightness /= Math.sqrt(8);
+				for (let index = 0; index < diameter * diameter; index++) {
+					/** @type {Coordinate} */ const position = { x: index % diameter - radius, y: Math.floor(index / diameter) - radius };
+					const channel = (index % diameter) * diameter * 4 + Math.floor(index / diameter) * 4;
+					const distance = Math.sqrt(Math.pow(position.x, 2) + Math.pow(position.y, 2));
+					const angle = (() => {
+						let angle = Math.atan2(position.y, -position.x) * 180 / Math.PI;
+						if (angle < 0) {
+							angle += 360;
+						}
+						return angle;
+					})();
+					const datul = data[Math.floor(data.length * angle / 360)];
+					if (distance <= radius * datul / 255) {
+						const highlight = Color.viaHSL(angle, distance / radius * 50 + 50, 50).rotate(-animator.pulsar(duration * 1000) * 360);
+						pixels[channel] = highlight.red;
+						pixels[channel + 1] = highlight.green;
+						pixels[channel + 2] = highlight.blue;
+						pixels[channel + 3] = 255;
 					}
-					gradient.addColorStop(anchorTop, highlight.toString());
-					highlight.lightness /= 4;
-					gradient.addColorStop(anchor, highlight.toString());
-					highlight.lightness *= 2;
-					gradient.addColorStop(anchorBottom, highlight.toString());
-					context.fillStyle = gradient;
-					context.fillRect(pathX, pathY, pathWidth, pathHeight);
-				});
+				}
+				context.putImageData(imageData, center.x - radius, center.y - radius);
+				/* Application.debug(
+					`Time: ${(animator.time / 1000).toFixed()}`,
+					`FPS: ${animator.FPS.toFixed(2)}`,
+					`Multiplier : ${animator.pulsar(duration * 1000).toFixed(2)}`
+				); */
 				/* Application.debug(
 					`Time: ${hours == 0 ? `` : `${hours.toFixed().replace(/^(?!.{2})/, `0`)}:`}${minutes.toFixed().replace(/^(?!.{2})/, `0`)}:${seconds.toFixed().replace(/^(?!.{2})/, `0`)}`,
 					`FPS: ${animator.FPS.toFixed(2)}`,
