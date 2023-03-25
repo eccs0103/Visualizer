@@ -1,3 +1,4 @@
+"use strict";
 class Animator extends Engine {
 	/**
 	 * @param {HTMLCanvasElement} canvas 
