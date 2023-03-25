@@ -13,9 +13,9 @@ try {
 		audioPlayer.classList.toggle(`-playing`, false);
 		audioPlayer.classList.toggle(`-paused`, true);
 	});
-	audioPlayer.addEventListener(`loadeddata`, (event) => {
+	/* audioPlayer.addEventListener(`loadeddata`, (event) => {
 		audioPlayer.pause();
-	});
+	}); */
 	//#endregion
 	//#region Analysis
 	const audioContext = new AudioContext();
