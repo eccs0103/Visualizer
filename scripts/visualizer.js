@@ -47,7 +47,7 @@ try {
 		switch (settings.type) {
 			//#region Classic
 			case VisualizerType.classic: {
-				const [hours, minutes, seconds] = (() => {
+				/* const [hours, minutes, seconds] = (() => {
 					const seconds = animator.time / 1000;
 					const minutes = seconds / 60;
 					const hours = minutes / 60;
@@ -70,7 +70,7 @@ try {
 					const maxAmplitude = max / 255;
 					const maxAmplitudeDecibels = 20 * Math.log10(maxAmplitude / 32767);
 					return [volume, amplitude, maxAmplitude, maxAmplitudeDecibels];
-				})();
+				})(); */
 				const duration = settings.classicHighlightCycleTime;
 				const anchor = settings.classicReflection ? 0.8 : 1;
 				const anchorTop = anchor * 2 / 3;
@@ -90,7 +90,7 @@ try {
 				const timeCoefficent = (animator.time % (duration * 1000)) / (duration * 1000);
 				data.forEach((datul, index) => {
 					const pathX = (pathWidth + pathGap) * index;
-					const pathHeight = canvas.height * (datul / 255) * amplitude;
+					const pathHeight = canvas.height * (datul / 255);
 					const pathY = (canvas.height - pathHeight) * anchor;
 					const pathCoefficent = index / data.length;
 					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
@@ -107,14 +107,14 @@ try {
 					context.fillStyle = gradient;
 					context.fillRect(pathX, pathY, pathWidth, pathHeight);
 				});
-				// Application.debug(
-				// 	`Time: ${hours == 0 ? `` : `${hours.toFixed().replace(/^(?!.{2})/, `0`)}:`}${minutes.toFixed().replace(/^(?!.{2})/, `0`)}:${seconds.toFixed().replace(/^(?!.{2})/, `0`)}`,
-				// 	`FPS: ${animator.FPS.toFixed(2)}`,
-				// 	`Volume: ${volume.toFixed(2)}`,
-				// 	`Amplitude: ${amplitude.toFixed(2)}`,
-				// 	`Max Amplitude: ${maxAmplitude.toFixed(2)}`,
-				// 	`Max Amplitude Decibels: ${maxAmplitudeDecibels.toFixed(2)}`,
-				// );
+				/* Application.debug(
+					`Time: ${hours == 0 ? `` : `${hours.toFixed().replace(/^(?!.{2})/, `0`)}:`}${minutes.toFixed().replace(/^(?!.{2})/, `0`)}:${seconds.toFixed().replace(/^(?!.{2})/, `0`)}`,
+					`FPS: ${animator.FPS.toFixed(2)}`,
+					`Volume: ${volume.toFixed(2)}`,
+					`Amplitude: ${amplitude.toFixed(2)}`,
+					`Max Amplitude: ${maxAmplitude.toFixed(2)}`,
+					`Max Amplitude Decibels: ${maxAmplitudeDecibels.toFixed(2)}`,
+				); */
 			} break;
 			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);
