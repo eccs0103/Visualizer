@@ -315,6 +315,6 @@ audio#player.-playing ~ div#interface div.-status img {
 	content: url(../resources/pause.png);
 }
 
-select#visualizer-type:not(:has(option[value="classic"]:checked)) ~ section.-classic {
+select#visualizer-type:not(:has(option[value="waveform"]:checked)) ~ section.-waveform {
 	display: none !important;
 }

@@ -14,17 +14,17 @@
 	/** @readonly */ x32768: 32768,
 };
 /** @enum {String} */ const VisualizerType = {
-	/** @readonly */ classic: `classic`,
-	/** @readonly */ next: `next`,
+	/** @readonly */ waveform: `waveform`,
+	/** @readonly */ pulsar: `pulsar`,
 };
 /**
  * @typedef SettingsNotation
  * @property {Boolean | undefined} loop
  * @property {FFTSize | undefined} FFTSize
  * @property {VisualizerType | undefined} type
- * @property {Number | undefined} classicHighlightCycleTime
- * @property {Number | undefined} classicGapPercentage
- * @property {Boolean | undefined} classicReflection
+ * @property {Number | undefined} waveformHighlightCycleTime
+ * @property {Number | undefined} waveformGapPercentage
+ * @property {Boolean | undefined} waveformReflection
  */
 class Settings {
 	/**
@@ -35,9 +35,9 @@ class Settings {
 		if (source.loop !== undefined) result.loop = source.loop;
 		if (source.FFTSize !== undefined) result.FFTSize = source.FFTSize;
 		if (source.type !== undefined) result.type = source.type;
-		if (source.classicHighlightCycleTime !== undefined) result.classicHighlightCycleTime = source.classicHighlightCycleTime;
-		if (source.classicGapPercentage !== undefined) result.classicGapPercentage = source.classicGapPercentage;
-		if (source.classicReflection !== undefined) result.classicReflection = source.classicReflection;
+		if (source.waveformHighlightCycleTime !== undefined) result.waveformHighlightCycleTime = source.waveformHighlightCycleTime;
+		if (source.waveformGapPercentage !== undefined) result.waveformGapPercentage = source.waveformGapPercentage;
+		if (source.waveformReflection !== undefined) result.waveformReflection = source.waveformReflection;
 		return result;
 	}
 	/**
@@ -48,58 +48,68 @@ class Settings {
 		result.loop = source.loop;
 		result.FFTSize = source.FFTSize;
 		result.type = source.type;
-		result.classicHighlightCycleTime = source.classicHighlightCycleTime;
-		result.classicGapPercentage = source.classicGapPercentage;
-		result.classicReflection = source.classicReflection;
+		result.waveformHighlightCycleTime = source.waveformHighlightCycleTime;
+		result.waveformGapPercentage = source.waveformGapPercentage;
+		result.waveformReflection = source.waveformReflection;
 		return result;
 	}
-	/** @type {Number} */ static #classicMinHighlightCycleTime = 1;
-	/** @readonly */ static get classicMinHighlightCycleTime() {
-		return this.#classicMinHighlightCycleTime;
+	/** @type {Number} */ static #waveformMinHighlightCycleTime = 1;
+	/** @readonly */ static get waveformMinHighlightCycleTime() {
+		return this.#waveformMinHighlightCycleTime;
 	}
-	/** @type {Number} */ static #classicMaxHighlightCycleTime = 20;
-	/** @readonly */ static get classicMaxHighlightCycleTime() {
-		return this.#classicMaxHighlightCycleTime;
+	/** @type {Number} */ static #waveformMaxHighlightCycleTime = 20;
+	/** @readonly */ static get waveformMaxHighlightCycleTime() {
+		return this.#waveformMaxHighlightCycleTime;
 	}
-	/** @type {Number} */ static #classicMinGapPercentage = 0;
-	/** @readonly */ static get classicMinGapPercentage() {
-		return this.#classicMinGapPercentage;
+	/** @type {Number} */ static #waveformMinGapPercentage = 0;
+	/** @readonly */ static get waveformMinGapPercentage() {
+		return this.#waveformMinGapPercentage;
 	}
-	/** @type {Number} */ static #classicMaxGapPercentage = 1;
-	/** @readonly */ static get classicMaxGapPercentage() {
-		return this.#classicMaxGapPercentage;
+	/** @type {Number} */ static #waveformMaxGapPercentage = 1;
+	/** @readonly */ static get waveformMaxGapPercentage() {
+		return this.#waveformMaxGapPercentage;
 	}
 	constructor() {
 		this.loop = true;
 		this.FFTSize = FFTSize.x1024;
-		this.type = VisualizerType.classic;
-		this.classicHighlightCycleTime = 10;
-		this.classicGapPercentage = 0.25;
-		this.classicReflection = true;
+		this.type = VisualizerType.waveform;
+		this.waveformHighlightCycleTime = 10;
+		this.waveformGapPercentage = 0.25;
+		this.waveformReflection = true;
 	}
 	loop;
 	FFTSize;
-	type;
-	/** @type {Number} */ #classicHighlightCycleTime;
-	get classicHighlightCycleTime() {
-		return this.#classicHighlightCycleTime;
+	/** @type {VisualizerType} */ #type;
+	get type() {
+		return this.#type;
 	}
-	set classicHighlightCycleTime(value) {
-		if (Settings.#classicMinHighlightCycleTime <= value && value <= Settings.#classicMaxHighlightCycleTime) {
-			this.#classicHighlightCycleTime = value;
+	set type(value) {
+		if (value in VisualizerType) {
+			this.#type = value;
 		} else {
-			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#classicMinHighlightCycleTime} to ${Settings.#classicMaxHighlightCycleTime} inclusive.`);
+			throw new TypeError(`Invalid visualizer type: '${value}'.`);
 		}
 	}
-	/** @type {Number} */ #classicGapPercentage;
-	get classicGapPercentage() {
-		return this.#classicGapPercentage;
+	/** @type {Number} */ #waveformHighlightCycleTime;
+	get waveformHighlightCycleTime() {
+		return this.#waveformHighlightCycleTime;
 	}
-	set classicGapPercentage(value) {
-		if (Settings.#classicMinGapPercentage <= value && value <= Settings.#classicMaxGapPercentage) {
-			this.#classicGapPercentage = value;
+	set waveformHighlightCycleTime(value) {
+		if (Settings.#waveformMinHighlightCycleTime <= value && value <= Settings.#waveformMaxHighlightCycleTime) {
+			this.#waveformHighlightCycleTime = value;
 		} else {
-			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#classicMinGapPercentage} to ${Settings.#classicMaxGapPercentage} inclusive.`);
+			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#waveformMinHighlightCycleTime} to ${Settings.#waveformMaxHighlightCycleTime} inclusive.`);
+		}
+	}
+	/** @type {Number} */ #waveformGapPercentage;
+	get waveformGapPercentage() {
+		return this.#waveformGapPercentage;
+	}
+	set waveformGapPercentage(value) {
+		if (Settings.#waveformMinGapPercentage <= value && value <= Settings.#waveformMaxGapPercentage) {
+			this.#waveformGapPercentage = value;
+		} else {
+			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#waveformMinGapPercentage} to ${Settings.#waveformMaxGapPercentage} inclusive.`);
 		}
 	}
 }
@@ -139,6 +149,13 @@ class Memory {
 //#endregion
 //#region Metadata
 /** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${Application.developer}\\${Application.title}\\Settings`, Settings.export(new Settings()));
+archiveSettings.change((data) => {
+	if (data.type == `classic`) {
+		data.type = VisualizerType.waveform;
+	}
+	return data;
+})
+let settings = Settings.import(archiveSettings.data);
 const theme = Application.search.get(`theme`);
 switch (theme) {
 	case `light`: {

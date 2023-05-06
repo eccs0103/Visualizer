@@ -1,7 +1,5 @@
 "use strict";
 try {
-	const settings = Settings.import(archiveSettings.data);
-
 	//#region Player
 	const audioPlayer = (/** @type {HTMLAudioElement} */ (document.querySelector(`audio#player`)));
 	audioPlayer.loop = settings.loop;
@@ -48,34 +46,32 @@ try {
 	animator.renderer((context) => {
 		analyser.getByteFrequencyData(data);
 		switch (settings.type) {
-			//#region Classic
-			case VisualizerType.classic: {
+			//#region Waveform
+			case VisualizerType.waveform: {
 				/* const [hours, minutes, seconds] = (() => {
 					const seconds = animator.time / 1000;
 					const minutes = seconds / 60;
 					const hours = minutes / 60;
 					return [Math.floor(hours), Math.floor(minutes % 60), Math.floor(seconds % 60)];
 				})(); */
-				const [volume, amplitude, maxAmplitude, maxAmplitudeDecibels] = (() => {
-					let volumeSummary = 0;
-					let min = data[0], max = data[0];
+				const [volume, minAmplitude, maxAmplitude, averageAmplitude] = (() => {
+					let summary = 0, min = data[0], max = data[0];
 					data.forEach((datul) => {
-						volumeSummary += datul;
-						if (datul < min) {
-							min = datul;
-						}
-						if (datul > max) {
-							max = datul;
-						}
+						summary += datul;
+						if (datul < min) min = datul;
+						if (datul > max) max = datul;
 					});
-					const volume = (volumeSummary / data.length) / 255;
-					const amplitude = (max - min) / 255;
-					const maxAmplitude = max / 255;
-					const maxAmplitudeDecibels = 20 * Math.log10(maxAmplitude / 32767);
-					return [volume, amplitude, maxAmplitude, maxAmplitudeDecibels];
+					const volume = (summary / data.length) / 255;
+					const minAmplitude = (min) / 255;
+					const maxAmplitude = (max) / 255;
+					const averageAmplitude = maxAmplitude - minAmplitude;
+					//const decibels = 20 * Math.log10(averageAmplitude / 32767);
+					return [volume, minAmplitude, maxAmplitude, averageAmplitude];
 				})();
-				const duration = settings.classicHighlightCycleTime;
-				const anchor = settings.classicReflection ? 0.8 : 1;
+				// const a = animator.pulse(1000) * (averageAmplitude - maxAmplitude) * Math.PI / 72;
+				// context.setTransform(1 + 0.2 * volume, a, 0, 1, a, 0);
+				const duration = settings.waveformHighlightCycleTime;
+				const anchor = (settings.waveformReflection ? 0.75 : 1) * (1 + 0.1 * volume);
 				const anchorTop = anchor * 2 / 3;
 				const anchorBottom = anchorTop + 1 / 3;
 				const gradientBackground = context.createLinearGradient(canvas.width / 2, 0, canvas.width / 2, canvas.height);
@@ -87,7 +83,7 @@ try {
 				gradientBackground.addColorStop(anchorBottom, background.toString());
 				context.fillStyle = gradientBackground;
 				context.fillRect(0, 0, canvas.width, canvas.height);
-				const gapPercentage = settings.classicGapPercentage;
+				const gapPercentage = settings.waveformGapPercentage;
 				const pathWidth = canvas.width / (data.length * (1 + gapPercentage) - gapPercentage);
 				const pathGap = pathWidth * gapPercentage;
 				data.forEach((datul, index) => {
@@ -98,6 +94,7 @@ try {
 					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
 					const gradient = context.createLinearGradient(pathX, 0, pathX, canvas.height);
 					const highlight = Color.viaHSL(pathCoefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(volume);
+					// highlight.alpha = volume;
 					if (!isPlayed) {
 						highlight.lightness /= Math.sqrt(8);
 					}
@@ -109,10 +106,15 @@ try {
 					context.fillStyle = gradient;
 					context.fillRect(pathX, pathY, pathWidth, pathHeight);
 				});
+				// context.save();
+				// context.translate(canvas.width / 2, canvas.height / 2);
+				// context.setTransform(1 + 0.2 * volume, 0, 0, 1 + 0.2 * volume, 0, 0);
+				// context.restore();
 			} break;
 			//#endregion
-			//#region Next
-			case VisualizerType.next: {
+			//#region Pulsar
+			case VisualizerType.pulsar: {
+				const volume = data.reduce((summary, datul) => summary + datul, 0) / data.length / 255;
 				/**
 				 * @typedef Coordinate
 				 * @property {Number} x
@@ -123,7 +125,7 @@ try {
 				/** @type {Coordinate} */ const center = { x: canvas.width / 2, y: canvas.height / 2 };
 				const imageData = context.createImageData(diameter, diameter);
 				const pixels = imageData.data;
-				const duration = settings.classicHighlightCycleTime;
+				const duration = settings.waveformHighlightCycleTime;
 				for (let index = 0; index < diameter * diameter; index++) {
 					/** @type {Coordinate} */ const position = { x: index % diameter - radius, y: Math.floor(index / diameter) - radius };
 					const channel = (index % diameter) * diameter * 4 + Math.floor(index / diameter) * 4;
@@ -137,7 +139,7 @@ try {
 					})();
 					const datul = data[Math.floor(data.length * angle / 360)];
 					if (distance <= radius * datul / 255) {
-						const highlight = Color.viaHSL(angle, distance / radius * 50 + 50, 50).rotate(-animator.impulse(duration * 1000) * 360);
+						const highlight = Color.viaHSL(angle, distance / radius * 50 + 50, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(volume);
 						pixels[channel] = highlight.red;
 						pixels[channel + 1] = highlight.green;
 						pixels[channel + 2] = highlight.blue;
@@ -145,19 +147,6 @@ try {
 					}
 				}
 				context.putImageData(imageData, center.x - radius, center.y - radius);
-				/* Application.debug(
-					`Time: ${(animator.time / 1000).toFixed()}`,
-					`FPS: ${animator.FPS.toFixed(2)}`,
-					`Multiplier : ${animator.pulsar(duration * 1000).toFixed(2)}`
-				); */
-				/* Application.debug(
-					`Time: ${hours == 0 ? `` : `${hours.toFixed().replace(/^(?!.{2})/, `0`)}:`}${minutes.toFixed().replace(/^(?!.{2})/, `0`)}:${seconds.toFixed().replace(/^(?!.{2})/, `0`)}`,
-					`FPS: ${animator.FPS.toFixed(2)}`,
-					`Volume: ${volume.toFixed(2)}`,
-					`Amplitude: ${amplitude.toFixed(2)}`,
-					`Max Amplitude: ${maxAmplitude.toFixed(2)}`,
-					`Max Amplitude Decibels: ${maxAmplitudeDecibels.toFixed(2)}`,
-				); */
 			} break;
 			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);

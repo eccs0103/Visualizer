@@ -51,31 +51,32 @@
 		<section class="option">
 			<p class="title">Visualizer type</p>
 			<dfn class="definition">The visualizer type. Appearance, animations, rendering when playing music.</dfn>
-			<select id="visualizer-type" class="depth value" required disabled>
-				<option value="classic">Classic</option>
+			<select id="visualizer-type" class="depth value" required>
+				<option value="waveform">Waveform</option>
+				<option value="pulsar">Pulsar</option>
 			</select>
-			<!-- Region Classic -->
-			<section class="option contents -classic" style="padding: 0;">
+			<!-- Region Waveform -->
+			<section class="option contents -waveform" style="padding: 0;">
 				<section class="option">
 					<p class="title">Highlight cycle time</p>
 					<dfn class="definition">The time it takes for the background highlight to make one complete circle in the color palette.</dfn>
-					<input id="classic-highlight-cycle-time" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
+					<input id="waveform-highlight-cycle-time" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
 				</section>
 				<section class="option">
 					<p class="title">Gap percentage</p>
 					<dfn class="definition">Calculates the size of the gap relative to the line size.</dfn>
-					<input id="classic-gap-percentage" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
+					<input id="waveform-gap-percentage" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
 				</section>
 				<section class="option">
 					<p class="title">Reflection</p>
 					<dfn class="definition">Creates a reflection of visual effects.</dfn>
-					<input id="toggle-classic-reflection" type="checkbox" hidden>
-					<label for="toggle-classic-reflection" role="checkbox" class="depth toggle value">
+					<input id="toggle-waveform-reflection" type="checkbox" hidden>
+					<label for="toggle-waveform-reflection" role="checkbox" class="depth toggle value">
 						<span class="layer knob"></span>
 					</label>
 				</section>
 			</section>
-			<!-- Endregion Classic -->
+			<!-- Endregion Waveform -->
 		</section>
 		<section class="option">
 			<button id="reset-settings" class="layer grid-line" style="width: fit-content; justify-self: center;">Reset settings</button>
