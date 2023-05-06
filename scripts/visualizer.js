@@ -50,6 +50,30 @@ try {
 		switch (settings.type) {
 			//#region Classic
 			case VisualizerType.classic: {
+				/* const [hours, minutes, seconds] = (() => {
+					const seconds = animator.time / 1000;
+					const minutes = seconds / 60;
+					const hours = minutes / 60;
+					return [Math.floor(hours), Math.floor(minutes % 60), Math.floor(seconds % 60)];
+				})(); */
+				const [volume, amplitude, maxAmplitude, maxAmplitudeDecibels] = (() => {
+					let volumeSummary = 0;
+					let min = data[0], max = data[0];
+					data.forEach((datul) => {
+						volumeSummary += datul;
+						if (datul < min) {
+							min = datul;
+						}
+						if (datul > max) {
+							max = datul;
+						}
+					});
+					const volume = (volumeSummary / data.length) / 255;
+					const amplitude = (max - min) / 255;
+					const maxAmplitude = max / 255;
+					const maxAmplitudeDecibels = 20 * Math.log10(maxAmplitude / 32767);
+					return [volume, amplitude, maxAmplitude, maxAmplitudeDecibels];
+				})();
 				const duration = settings.classicHighlightCycleTime;
 				const anchor = settings.classicReflection ? 0.8 : 1;
 				const anchorTop = anchor * 2 / 3;
@@ -73,7 +97,7 @@ try {
 					const pathCoefficent = index / data.length;
 					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > pathCoefficent);
 					const gradient = context.createLinearGradient(pathX, 0, pathX, canvas.height);
-					const highlight = Color.viaHSL(pathCoefficent * 360, 100, 50).rotate(-animator.pulsar(duration * 1000) * 360);
+					const highlight = Color.viaHSL(pathCoefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(volume);
 					if (!isPlayed) {
 						highlight.lightness /= Math.sqrt(8);
 					}
@@ -89,30 +113,6 @@ try {
 			//#endregion
 			//#region Next
 			case VisualizerType.next: {
-				/* const [hours, minutes, seconds] = (() => {
-					const seconds = animator.time / 1000;
-					const minutes = seconds / 60;
-					const hours = minutes / 60;
-					return [Math.floor(hours), Math.floor(minutes % 60), Math.floor(seconds % 60)];
-				})();
-				const [volume, amplitude, maxAmplitude, maxAmplitudeDecibels] = (() => {
-					let volumeSummary = 0;
-					let min = data[0], max = data[0];
-					data.forEach((datul) => {
-						volumeSummary += datul;
-						if (datul < min) {
-							min = datul;
-						}
-						if (datul > max) {
-							max = datul;
-						}
-					});
-					const volume = (volumeSummary / data.length) / 255;
-					const amplitude = (max - min) / 255;
-					const maxAmplitude = max / 255;
-					const maxAmplitudeDecibels = 20 * Math.log10(maxAmplitude / 32767);
-					return [volume, amplitude, maxAmplitude, maxAmplitudeDecibels];
-				})(); */
 				/**
 				 * @typedef Coordinate
 				 * @property {Number} x
@@ -137,7 +137,7 @@ try {
 					})();
 					const datul = data[Math.floor(data.length * angle / 360)];
 					if (distance <= radius * datul / 255) {
-						const highlight = Color.viaHSL(angle, distance / radius * 50 + 50, 50).rotate(-animator.pulsar(duration * 1000) * 360);
+						const highlight = Color.viaHSL(angle, distance / radius * 50 + 50, 50).rotate(-animator.impulse(duration * 1000) * 360);
 						pixels[channel] = highlight.red;
 						pixels[channel + 1] = highlight.green;
 						pixels[channel + 2] = highlight.blue;
