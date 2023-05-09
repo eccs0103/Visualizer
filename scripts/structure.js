@@ -1,4 +1,10 @@
+// @ts-ignore
+/** @typedef {import("./modules/archive")} */
+// @ts-ignore
+/** @typedef {import("./modules/application")} */
+
 "use strict";
+
 //#region Settings
 /** @enum {Number} */ const FFTSize = {
 	/** @readonly */ x32: 32,
@@ -154,7 +160,7 @@ archiveSettings.change((data) => {
 		data.type = VisualizerType.waveform;
 	}
 	return data;
-})
+});
 let settings = Settings.import(archiveSettings.data);
 const theme = Application.search.get(`theme`);
 switch (theme) {
@@ -162,4 +168,9 @@ switch (theme) {
 		document.documentElement.dataset[`theme`] = theme;
 	} break;
 }
+/**
+ * @typedef Coordinate
+ * @property {Number} x
+ * @property {Number} y
+ */
 //#endregion

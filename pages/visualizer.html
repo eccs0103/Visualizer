@@ -21,15 +21,21 @@
 <body style="position: fixed; inset: 0;">
 	<audio id="player" autoplay hidden></audio>
 	<canvas id="visualizer" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
-	<div id="interface" role="button" style="position: absolute; inset: 0; display: grid; place-items: center;">
-		<a role="button" href="./settings.html" class="layer transparent flex" style="position: absolute; top: var(--size-gap); right: var(--size-gap);">
-			<img src="../resources/settings.png" class="icon">
+	<div id="interface" style="position: absolute; inset: 0; display: grid; grid-template: 'upload ipload _1 settings settings' 1fr '_2 _3 status _5 _6' 6fr 'time slider slider slider slider' 1fr / 1fr 1fr 6fr 1fr 1fr; padding: var(--size-large-gap); gap: var(--size-gap);">
+		<label for="loader" role="button" class="layer transparent flex without-padding" style="grid-area: upload; place-self: start start; align-items: center; gap: var(--size-gap);">
+			<img src="../resources/upload.png" alt="Upload" class="icon">
+			<span>Upload</span>
+		</label>
+		<input id="loader" type="file" accept="audio/*" hidden>
+		<a role="button" href="./settings.html" class="layer transparent flex without-padding" style="grid-area: settings; place-self: start end;">
+			<img src="../resources/settings.png" alt="Settings" class="icon">
 		</a>
-		<div class="flex -status" style="position: absolute; inset: auto; padding: var(--size-large-gap); border-radius: 50%;">
-			<img src="../resources/upload.png" class="icon" style="height: calc(var(--size-large-standart) * 1.5);">
+		<div class="flex -status" style="grid-area: status; place-self: center; pointer-events: none;">
+			<img src="../resources/play.png" alt="Status" class="icon" style="height: calc(var(--size-standart) * 3);">
 		</div>
+		<span id="time" style="grid-area: time; place-self: end start;"></span>
+		<input id="slider" type="range" class="depth flex" style="grid-area: slider; place-self: center stretch;" hidden>
 	</div>
-	<input id="loader" type="file" accept="audio/*" hidden>
 </body>
 
 </html>

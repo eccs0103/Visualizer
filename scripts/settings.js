@@ -1,4 +1,8 @@
+// @ts-ignore
+/** @typedef {import("./structure")} */
+
 "use strict";
+
 window.addEventListener(`beforeunload`, (event) => {
 	archiveSettings.data = Settings.export(settings);
 });

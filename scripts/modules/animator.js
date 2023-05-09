@@ -1,4 +1,8 @@
+// @ts-ignore
+/** @typedef {import("./engine.js")} */
+
 "use strict";
+
 class Animator extends Engine {
 	/**
 	 * @param {HTMLCanvasElement} canvas 
@@ -7,7 +11,7 @@ class Animator extends Engine {
 	constructor(canvas, launch = false) {
 		super(launch);
 		const instance = this;
-		instance.#handler = () => { }
+		instance.#handler = () => { };
 		const context = (() => {
 			const result = canvas.getContext(`2d`);
 			if (!result) {
@@ -19,6 +23,7 @@ class Animator extends Engine {
 			const { width, height } = canvas.getBoundingClientRect();
 			canvas.width = width;
 			canvas.height = height;
+			context.translate(width / 2, height / 2);
 			instance.#handler(context);
 		}
 		resize();
