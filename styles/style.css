@@ -91,11 +91,6 @@ body {
 	display: contents;
 }
 
-div#debug {
-	position: fixed;
-	inset: 0 0 auto auto;
-}
-
 button,
 *[role="button"],
 input,
@@ -198,6 +193,11 @@ dialog.pop-up div.footer:empty {
 	display: none;
 }
 
+div#debug {
+	position: fixed;
+	inset: 0 0 auto auto;
+}
+
 *.grid-line {
 	grid-column: 1 / -1;
 }
@@ -254,9 +254,20 @@ img.icon {
 	aspect-ratio: 1;
 }
 
+img.in-line {
+	height: 1em;
+}
+
 hr {
 	margin: var(--size-gap) 0;
 	padding: calc(var(--size-serpator) / 2) !important;
+}
+
+kbd {
+	white-space: nowrap;
+	padding: 0.15em 0.35em !important;
+	font-family: 'Consolas', sans-serif, system-ui, monospace;
+	font-weight: bold;
 }
 
 code {
@@ -314,22 +325,22 @@ audio#player:not([src]) ~ div#interface > div.-status {
 	0% {
 		pointer-events: none;
 		opacity: 0;
-	}
+}
 
 	100% {
 		opacity: 1;
-	}
+}
 }
 
 @keyframes -hide-interface {
 	0% {
 		opacity: 1;
-	}
+}
 
 	100% {
 		opacity: 0;
 		pointer-events: none;
-	}
+}
 }
 
 audio#player.-playing ~ div#interface {

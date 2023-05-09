@@ -165,24 +165,24 @@ class Color {
 	}
 	//#endregion
 	//#region Presets
-	/** @readonly */ static get transparent() { return Color.viaRGB(0, 0, 0, 0); };
-	/** @readonly */ static get maroon() { return Color.viaRGB(128, 0, 0); };
-	/** @readonly */ static get red() { return Color.viaRGB(255, 0, 0); };
-	/** @readonly */ static get orange() { return Color.viaRGB(255, 165, 0); };
-	/** @readonly */ static get yellow() { return Color.viaRGB(255, 255, 0); };
-	/** @readonly */ static get olive() { return Color.viaRGB(128, 128, 0); };
-	/** @readonly */ static get green() { return Color.viaRGB(0, 128, 0); };
-	/** @readonly */ static get purple() { return Color.viaRGB(128, 0, 128); };
-	/** @readonly */ static get fuchsia() { return Color.viaRGB(255, 0, 255); };
-	/** @readonly */ static get lime() { return Color.viaRGB(0, 255, 0); };
-	/** @readonly */ static get teal() { return Color.viaRGB(0, 128, 128); };
-	/** @readonly */ static get aqua() { return Color.viaRGB(0, 255, 255); };
-	/** @readonly */ static get blue() { return Color.viaRGB(0, 0, 255); };
-	/** @readonly */ static get navy() { return Color.viaRGB(0, 0, 128); };
-	/** @readonly */ static get black() { return Color.viaRGB(0, 0, 0); };
-	/** @readonly */ static get gray() { return Color.viaRGB(128, 128, 128); };
-	/** @readonly */ static get silver() { return Color.viaRGB(192, 192, 192); };
-	/** @readonly */ static get white() { return Color.viaRGB(255, 255, 255); };
+	/** @readonly */ static get TRANSPARENT() { return Color.viaRGB(0, 0, 0, 0); };
+	/** @readonly */ static get MAROON() { return Color.viaRGB(128, 0, 0); };
+	/** @readonly */ static get RED() { return Color.viaRGB(255, 0, 0); };
+	/** @readonly */ static get ORANGE() { return Color.viaRGB(255, 165, 0); };
+	/** @readonly */ static get YELLOW() { return Color.viaRGB(255, 255, 0); };
+	/** @readonly */ static get OLIVE() { return Color.viaRGB(128, 128, 0); };
+	/** @readonly */ static get GREEN() { return Color.viaRGB(0, 128, 0); };
+	/** @readonly */ static get PURPLE() { return Color.viaRGB(128, 0, 128); };
+	/** @readonly */ static get FUCHSIA() { return Color.viaRGB(255, 0, 255); };
+	/** @readonly */ static get LIME() { return Color.viaRGB(0, 255, 0); };
+	/** @readonly */ static get TEAL() { return Color.viaRGB(0, 128, 128); };
+	/** @readonly */ static get AQUA() { return Color.viaRGB(0, 255, 255); };
+	/** @readonly */ static get BLUE() { return Color.viaRGB(0, 0, 255); };
+	/** @readonly */ static get NAVY() { return Color.viaRGB(0, 0, 128); };
+	/** @readonly */ static get BLACK() { return Color.viaRGB(0, 0, 0); };
+	/** @readonly */ static get GRAY() { return Color.viaRGB(128, 128, 128); };
+	/** @readonly */ static get SILVER() { return Color.viaRGB(192, 192, 192); };
+	/** @readonly */ static get WHITE() { return Color.viaRGB(255, 255, 255); };
 	//#endregion
 	//#region Modifiers
 	/**
@@ -266,6 +266,15 @@ class Color {
 	static illuminate(source, scale) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Property 'scale' out of range: ${scale}`);
 		source.lightness = 100 * scale;
+		return source;
+	}
+	/**
+	 * @param {Color} source 
+	 * @param {Number} scale [0 - 1]
+	 */
+	static pass(source, scale) {
+		if (scale < 0 || scale > 1) throw new RangeError(`Property 'scale' out of range: ${scale}`);
+		source.alpha = scale;
 		return source;
 	}
 	//#endregion
@@ -389,6 +398,12 @@ class Color {
 	 */
 	illuminate(scale) {
 		return Color.illuminate(this, scale);
+	}
+	/**
+	 * @param {Number} scale [0 - 1]
+	 */
+	pass(scale) {
+		return Color.pass(this, scale);
 	}
 	//#endregion
 }
