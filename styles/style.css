@@ -305,7 +305,7 @@ code > span::before {
 
 /* Local */
 audio#player:not([src]) ~ div#interface > label[for="loader"] {
-	grid-area: 2 / 3 / 3 / 4 !important;
+	grid-area: status !important;
 	place-self: center !important;
 }
 

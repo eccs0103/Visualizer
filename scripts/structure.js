@@ -28,9 +28,6 @@
  * @property {Boolean | undefined} loop
  * @property {FFTSize | undefined} FFTSize
  * @property {VisualizerType | undefined} type
- * @property {Number | undefined} waveformHighlightCycleTime
- * @property {Number | undefined} waveformGapPercentage
- * @property {Boolean | undefined} waveformReflection
  */
 class Settings {
 	/**
@@ -41,9 +38,6 @@ class Settings {
 		if (source.loop !== undefined) result.loop = source.loop;
 		if (source.FFTSize !== undefined) result.FFTSize = source.FFTSize;
 		if (source.type !== undefined) result.type = source.type;
-		if (source.waveformHighlightCycleTime !== undefined) result.waveformHighlightCycleTime = source.waveformHighlightCycleTime;
-		if (source.waveformGapPercentage !== undefined) result.waveformGapPercentage = source.waveformGapPercentage;
-		if (source.waveformReflection !== undefined) result.waveformReflection = source.waveformReflection;
 		return result;
 	}
 	/**
@@ -54,69 +48,31 @@ class Settings {
 		result.loop = source.loop;
 		result.FFTSize = source.FFTSize;
 		result.type = source.type;
-		result.waveformHighlightCycleTime = source.waveformHighlightCycleTime;
-		result.waveformGapPercentage = source.waveformGapPercentage;
-		result.waveformReflection = source.waveformReflection;
 		return result;
-	}
-	/** @type {Number} */ static #waveformMinHighlightCycleTime = 1;
-	/** @readonly */ static get waveformMinHighlightCycleTime() {
-		return this.#waveformMinHighlightCycleTime;
-	}
-	/** @type {Number} */ static #waveformMaxHighlightCycleTime = 20;
-	/** @readonly */ static get waveformMaxHighlightCycleTime() {
-		return this.#waveformMaxHighlightCycleTime;
-	}
-	/** @type {Number} */ static #waveformMinGapPercentage = 0;
-	/** @readonly */ static get waveformMinGapPercentage() {
-		return this.#waveformMinGapPercentage;
-	}
-	/** @type {Number} */ static #waveformMaxGapPercentage = 1;
-	/** @readonly */ static get waveformMaxGapPercentage() {
-		return this.#waveformMaxGapPercentage;
 	}
 	constructor() {
 		this.loop = true;
 		this.FFTSize = FFTSize.x1024;
 		this.type = VisualizerType.waveform;
-		this.waveformHighlightCycleTime = 10;
-		this.waveformGapPercentage = 0.25;
-		this.waveformReflection = true;
 	}
 	loop;
-	FFTSize;
+	/** @type {FFTSize} */ #FFTSize;
+	get FFTSize() {
+		return this.#FFTSize;
+	}
+	set FFTSize(value) {
+		if (Object.values(FFTSize).includes(value)) {
+			this.#FFTSize = value;
+		} else throw new TypeError(`Invalid FFT size: '${value}'.`);
+	}
 	/** @type {VisualizerType} */ #type;
 	get type() {
 		return this.#type;
 	}
 	set type(value) {
-		if (value in VisualizerType) {
+		if (Object.values(VisualizerType).includes(value)) {
 			this.#type = value;
-		} else {
-			throw new TypeError(`Invalid visualizer type: '${value}'.`);
-		}
-	}
-	/** @type {Number} */ #waveformHighlightCycleTime;
-	get waveformHighlightCycleTime() {
-		return this.#waveformHighlightCycleTime;
-	}
-	set waveformHighlightCycleTime(value) {
-		if (Settings.#waveformMinHighlightCycleTime <= value && value <= Settings.#waveformMaxHighlightCycleTime) {
-			this.#waveformHighlightCycleTime = value;
-		} else {
-			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#waveformMinHighlightCycleTime} to ${Settings.#waveformMaxHighlightCycleTime} inclusive.`);
-		}
-	}
-	/** @type {Number} */ #waveformGapPercentage;
-	get waveformGapPercentage() {
-		return this.#waveformGapPercentage;
-	}
-	set waveformGapPercentage(value) {
-		if (Settings.#waveformMinGapPercentage <= value && value <= Settings.#waveformMaxGapPercentage) {
-			this.#waveformGapPercentage = value;
-		} else {
-			throw new RangeError(`Value ${value} is out of range. It must be from ${Settings.#waveformMinGapPercentage} to ${Settings.#waveformMaxGapPercentage} inclusive.`);
-		}
+		} else throw new TypeError(`Invalid visualizer type: '${value}'.`);
 	}
 }
 //#endregion

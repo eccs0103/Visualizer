@@ -16,7 +16,7 @@
 </head>
 
 <body style="display: grid; place-items: start center; gap: var(--size-gap); padding: var(--size-large-gap); overflow: hidden auto;">
-	<a href="./visualizer.html" role="button" class="layer transparent flex without-padding" style="position: sticky; top: var(--size-large-gap); justify-self: left;">
+	<a href="./visualizer.html" role="button" class="layer transparent flex" style="position: sticky; top: var(--size-large-gap); justify-self: left;">
 		<img src="../resources/return.png" alt="Return" class="icon">
 	</a>
 	<div class="layer" style="min-width: var(--size-large-standart); max-width: calc(100vmin - 2 * var(--size-large-gap)); width: fit-content; height: fit-content; display: grid; padding: var(--size-large-gap);">
@@ -55,28 +55,6 @@
 				<option value="waveform">Waveform</option>
 				<option value="pulsar">Pulsar</option>
 			</select>
-			<!-- Region Waveform -->
-			<section class="option contents -waveform" style="padding: 0;">
-				<section class="option">
-					<p class="title">Highlight cycle time</p>
-					<dfn class="definition">The time it takes for the background highlight to make one complete circle in the color palette.</dfn>
-					<input id="waveform-highlight-cycle-time" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
-				</section>
-				<section class="option">
-					<p class="title">Gap percentage</p>
-					<dfn class="definition">Calculates the size of the gap relative to the line size.</dfn>
-					<input id="waveform-gap-percentage" type="number" inputmode="numeric" required class="depth value" style="width: 6em;">
-				</section>
-				<section class="option">
-					<p class="title">Reflection</p>
-					<dfn class="definition">Creates a reflection of visual effects.</dfn>
-					<input id="toggle-waveform-reflection" type="checkbox" hidden>
-					<label for="toggle-waveform-reflection" role="checkbox" class="depth toggle value">
-						<span class="layer knob"></span>
-					</label>
-				</section>
-			</section>
-			<!-- Endregion Waveform -->
 		</section>
 		<section class="option">
 			<button id="reset-settings" class="layer grid-line" style="width: fit-content; justify-self: center;">Reset settings</button>

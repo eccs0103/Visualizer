@@ -21,13 +21,13 @@
 <body style="position: fixed; inset: 0;">
 	<audio id="player" autoplay hidden></audio>
 	<canvas id="visualizer" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
-	<div id="interface" style="position: absolute; inset: 0; display: grid; grid-template: 'upload ipload _1 settings settings' 1fr '_2 _3 status _5 _6' 6fr 'time slider slider slider slider' 1fr / 1fr 1fr 6fr 1fr 1fr; padding: var(--size-large-gap); gap: var(--size-gap);">
-		<label for="loader" role="button" class="layer transparent flex without-padding" style="grid-area: upload; place-self: start start; align-items: center; gap: var(--size-gap);">
+	<div id="interface" style="position: absolute; inset: 0; display: grid; grid-template: 'upload _1 settings' 1fr '_2 status _3' 2fr 'time slider slider' 1fr / 1fr 2fr 1fr; padding: var(--size-large-gap); gap: var(--size-gap);">
+		<label for="loader" role="button" class="layer transparent flex" style="grid-area: upload; place-self: start start; align-items: center; gap: var(--size-gap);">
 			<img src="../resources/upload.png" alt="Upload" class="icon">
 			<span>Upload</span>
 		</label>
 		<input id="loader" type="file" accept="audio/*" hidden>
-		<a role="button" href="./settings.html" class="layer transparent flex without-padding" style="grid-area: settings; place-self: start end;">
+		<a role="button" href="./settings.html" class="layer transparent flex" style="grid-area: settings; place-self: start end;">
 			<img src="../resources/settings.png" alt="Settings" class="icon">
 		</a>
 		<div class="flex -status" style="grid-area: status; place-self: center; pointer-events: none;">
