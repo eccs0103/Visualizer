@@ -124,9 +124,4 @@ switch (theme) {
 		document.documentElement.dataset[`theme`] = theme;
 	} break;
 }
-/**
- * @typedef Coordinate
- * @property {Number} x
- * @property {Number} y
- */
 //#endregion

@@ -6,6 +6,8 @@
 /** @typedef {import("./modules/animator")} */
 // @ts-ignore
 /** @typedef {import("./modules/color")} */
+// @ts-ignore
+/** @typedef {import("./modules/coordinate")} */
 
 "use strict";
 
@@ -58,10 +60,7 @@ try {
 		case VisualizerType.waveform: {
 			const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor);
 			const gapPercentage = 0;
-			/** @type {Coordinate} */ const size = {
-				x: canvas.width / (length * (1 + gapPercentage) - gapPercentage),
-				y: 0,
-			};
+			const size = new Coordinate(canvas.width / (length * (1 + gapPercentage) - gapPercentage));
 			const gap = size.x * gapPercentage;
 			//
 			animator.renderer((context) => {
@@ -90,10 +89,7 @@ try {
 				arrayFrequencyData.forEach((datul, index) => {
 					const coefficent = index / length;
 					size.y = canvas.height * (datul / 255);
-					/** @type {Coordinate} */ const position = {
-						x: (size.x + gap) * index - canvas.width / 2,
-						y: (canvas.height - size.y) * anchor - canvas.height / 2,
-					};
+					const position = new Coordinate((size.x + gap) * index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
 					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > coefficent);
 					const gradientPath = context.createLinearGradient(position.x, -canvas.height / 2, position.x, canvas.height / 2);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(0.2 + 0.8 * volume).rotate(volume * (360 / duration));
@@ -125,10 +121,7 @@ try {
 				context.strokeStyle = background.invert().toString();
 				context.beginPath();
 				arrayTimeDomainData.forEach((datul, index) => {
-				/** @type {Coordinate} */ const position = {
-						x: (index / length - 0.5) * canvas.width,
-						y: (((datul / 255) - 0.5) * Math.pow(volume, 4)) * canvas.height,
-					};
+					const position = new Coordinate((index / length - 0.5) * canvas.width, (((datul / 255) - 0.5) * Math.pow(volume, 4)) * canvas.height);
 					context.lineTo(position.x, position.y);
 				});
 				context.stroke();
@@ -140,10 +133,7 @@ try {
 					const distance = radius * (1 + 1 * (datul / 255) * Math.pow(volume, 2));
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(0.2 + 0.8 * volume).rotate(volume * (360 / duration));
 					gradientPath.addColorStop(coefficent, highlight.toString());
-					/** @type {Coordinate} */ const position = {
-						x: distance * Math.sin(coefficent * 2 * Math.PI),
-						y: distance * Math.cos(coefficent * 2 * Math.PI),
-					};
+					const position = new Coordinate(distance * Math.sin(coefficent * 2 * Math.PI), distance * Math.cos(coefficent * 2 * Math.PI));
 					context.lineTo(position.x, position.y);
 				});
 				context.closePath();
