@@ -31,15 +31,37 @@ try {
 	const source = audioContext.createMediaElementSource(audioPlayer);
 	source.connect(analyser);
 	analyser.connect(audioContext.destination);
+
+	/**
+	 * @param {Number} number 
+	 */
+	function toTimeString(number) {
+		const hours = Math.floor(number / 3600);
+		const minutes = Math.floor((number % 3600) / 60);
+		const seconds = Math.floor(number % 60);
+		const milliseconds = Math.floor((number % 1) * 100);
+		return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+	}
+
 	/**
 	 * @param {Blob} blob 
 	 * @param {Number} time 
 	 */
-	function analysys(blob, time = 0) {
-		const url = URL.createObjectURL(blob);
-		audioPlayer.src = url;
-		audioPlayer.currentTime = time;
-		audioContext.resume();
+	async function analysys(blob, time = 0) {
+		return (/** @type {Promise<Boolean>} */ (new Promise((resolve) => {
+			try {
+				const url = URL.createObjectURL(blob);
+				audioPlayer.src = url;
+				audioPlayer.currentTime = time;
+				audioContext.resume();
+				audioPlayer.addEventListener(`loadeddata`, (event) => {
+					spanTime.innerText = `${toTimeString(audioPlayer.currentTime)} • ${toTimeString(audioPlayer.duration)}`;
+					resolve(true);
+				}, { once: true });
+			} catch (exception) {
+				resolve(false);
+			}
+		})));
 	}
 	//#endregion
 	//#region Canvas
@@ -53,17 +75,17 @@ try {
 	const duration = 6;
 	const length = analyser.frequencyBinCount * 0.7;
 	const [arrayFrequencyData, arrayTimeDomainData] = [new Uint8Array(length), new Uint8Array(length)];
-
-	//#region Render
-	switch (settings.type) {
-		//#region Waveform
-		case VisualizerType.waveform: {
-			const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor);
-			const gapPercentage = 0;
-			const size = new Coordinate(canvas.width / (length * (1 + gapPercentage) - gapPercentage));
-			const gap = size.x * gapPercentage;
-			//
-			animator.renderer((context) => {
+	//
+	animator.renderer((context) => {
+		spanTime.innerText = `${toTimeString(audioPlayer.currentTime)} • ${toTimeString(audioPlayer.duration)}`;
+		switch (settings.type) {
+			//#region Waveform
+			case VisualizerType.waveform: {
+				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor);
+				const gapPercentage = 0;
+				const size = new Coordinate(canvas.width / (length * (1 + gapPercentage) - gapPercentage));
+				const gap = size.x * gapPercentage;
+				//
 				analyser.getByteFrequencyData(arrayFrequencyData);
 				context.clearRect(-canvas.width / 2, -canvas.height, canvas.width, canvas.height);
 				const volume = (arrayFrequencyData.reduce((summary, datul) => summary + datul, 0) / length) / 255;
@@ -104,14 +126,12 @@ try {
 					context.fillStyle = gradientPath;
 					context.fillRect(position.x, position.y, size.x, size.y);
 				});
-			});
-		} break;
-		//#endregion
-		//#region Pulsar
-		case VisualizerType.pulsar: {
-			const background = Color.parse(getComputedStyle(document.body).backgroundColor);
-			//
-			animator.renderer((context) => {
+			} break;
+			//#endregion
+			//#region Pulsar
+			case VisualizerType.pulsar: {
+				const background = Color.parse(getComputedStyle(document.body).backgroundColor);
+				//
 				analyser.getByteTimeDomainData(arrayTimeDomainData);
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				const radius = Math.min(canvas.width, canvas.height) / 4;
@@ -139,13 +159,12 @@ try {
 				context.closePath();
 				context.strokeStyle = gradientPath;
 				context.stroke();
-			});
-		} break;
-		//#endregion
-		default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);
-	}
-	//#endregion
-
+			} break;
+			//#endregion
+			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);
+		}
+	});
+	//
 	audioPlayer.addEventListener(`play`, (event) => {
 		animator.launched = true;
 	});
@@ -162,19 +181,22 @@ try {
 	});
 
 	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
-	inputLoader.addEventListener(`change`, (event) => {
+	inputLoader.addEventListener(`change`, async (event) => {
 		event.stopPropagation();
 		if (!inputLoader.files) {
 			throw new ReferenceError(`Files list is empty.`);
 		}
 		const file = inputLoader.files[0];
-		analysys(file);
+		await analysys(file);
 	});
 
 	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
 	aSettings.addEventListener(`click`, (event) => {
 		event.stopPropagation();
 	});
+
+	const spanTime = (/** @type {HTMLSpanElement} */ (document.querySelector(`span#time`)));
+	spanTime.innerText = ``;
 	//#endregion
 } catch (exception) {
 	Application.prevent(exception);
