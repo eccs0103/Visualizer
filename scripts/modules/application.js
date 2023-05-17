@@ -167,19 +167,22 @@ class Application {
 			}
 		}
 	}
+	/** @type {HTMLDivElement} */ static #debug;
+	static {
+		const debug = document.body.appendChild(document.createElement(`div`));
+		debug.id = `debug`;
+		debug.classList.add(`layer`, `in-top`, `in-right`);
+		debug.hidden = true;
+		Application.#debug = debug;
+	}
 	/**
 	 * @param  {Array<any>} data 
 	 */
 	static debug(...data) {
-		const debug = (/** @type {HTMLDivElement} */ (document.querySelector(`div#debug`))) ?? (() => {
-			const result = document.body.appendChild(document.createElement(`div`));
-			result.id = `debug`;
-			return result;
-		})();
-		debug.classList.toggle(`layer`, true);
-		debug.classList.toggle(`in-top`, true);
-		debug.classList.toggle(`in-right`, true);
-		debug.innerText = data.join(`\n`);
+		Application.#debug.innerText = data.join(`\n`);
+		if (Application.#debug.hidden) {
+			Application.#debug.hidden = false;
+		}
 	}
 	/**
 	 * @param {any} exception 
