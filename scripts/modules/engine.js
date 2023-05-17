@@ -1,13 +1,16 @@
 "use strict";
+
+/**
+ * @callback EngineHandler
+ * @returns {void}
+ */
+
 class Engine {
 	/**
 	 * @param {Boolean} launch
 	 */
 	constructor(launch = false) {
 		const instance = this;
-		instance.#handler = () => { }
-		instance.#time = 0;
-		instance.#FPS = 0;
 		instance.#launched = launch;
 		let previous = 0;
 		requestAnimationFrame(function callback(time) {
@@ -22,18 +25,19 @@ class Engine {
 			requestAnimationFrame(callback);
 		});
 	}
-	/** @type {() => void} */ #handler;
+	/** @type {EngineHandler} */ #handler = () => { };
 	/**
-	 * @param {() => void} handler 
+	 * @param {EngineHandler} handler 
 	 */
 	renderer(handler) {
 		this.#handler = handler;
+		this.#handler();
 	}
-	/** @type {DOMHighResTimeStamp} */ #time;
+	/** @type {DOMHighResTimeStamp} */ #time = 0;
 	/** @readonly */ get time() {
 		return this.#time;
 	}
-	/** @type {Number} */ #FPS;
+	/** @type {Number} */ #FPS = 0;
 	/** @readonly */ get FPS() {
 		return this.#FPS;
 	}

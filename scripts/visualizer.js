@@ -40,7 +40,7 @@ try {
 		const minutes = Math.floor((number % 3600) / 60);
 		const seconds = Math.floor(number % 60);
 		const milliseconds = Math.floor((number % 1) * 100);
-		return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+		return `${hours == 0 ? `` : `${hours.toString().padStart(2, '0')}:`}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 	}
 
 	/**
@@ -55,7 +55,10 @@ try {
 				audioPlayer.currentTime = time;
 				audioContext.resume();
 				audioPlayer.addEventListener(`loadeddata`, (event) => {
-					spanTime.innerText = `${toTimeString(audioPlayer.currentTime)} • ${toTimeString(audioPlayer.duration)}`;
+					spanTime.innerText = `${toTimeString(audioPlayer.currentTime)}`;
+					if (!Number.isNaN(audioPlayer.duration)) {
+						spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
+					}
 					resolve(true);
 				}, { once: true });
 			} catch (exception) {
@@ -63,6 +66,32 @@ try {
 			}
 		})));
 	}
+	//#endregion
+	//#region Interface
+	const divInterface = (/** @type {HTMLDivElement} */ (document.querySelector(`div#interface`)));
+	divInterface.addEventListener(`click`, (event) => {
+		if (event.eventPhase != Event.BUBBLING_PHASE && audioPlayer.readyState == HTMLMediaElement.HAVE_ENOUGH_DATA && audioPlayer.paused) {
+			audioPlayer.play();
+		}
+	});
+
+	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
+	inputLoader.addEventListener(`change`, async (event) => {
+		event.stopPropagation();
+		if (!inputLoader.files) {
+			throw new ReferenceError(`Files list is empty.`);
+		}
+		const file = inputLoader.files[0];
+		await analysys(file);
+	});
+
+	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
+	aSettings.addEventListener(`click`, (event) => {
+		event.stopPropagation();
+	});
+
+	const spanTime = (/** @type {HTMLSpanElement} */ (document.querySelector(`span#time`)));
+	spanTime.innerText = ``;
 	//#endregion
 	//#region Canvas
 	const canvas = (/** @type {HTMLCanvasElement} */ (document.querySelector(`canvas#visualizer`)));
@@ -73,11 +102,14 @@ try {
 	});
 	const animator = new Animator(canvas);
 	const duration = 6;
-	const length = analyser.frequencyBinCount * 0.7;
+	const length = analyser.frequencyBinCount * 0.75;
 	const [arrayFrequencyData, arrayTimeDomainData] = [new Uint8Array(length), new Uint8Array(length)];
 	//
 	animator.renderer((context) => {
-		spanTime.innerText = `${toTimeString(audioPlayer.currentTime)} • ${toTimeString(audioPlayer.duration)}`;
+		spanTime.innerText = `${toTimeString(audioPlayer.currentTime)}`;
+		if (!Number.isNaN(audioPlayer.duration)) {
+			spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
+		}
 		switch (settings.type) {
 			//#region Waveform
 			case VisualizerType.waveform: {
@@ -105,7 +137,7 @@ try {
 				const transform = context.getTransform();
 				transform.a = 1 + 0.1 * volume;
 				transform.d = 1 + 0.1 * volume;
-				transform.b = (animator.pulse(duration * 1000) * (0.1 * volume) * Math.PI / 8);
+				transform.b = (animator.pulse(duration * 1000) * (0.1 * volume) * Math.PI / 16);
 				context.setTransform(transform);
 				//
 				arrayFrequencyData.forEach((datul, index) => {
@@ -136,6 +168,7 @@ try {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				const radius = Math.min(canvas.width, canvas.height) / 4;
 				const volume = (arrayTimeDomainData.reduce((summary, datul) => summary + datul, 0) / length) / 255;
+				// Application.debug(volume);
 				context.lineWidth = canvas.width / settings.FFTSize;
 				//
 				context.strokeStyle = background.invert().toString();
@@ -171,32 +204,6 @@ try {
 	audioPlayer.addEventListener(`pause`, (event) => {
 		animator.launched = false;
 	});
-	//#endregion
-	//#region Interface
-	const divInterface = (/** @type {HTMLDivElement} */ (document.querySelector(`div#interface`)));
-	divInterface.addEventListener(`click`, (event) => {
-		if (event.eventPhase != Event.BUBBLING_PHASE && audioPlayer.readyState == HTMLMediaElement.HAVE_ENOUGH_DATA && audioPlayer.paused) {
-			audioPlayer.play();
-		}
-	});
-
-	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
-	inputLoader.addEventListener(`change`, async (event) => {
-		event.stopPropagation();
-		if (!inputLoader.files) {
-			throw new ReferenceError(`Files list is empty.`);
-		}
-		const file = inputLoader.files[0];
-		await analysys(file);
-	});
-
-	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
-	aSettings.addEventListener(`click`, (event) => {
-		event.stopPropagation();
-	});
-
-	const spanTime = (/** @type {HTMLSpanElement} */ (document.querySelector(`span#time`)));
-	spanTime.innerText = ``;
 	//#endregion
 } catch (exception) {
 	Application.prevent(exception);

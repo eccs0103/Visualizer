@@ -3,6 +3,12 @@
 
 "use strict";
 
+/**
+ * @callback AnimatorHandler
+ * @param {CanvasRenderingContext2D} context
+ * @returns {void}
+ */
+
 class Animator extends Engine {
 	/**
 	 * @param {HTMLCanvasElement} canvas 
@@ -11,8 +17,7 @@ class Animator extends Engine {
 	constructor(canvas, launch = false) {
 		super(launch);
 		const instance = this;
-		instance.#handler = () => { };
-		const context = (() => {
+		this.#context = (() => {
 			const result = canvas.getContext(`2d`);
 			if (!result) {
 				throw new ReferenceError(`Element 'context' isn't defined.`);
@@ -23,21 +28,22 @@ class Animator extends Engine {
 			const { width, height } = canvas.getBoundingClientRect();
 			canvas.width = width;
 			canvas.height = height;
-			context.translate(width / 2, height / 2);
-			instance.#handler(context);
+			instance.#context.translate(width / 2, height / 2);
+			instance.#handler(instance.#context);
 		}
 		resize();
 		window.addEventListener(`resize`, resize);
-		super.renderer(() => {
-			instance.#handler(context);
-		});
 	}
-	/** @type {(context: CanvasRenderingContext2D) => void} */ #handler;
+	#context;
+	/** @type {AnimatorHandler} */ #handler = () => { };
 	/**
-	 * @param {(context: CanvasRenderingContext2D) => void} handler 
+	 * @param {AnimatorHandler} handler 
 	 */
 	renderer(handler) {
 		this.#handler = handler;
+		super.renderer(() => {
+			this.#handler(this.#context);
+		});
 	}
 	/**
 	 * @param {Number} period time in miliseconds
