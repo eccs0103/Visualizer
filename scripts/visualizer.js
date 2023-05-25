@@ -110,6 +110,10 @@ try {
 		if (!Number.isNaN(audioPlayer.duration)) {
 			spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
 		}
+		analyser.getByteFrequencyData(arrayFrequencyData);
+		analyser.getByteTimeDomainData(arrayTimeDomainData);
+		const volume = (arrayFrequencyData.reduce((summary, datul) => summary + datul, 0) / length) / 255;
+
 		switch (settings.type) {
 			//#region Waveform
 			case VisualizerType.waveform: {
@@ -118,9 +122,7 @@ try {
 				const size = new Coordinate(canvas.width / (length * (1 + gapPercentage) - gapPercentage));
 				const gap = size.x * gapPercentage;
 				//
-				analyser.getByteFrequencyData(arrayFrequencyData);
-				context.clearRect(-canvas.width / 2, -canvas.height, canvas.width, canvas.height);
-				const volume = (arrayFrequencyData.reduce((summary, datul) => summary + datul, 0) / length) / 255;
+				context.clearRect(-canvas.width / 2, -canvas.height, canvas.width, canvas.height);				
 				//
 				const anchor = 0.8 - 0.1 * volume;
 				const anchorTop = anchor * 2 / 3;
@@ -164,12 +166,14 @@ try {
 			case VisualizerType.pulsar: {
 				const background = Color.parse(getComputedStyle(document.body).backgroundColor);
 				//
-				analyser.getByteTimeDomainData(arrayTimeDomainData);
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-				const radius = Math.min(canvas.width, canvas.height) / 4;
-				const volume = (arrayTimeDomainData.reduce((summary, datul) => summary + datul, 0) / length) / 255;
-				// Application.debug(volume);
-				context.lineWidth = canvas.width / settings.FFTSize;
+				const radius = Math.min(canvas.width, canvas.height) / 3;
+				context.lineWidth = 4 * Math.min(canvas.width, canvas.height) / settings.FFTSize;
+				const transform = context.getTransform();
+				transform.a = 1 + 0.1 * volume;
+				transform.d = 1 + 0.1 * volume;
+				transform.b = (animator.pulse(duration * 1000) * (0.1 * volume) * Math.PI / 16);
+				context.setTransform(transform);
 				//
 				context.strokeStyle = background.invert().toString();
 				context.beginPath();
