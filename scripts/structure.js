@@ -6,27 +6,14 @@
 "use strict";
 
 //#region Settings
-/** @enum {Number} */ const FFTSize = {
-	/** @readonly */ x32: 32,
-	/** @readonly */ x64: 64,
-	/** @readonly */ x128: 128,
-	/** @readonly */ x256: 256,
-	/** @readonly */ x512: 512,
-	/** @readonly */ x1024: 1024,
-	/** @readonly */ x2048: 2048,
-	/** @readonly */ x4096: 4096,
-	/** @readonly */ x8192: 8192,
-	/** @readonly */ x16384: 16384,
-	/** @readonly */ x32768: 32768,
-};
 /** @enum {String} */ const VisualizerType = {
+	/** @readonly */ spectrogram: `spectrogram`,
 	/** @readonly */ waveform: `waveform`,
-	/** @readonly */ pulsar: `pulsar`,
 };
 /**
  * @typedef SettingsNotation
  * @property {Boolean | undefined} loop
- * @property {FFTSize | undefined} FFTSize
+ * @property {Number | undefined} quality
  * @property {VisualizerType | undefined} type
  */
 class Settings {
@@ -36,7 +23,7 @@ class Settings {
 	static import(source) {
 		const result = new Settings();
 		if (source.loop !== undefined) result.loop = source.loop;
-		if (source.FFTSize !== undefined) result.FFTSize = source.FFTSize;
+		if (source.quality !== undefined) result.#quality = source.quality;
 		if (source.type !== undefined) result.type = source.type;
 		return result;
 	}
@@ -46,24 +33,36 @@ class Settings {
 	static export(source) {
 		const result = (/** @type {SettingsNotation} */ ({}));
 		result.loop = source.loop;
-		result.FFTSize = source.FFTSize;
-		result.type = source.type;
+		result.quality = source.#quality;
+		result.type = source.#type;
 		return result;
+	}
+	/** @type {Number} */ static #minQuality = 5;
+	/** @readonly */ static get minQuality() {
+		return this.#minQuality;
+	}
+	/** @type {Number} */ static #maxQuality = 15;
+	/** @readonly */ static get maxQuality() {
+		return this.#maxQuality;
 	}
 	constructor() {
 		this.loop = true;
-		this.FFTSize = FFTSize.x1024;
-		this.type = VisualizerType.waveform;
+		this.quality = 10;
+		this.type = VisualizerType.spectrogram;
 	}
 	loop;
-	/** @type {FFTSize} */ #FFTSize;
-	get FFTSize() {
-		return this.#FFTSize;
+	/** @type {Number} */ #quality;
+	get quality() {
+		return this.#quality;
 	}
-	set FFTSize(value) {
-		if (Object.values(FFTSize).includes(value)) {
-			this.#FFTSize = value;
-		} else throw new TypeError(`Invalid FFT size: '${value}'.`);
+	set quality(value) {
+		if (Math.floor(value) !== value) {
+			throw new TypeError(`Value of 'quality' property must be integer number.`);
+		}
+		if (Settings.minQuality > value || value > Settings.maxQuality) {
+			throw new TypeError(`Value of 'quality' property must between ${Settings.minQuality} and ${Settings.maxQuality} including.`);
+		}
+		this.#quality = value;
 	}
 	/** @type {VisualizerType} */ #type;
 	get type() {
@@ -112,8 +111,17 @@ class Memory {
 //#region Metadata
 /** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${Application.developer}\\${Application.title}\\Settings`, Settings.export(new Settings()));
 archiveSettings.change((data) => {
-	if (data.type == `classic`) {
-		data.type = VisualizerType.waveform;
+	switch (data.type) {
+		case `classic`: {
+			data.type = VisualizerType.spectrogram;
+		} break;
+		case `pulsar`: {
+			data.type = VisualizerType.waveform;
+		} break;
+	}
+	const fftSize = data[`FFTSize`];
+	if (fftSize !== undefined) {
+		data.quality = Math.log2(fftSize);
 	}
 	return data;
 });

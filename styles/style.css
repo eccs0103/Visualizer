@@ -359,6 +359,6 @@ audio#player.-paused ~ div#interface div.-status > img.icon {
 	content: url(../resources/play.png);
 }
 
-select#visualizer-type:not(:has(option[value="waveform"]:checked)) ~ section.-waveform {
+select#visualizer-type:not(:has(option[value="spectrogram"]:checked)) ~ section.-spectrogram {
 	display: none !important;
 }

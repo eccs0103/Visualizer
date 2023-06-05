@@ -27,7 +27,7 @@ try {
 	//#region Analysis
 	const audioContext = new AudioContext();
 	const analyser = audioContext.createAnalyser();
-	analyser.fftSize = settings.FFTSize;
+	analyser.fftSize = Math.pow(2, settings.quality);
 	const source = audioContext.createMediaElementSource(audioPlayer);
 	source.connect(analyser);
 	analyser.connect(audioContext.destination);
@@ -102,29 +102,39 @@ try {
 	});
 	const animator = new Animator(canvas);
 	const duration = 6;
-	const length = analyser.frequencyBinCount * 0.75;
-	const [arrayFrequencyData, arrayTimeDomainData] = [new Uint8Array(length), new Uint8Array(length)];
+	const length = analyser.frequencyBinCount;
+	const arrayFrequencyData = new Array(length), arrayTimeDomainData = new Array(length);
 	//
 	animator.renderer((context) => {
 		spanTime.innerText = `${toTimeString(audioPlayer.currentTime)}`;
 		if (!Number.isNaN(audioPlayer.duration)) {
 			spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
 		}
-		analyser.getByteFrequencyData(arrayFrequencyData);
-		analyser.getByteTimeDomainData(arrayTimeDomainData);
-		const volume = (arrayFrequencyData.reduce((summary, datul) => summary + datul, 0) / length) / 255;
+		const [volumeFrequency, volumeTimeDomain] = (() => {
+			const tempFrequencyData = new Uint8Array(length), tempTimeDomainData = new Uint8Array(length);
+			analyser.getByteFrequencyData(tempFrequencyData);
+			analyser.getByteTimeDomainData(tempTimeDomainData);
+			let summaryFrequency = 0, summaryTimeDomain = 0;
+			for (let index = 0; index < length; index++) {
+				arrayFrequencyData[index] = tempFrequencyData[index] / 255;
+				arrayTimeDomainData[index] = (tempTimeDomainData[index] / 255 - 0.5) * 2;
+				summaryFrequency += arrayFrequencyData[index];
+				summaryTimeDomain += arrayTimeDomainData[index];
+			}
+			return [summaryFrequency / length, summaryTimeDomain / length];
+		})();
 
 		switch (settings.type) {
-			//#region Waveform
-			case VisualizerType.waveform: {
+			//#region Spectrogram
+			case VisualizerType.spectrogram: {
 				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor);
 				const gapPercentage = 0;
 				const size = new Coordinate(canvas.width / (length * (1 + gapPercentage) - gapPercentage));
 				const gap = size.x * gapPercentage;
 				//
-				context.clearRect(-canvas.width / 2, -canvas.height, canvas.width, canvas.height);				
+				context.clearRect(-canvas.width / 2, -canvas.height, canvas.width, canvas.height);
 				//
-				const anchor = 0.8 - 0.1 * volume;
+				const anchor = 0.8 - 0.1 * volumeFrequency;
 				const anchorTop = anchor * 2 / 3;
 				const anchorBottom = anchorTop + 1 / 3;
 				const gradientBackground = context.createLinearGradient(canvas.width / 2, -canvas.height / 2, canvas.width / 2, canvas.height / 2);
@@ -137,18 +147,19 @@ try {
 				context.fillStyle = gradientBackground;
 				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				const transform = context.getTransform();
-				transform.a = 1 + 0.1 * volume;
-				transform.d = 1 + 0.1 * volume;
-				transform.b = (animator.pulse(duration * 1000) * (0.1 * volume) * Math.PI / 16);
+				transform.a = 1 + 0.1 * volumeFrequency;
+				transform.d = 1 + 0.1 * volumeFrequency;
+				transform.b = (animator.pulse(duration * 1000) * (0.1 * volumeFrequency) * Math.PI / 16);
 				context.setTransform(transform);
 				//
-				arrayFrequencyData.forEach((datul, index) => {
-					const coefficent = index / length;
-					size.y = canvas.height * (datul / 255);
-					const position = new Coordinate((size.x + gap) * index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
+				for (let index = 0; index < canvas.width; index++) {
+					const coefficent = index / canvas.width;
+					const datul = arrayFrequencyData[Math.floor(coefficent * length)];
+					size.y = canvas.height * datul;
+					const position = new Coordinate(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
 					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > coefficent);
 					const gradientPath = context.createLinearGradient(position.x, -canvas.height / 2, position.x, canvas.height / 2);
-					const highlight = Color.viaHSL(coefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(0.2 + 0.8 * volume).rotate(volume * (360 / duration));
+					const highlight = Color.viaHSL(coefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(0.2 + 0.8 * volumeFrequency).rotate(volumeFrequency * (360 / duration));
 					if (!isPlayed) {
 						highlight.lightness /= 2;
 					}
@@ -159,40 +170,46 @@ try {
 					gradientPath.addColorStop(anchorBottom, highlight.toString());
 					context.fillStyle = gradientPath;
 					context.fillRect(position.x, position.y, size.x, size.y);
-				});
+				}
 			} break;
 			//#endregion
-			//#region Pulsar
-			case VisualizerType.pulsar: {
+			//#region Waveform
+			case VisualizerType.waveform: {
 				const background = Color.parse(getComputedStyle(document.body).backgroundColor);
 				//
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-				const radius = Math.min(canvas.width, canvas.height) / 3;
-				context.lineWidth = 4 * Math.min(canvas.width, canvas.height) / settings.FFTSize;
+				const radius = Math.min(canvas.width, canvas.height) / 2;
+				context.lineWidth = Math.min(canvas.width, canvas.height) / 512;
 				const transform = context.getTransform();
-				transform.a = 1 + 0.1 * volume;
-				transform.d = 1 + 0.1 * volume;
-				transform.b = (animator.pulse(duration * 1000) * (0.1 * volume) * Math.PI / 16);
+				transform.a = 1 + 0.1 * volumeFrequency;
+				transform.d = 1 + 0.1 * volumeFrequency;
+				transform.b = (animator.pulse(duration * 1000) * (0.1 * volumeFrequency) * Math.PI / 16);
 				context.setTransform(transform);
 				//
 				context.strokeStyle = background.invert().toString();
 				context.beginPath();
-				arrayTimeDomainData.forEach((datul, index) => {
-					const position = new Coordinate((index / length - 0.5) * canvas.width, (((datul / 255) - 0.5) * Math.pow(volume, 4)) * canvas.height);
+				for (let index = 0; index < canvas.width; index++) {
+					const datul = arrayTimeDomainData[Math.floor(index / canvas.width * length)];
+					const position = new Coordinate(
+						index - canvas.width / 2,
+						(datul * Math.pow(volumeFrequency, 2)) * radius / 2
+					);
+					// console.log(datul);
 					context.lineTo(position.x, position.y);
-				});
+				}
 				context.stroke();
 				//
 				const gradientPath = context.createConicGradient(0, 0, 0);
 				context.beginPath();
-				arrayTimeDomainData.forEach((datul, index) => {
-					const coefficent = index / length;
-					const distance = radius * (1 + 1 * (datul / 255) * Math.pow(volume, 2));
-					const highlight = Color.viaHSL(coefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(0.2 + 0.8 * volume).rotate(volume * (360 / duration));
-					gradientPath.addColorStop(coefficent, highlight.toString());
+				for (let angle = 0; angle < 360; angle++) {
+					const coefficent = angle / 360;
+					const datul = arrayTimeDomainData[Math.floor(coefficent * length)];
+					const distance = radius * (0.75 + 0.25 * (datul * volumeFrequency));
+					const highlight = Color.viaHSL(coefficent * 360, 100, 50).rotate(-animator.impulse(duration * 1000) * 360).illuminate(0.2 + 0.8 * volumeFrequency).rotate(volumeFrequency * (360 / duration));
+					gradientPath.addColorStop(coefficent, highlight.toString(ColorFormat.RGB, true));
 					const position = new Coordinate(distance * Math.sin(coefficent * 2 * Math.PI), distance * Math.cos(coefficent * 2 * Math.PI));
 					context.lineTo(position.x, position.y);
-				});
+				}
 				context.closePath();
 				context.strokeStyle = gradientPath;
 				context.stroke();

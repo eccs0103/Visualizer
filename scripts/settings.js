@@ -15,11 +15,17 @@ try {
 		settings.loop = inputToggleLoop.checked;
 	});
 	//#endregion
-	//#region FFT size
-	const selectFFTSize = (/** @type {HTMLSelectElement} */ (document.querySelector(`select#FFT-size`)));
-	selectFFTSize.value = `${settings.FFTSize}`;
-	selectFFTSize.addEventListener(`change`, (event) => {
-		settings.FFTSize = Number(selectFFTSize.value);
+	//#region Quality
+	const selectQuality = (/** @type {HTMLSelectElement} */ (document.querySelector(`select#quality`)));
+	for (let quality = Settings.minQuality; quality <= Settings.maxQuality; quality++) {
+		const optionQuality = selectQuality.appendChild(document.createElement(`option`));
+		optionQuality.value = `${quality}`;
+		optionQuality.innerText = `${quality} level`;
+		optionQuality.title = optionQuality.innerText;
+	}
+	selectQuality.value = `${settings.quality}`;
+	selectQuality.addEventListener(`change`, (event) => {
+		settings.quality = Number(selectQuality.value);
 	});
 	//#endregion
 	//#region Visualizer type
@@ -35,7 +41,7 @@ try {
 		if (await Application.confirm(`The settings will be reset to factory defaults. Are you sure?`, MessageType.warn)) {
 			settings = new Settings();
 			inputToggleLoop.checked = settings.loop;
-			selectFFTSize.value = `${settings.FFTSize}`;
+			selectQuality.value = `${settings.quality}`;
 			selectVisualizerType.value = `${settings.type}`;
 		}
 	});

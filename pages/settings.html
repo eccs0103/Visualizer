@@ -34,26 +34,14 @@
 			<dfn class="definition">A fast Fourier transform (FFT) is an algorithm that computes the discrete Fourier transform of a sequence, or its inverse. Fourier analysis converts a signal from its original domain (often time or space) to a representation in the frequency domain and vice versa.<br>
 				<address>Source: <a href="https://en.wikipedia.org/wiki/Fast_Fourier_transform" target="_blank">Wikipedia</a></address>
 			</dfn>
-			<select id="FFT-size" class="depth value" required>
-				<option value="32">32</option>
-				<option value="64">64</option>
-				<option value="128">128</option>
-				<option value="256">256</option>
-				<option value="512">512</option>
-				<option value="1024">1024</option>
-				<option value="2048">2048</option>
-				<option value="4096">4096</option>
-				<option value="8192">8192</option>
-				<option value="16384">16384</option>
-				<option value="32768">32768</option>
-			</select>
+			<select id="quality" class="depth value" required> </select>
 		</section>
 		<section class="option">
 			<p class="title">Visualizer type</p>
 			<dfn class="definition">The visualizer type. Appearance, animations, rendering when playing music.</dfn>
 			<select id="visualizer-type" class="depth value" required>
+				<option value="spectrogram">Spectrogram</option>
 				<option value="waveform">Waveform</option>
-				<option value="pulsar">Pulsar</option>
 			</select>
 		</section>
 		<section class="option">
