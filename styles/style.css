@@ -196,6 +196,7 @@ dialog.pop-up div.footer:empty {
 div#debug {
 	position: fixed;
 	inset: 0 0 auto auto;
+	text-align: right;
 }
 
 *.grid-line {

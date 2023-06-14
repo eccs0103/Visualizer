@@ -10,6 +10,11 @@
 "use strict";
 
 //#region Visualizer
+/** @enum {String} */ const DataType = {
+	/** @readonly */ frequency: `frequency`,
+	/** @readonly */ timeDomain: `time domain`,
+};
+
 /**
  * @callback VisualizerHandler
  * @param {CanvasRenderingContext2D} context
@@ -19,81 +24,99 @@
 class Visualizer extends Animator {
 	/**
 	 * @param {HTMLCanvasElement} canvas 
+	 * @param {HTMLMediaElement} media 
 	 */
-	constructor(canvas) {
+	constructor(canvas, media) {
 		super(canvas);
-		this.#audioContext = new AudioContext();
-		this.#analyser = this.#audioContext.createAnalyser();
+
+		const audioContext = new AudioContext();
+		this.#analyser = audioContext.createAnalyser();
+		audioContext.createMediaElementSource(media).connect(this.#analyser);
+		this.#analyser.connect(audioContext.destination);
+		media.addEventListener(`play`, async (event) => {
+			await audioContext.resume();
+		});
+		//
 		this.#analyser.fftSize = Math.pow(2, 10);
-		this.#arrayFrequencyData = new Uint8Array(this.#analyser.frequencyBinCount);
-		this.#arrayTimeDomainData = new Uint8Array(this.#analyser.frequencyBinCount);
+		this.#arrayFrequencyData = new Uint8Array(this.length);
+		this.#arrayTimeDomainData = new Uint8Array(this.length);
+		this.#volumeFrequency = 0;
+		this.#volumeTimeDomain = 0;
 	}
-	#audioContext;
 	/** @type {AnalyserNode} */ #analyser;
-	/** @readonly */ get analyser() {
-		return this.#analyser;
+	/** @readonly */ get length() {
+		return this.#analyser.frequencyBinCount;
 	}
 	get quality() {
 		return Math.log2(this.#analyser.fftSize);
 	}
 	set quality(value) {
 		this.#analyser.fftSize = Math.pow(2, value);
-		this.#arrayFrequencyData = new Uint8Array(this.#analyser.frequencyBinCount);
-		this.#arrayTimeDomainData = new Uint8Array(this.#analyser.frequencyBinCount);
+		this.#arrayFrequencyData = new Uint8Array(this.length);
+		this.#arrayTimeDomainData = new Uint8Array(this.length);
 	}
 	/** @type {Uint8Array} */ #arrayFrequencyData;
-	/** @readonly */ get arrayFrequencyData() {
-		return this.#arrayFrequencyData;
-	}
 	/** @type {Uint8Array} */ #arrayTimeDomainData;
-	/** @readonly */ get arrayTimeDomainData() {
-		return this.#arrayTimeDomainData;
-	}
-	/** @type {MediaElementAudioSourceNode | undefined} */ #source;
 	/**
-	 * @param {HTMLMediaElement} media 
+	 * @param {DataType} type lengthvolume
 	 */
-	connect(media) {
-		this.#source = this.#audioContext.createMediaElementSource(media);
-		this.#source.connect(this.#analyser);
-		this.#analyser.connect(this.#audioContext.destination);
-		media.addEventListener(`play`, (event) => {
-			this.launched = true;
-			this.#audioContext.resume();
-		});
-		media.addEventListener(`pause`, (event) => {
-			this.launched = false;
-		});
-	}
-	disconnect() {
-		this.#analyser.disconnect();
-		if (this.#source) {
-			this.#source.disconnect();
-			this.#source = undefined;
+	getData(type) {
+		switch (type) {
+			case DataType.frequency: return this.#arrayFrequencyData;
+			case DataType.timeDomain: return this.#arrayTimeDomainData;
+			default: throw new TypeError(`Invalid data type: '${type}'.`);
 		}
+	}
+	/** @type {Number} */ #volumeFrequency;
+	/** @type {Number} */ #volumeTimeDomain;
+	/**
+	 * @param {DataType} type 
+	 */
+	getVolume(type) {
+		switch (type) {
+			case DataType.frequency: return this.#volumeFrequency;
+			case DataType.timeDomain: return this.#volumeTimeDomain;
+			default: throw new TypeError(`Invalid data type: '${type}'.`);
+		}
+	}
+	/** @type {Number} */ #amplitudeFrequency;
+	/** @type {Number} */ #amplitudeTimeDomain;
+	/**
+	 * @param {DataType} type 
+	 */
+	getAmplitude(type = DataType.timeDomain) {
+		switch (type) {
+			case DataType.frequency: return this.#amplitudeFrequency;
+			case DataType.timeDomain: return this.#amplitudeTimeDomain;
+			default: throw new TypeError(`Invalid data type: '${type}'.`);
+		}
+	}
+	isBeat() {
+		const threshold = 0.5;
+		return (this.#amplitudeTimeDomain > threshold);
 	}
 	/**
 	 * @param {VisualizerHandler} handler 
 	 */
 	renderer(handler) {
-		this.#analyser.getByteFrequencyData(this.#arrayFrequencyData);
-		this.#analyser.getByteTimeDomainData(this.#arrayTimeDomainData);
-		super.renderer(handler);
-	}
-	isBeat() {
-		// Вычисляем амплитуду звука
-		let summary = 0;
-		for (let index = 0; index < length; index++) {
-			const value = this.#arrayTimeDomainData[index] / 128 - 1; // Нормализуем значения от -1 до 1
-			summary += value * value; // Суммируем квадраты значений
-		}
-		const amplitude = Math.sqrt(summary / length); // Вычисляем среднеквадратическое значение
-
-		// Определяем порог для срабатывания бита
-		const threshold = 0.5; // Подберите подходящий порог для вашего аудио
-
-		// Проверяем, превышает ли амплитуда пороговое значение
-		return (amplitude > threshold);
+		super.renderer((context) => {
+			this.#analyser.getByteFrequencyData(this.#arrayFrequencyData);
+			this.#analyser.getByteTimeDomainData(this.#arrayTimeDomainData);
+			let summaryFrequency = 0, summaryTimeDomain = 0;
+			let summarySquareFrequency = 0, summarySquareTimeDomain = 0;
+			for (let index = 0; index < this.length; index++) {
+				const dataFrequency = this.#arrayFrequencyData[index] / 255, dataTimeDomain = this.#arrayTimeDomainData[index] / 128 - 1;
+				summaryFrequency += dataFrequency;
+				summaryTimeDomain += dataTimeDomain;
+				summarySquareTimeDomain += dataTimeDomain * dataTimeDomain;
+				summarySquareFrequency += dataFrequency * dataFrequency;
+			}
+			this.#volumeFrequency = (summaryFrequency / this.length);
+			this.#volumeTimeDomain = (summaryTimeDomain / this.length);
+			this.#amplitudeTimeDomain = Math.sqrt(summarySquareTimeDomain / this.length);
+			this.#amplitudeFrequency = Math.sqrt(summarySquareFrequency / this.length);
+			handler(context);
+		});
 	}
 }
 //#endregion
