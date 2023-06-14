@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Visualizer - Homepage</title>
 	<link rel="stylesheet" href="../styles/style.css">
+	<link rel="stylesheet" href="../styles/local/visualizer.css">
 	<link rel="stylesheet" href="../styles/themes/material.css">
 	<link rel="shortcut icon" href="../resources/eye.png" media="(prefers-color-scheme: light)">
 	<link rel="shortcut icon" href="../resources/eye (inverted).png" media="(prefers-color-scheme: dark)">
@@ -19,23 +20,24 @@
 	<script src="../scripts/visualizer.js" defer></script>
 </head>
 
-<body style="position: fixed; inset: 0;">
+<body>
 	<audio id="player" autoplay hidden></audio>
-	<canvas id="visualizer" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
-	<div id="interface" style="position: absolute; inset: 0; display: grid; grid-template: 'upload _1 settings' auto 'status status status' auto 'time slider slider' auto / auto auto auto; padding: var(--size-large-gap); gap: var(--size-gap);">
-		<label for="loader" role="button" class="layer transparent flex" style="grid-area: upload; place-self: start start; align-items: center; gap: var(--size-gap);">
-			<img src="../resources/upload.png" alt="Upload" class="icon">
-			<span>Upload</span>
-		</label>
-		<input id="loader" type="file" accept="audio/*" hidden>
-		<a role="button" href="./settings.html" class="layer transparent flex" style="grid-area: settings; place-self: start end;">
+	<canvas id="visualizer"></canvas>
+	<div id="interface"  class="translucent">
+		<div class="contents">
+			<input id="loader" type="file" accept="audio/*" hidden>
+			<label for="loader" role="button" class="flex centered with-gap with-padding -normalized">
+				<img src="../resources/upload.png" alt="Upload" class="icon">
+				<span>Upload</span>
+			</label>
+		</div>
+		<a role="button" href="./settings.html" class="flex centered with-padding -normalized">
 			<img src="../resources/settings.png" alt="Settings" class="icon">
 		</a>
-		<div class="flex -status" style="grid-area: status; place-self: center; pointer-events: none;">
-			<img src="../resources/play.png" alt="Status" class="icon" style="height: calc(var(--size-standart) * 3);">
+		<div class="flex -normalized -status">
+			<img src="../resources/play.png" alt="Status" class="icon">
 		</div>
-		<span id="time" style="grid-area: time; place-self: end start;"></span>
-		<input id="slider" type="range" class="depth flex" style="grid-area: slider; place-self: end stretch;" hidden>
+		<span id="time" class="-normalized"></span>
 	</div>
 </body>
 

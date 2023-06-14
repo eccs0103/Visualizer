@@ -1,0 +1,104 @@
+body {
+	position: fixed;
+	inset: 0;
+}
+
+canvas#visualizer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+div#interface {
+	position: absolute;
+	inset: 0;
+}
+
+@keyframes -show-interface {
+	0% {
+		pointer-events: none;
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes -hide-interface {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
+
+audio#player.-playing ~ div#interface {
+	animation: -hide-interface 0.5s ease-out 0s 1 both;
+}
+
+audio#player.-paused ~ div#interface {
+	animation: -show-interface 0.1s ease-in 0s 1 both;
+}
+
+div#interface *.-normalized {
+	width: -moz-fit-content;
+	width: fit-content;
+	height: -moz-fit-content;
+	height: fit-content;
+	position: absolute;
+	/* inset: auto; */
+	margin: auto;
+}
+
+label[for="loader"] {
+	inset: var(--size-large-gap) auto auto var(--size-large-gap);
+}
+
+audio#player:not([src]) ~ div#interface label[for="loader"] {
+	inset: 0;
+}
+
+audio#player:not([src]) ~ div#interface label[for="loader"] > img[src="../resources/upload.png"] {
+	height: calc(var(--size-standart) * 3);
+}
+
+audio#player:not([src]) ~ div#interface label[for="loader"] > *:not(img[src="../resources/upload.png"]) {
+	display: none !important;
+}
+
+a[href="./settings.html"] {
+	inset: var(--size-large-gap) var(--size-large-gap) auto auto;
+}
+
+div.-status {
+	inset: 0;
+}
+
+audio#player.-playing ~ div#interface div.-status > img.icon {
+	content: url(../../resources/pause.png);
+}
+
+audio#player.-paused ~ div#interface div.-status > img.icon {
+	content: url(../../resources/play.png);
+}
+
+audio#player:not([src]) ~ div#interface div.-status {
+	display: none !important;
+}
+
+img[src="../resources/play.png"] {
+	height: calc(var(--size-standart) * 3);
+}
+
+span#time {
+	inset: auto auto var(--size-large-gap) var(--size-large-gap);
+}
+
+/* select#visualizer-type:not(:has(option[value="spectrogram"]:checked)) ~ section.-spectrogram {
+	display: none !important;
+} */

@@ -36,11 +36,11 @@ class Application {
 	 */
 	static #popup(type) {
 		const dialog = document.body.appendChild(document.createElement(`dialog`));
-		dialog.classList.add(`layer`, `pop-up`);
+		dialog.classList.add(`layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`, `pop-up`);
 		dialog.showModal();
 		{
 			const divHeader = dialog.appendChild(document.createElement(`div`));
-			divHeader.classList.add(`header`, `flex`);
+			divHeader.classList.add(`flex`, `centered`, `header`);
 			{
 				const h3Title = divHeader.appendChild(document.createElement(`h3`));
 				switch (type) {
@@ -64,7 +64,7 @@ class Application {
 			divMain.classList.add(`main`);
 			{ }
 			const divFooter = dialog.appendChild(document.createElement(`div`));
-			divFooter.classList.add(`footer`, `flex`);
+			divFooter.classList.add(`flex`, `centered`, `with-gap`, `footer`);
 			{ }
 		}
 		return dialog;
@@ -105,11 +105,11 @@ class Application {
 			{
 				const buttonAccept = divFooter.appendChild(document.createElement(`button`));
 				buttonAccept.innerText = `Accept`;
-				buttonAccept.classList.add(`layer`, `transparent`, `highlight`);
+				buttonAccept.classList.add(`layer`, `rounded`, `flex`, `centered`, `with-padding`, `highlight`);
 				{ }
 				const buttonDecline = divFooter.appendChild(document.createElement(`button`));
 				buttonDecline.innerText = `Decline`;
-				buttonDecline.classList.add(`layer`, `transparent`, `alert`);
+				buttonDecline.classList.add(`layer`, `rounded`, `flex`, `centered`, `with-padding`, `alert`);
 				{ }
 				return (/** @type {Promise<Boolean>} */ (new Promise((resolve) => {
 					dialog.addEventListener(`click`, (event) => {
@@ -146,11 +146,11 @@ class Application {
 				const inputPrompt = divFooter.appendChild(document.createElement(`input`));
 				inputPrompt.type = `text`;
 				inputPrompt.placeholder = `Enter text`;
-				inputPrompt.classList.add(`depth`);
+				inputPrompt.classList.add(`depth`, `rounded`, `flex`, `with-padding`,);
 				{ }
 				const buttonContinue = divFooter.appendChild(document.createElement(`button`));
 				buttonContinue.innerText = `Continue`;
-				buttonContinue.classList.add(`layer`, `transparent`, `highlight`);
+				buttonContinue.classList.add(`layer`, `rounded`, `flex`, `centered`, `with-padding`, `highlight`);
 				{ }
 				return (/** @type {Promise<String?>} */ (new Promise((resolve) => {
 					dialog.addEventListener(`click`, (event) => {
@@ -167,21 +167,24 @@ class Application {
 			}
 		}
 	}
-	/** @type {HTMLDivElement} */ static #debug;
-	static {
+	static #debug = (() => {
 		const debug = document.body.appendChild(document.createElement(`div`));
 		debug.id = `debug`;
-		debug.classList.add(`layer`, `in-top`, `in-right`);
+		debug.classList.add(`layer`, `rounded`, `in-top`, `in-right`, `with-padding`);
 		debug.hidden = true;
-		Application.#debug = debug;
-	}
+		return debug;
+	})();
 	/**
-	 * @param  {Array<any>} data 
+	 * @param {Object} [object]
 	 */
-	static debug(...data) {
-		Application.#debug.innerText = data.join(`\n`);
-		if (Application.#debug.hidden) {
+	static debug(object) {
+		if (object === undefined && !Application.#debug.hidden) {
+			Application.#debug.hidden = true;
+		} else if (object !== undefined && Application.#debug.hidden) {
 			Application.#debug.hidden = false;
+		}
+		if (object !== undefined && !Application.#debug.hidden) {
+			Application.#debug.innerText = Object.entries(object).map(([key, value]) => `${key}:\t${value}`).join(`\n`);
 		}
 	}
 	/**

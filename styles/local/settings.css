@@ -1,0 +1,33 @@
+body {
+	display: grid;
+	grid-auto-rows: max-content;
+	place-items: start center;
+	gap: var(--size-gap);
+	padding: var(--size-large-gap);
+	overflow: hidden auto;
+}
+
+a[href="./visualizer.html"] {
+	position: sticky;
+	top: var(--size-large-gap);
+	justify-self: left;
+}
+
+div.-settings-panel {
+	min-width: var(--size-large-standart);
+	max-width: calc(100vmin - 2 * var(--size-large-gap));
+	width: fit-content;
+	height: fit-content;
+	display: grid;
+	padding: var(--size-large-gap);
+}
+
+button#reset-settings {
+	width: fit-content;
+	justify-self: center;
+}
+
+button#share-settings {
+	width: fit-content;
+	justify-self: center;
+}

@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Visualizer - Settings</title>
 	<link rel="stylesheet" href="../styles/style.css">
+	<link rel="stylesheet" href="../styles/local/settings.css">
 	<link rel="stylesheet" href="../styles/themes/material.css">
 	<link rel="shortcut icon" href="../resources/settings.png" media="(prefers-color-scheme: light)">
 	<link rel="shortcut icon" href="../resources/settings (inverted).png" media="(prefers-color-scheme: dark)">
@@ -17,11 +18,11 @@
 	<script src="../scripts/settings.js" defer></script>
 </head>
 
-<body style="display: grid; place-items: start center; gap: var(--size-gap); padding: var(--size-large-gap); overflow: hidden auto;">
-	<a href="./visualizer.html" role="button" class="layer transparent flex" style="position: sticky; top: var(--size-large-gap); justify-self: left;">
+<body>
+	<a href="./visualizer.html" role="button" class="flex centered with-padding">
 		<img src="../resources/return.png" alt="Return" class="icon">
 	</a>
-	<div class="layer" style="min-width: var(--size-large-standart); max-width: calc(100vmin - 2 * var(--size-large-gap)); width: fit-content; height: fit-content; display: grid; padding: var(--size-large-gap);">
+	<div class="layer rounded -settings-panel">
 		<h1>Settings</h1>
 		<section class="option">
 			<p class="title">Loop audio</p>
@@ -34,23 +35,23 @@
 		<section class="option">
 			<p class="title">Quality</p>
 			<dfn class="definition">Audio processing quality. Recommended level 10.</dfn>
-			<select id="quality" class="depth value" required> </select>
+			<select id="quality" class="depth with-padding rounded value" required> </select>
 		</section>
 		<section class="option">
 			<p class="title">Visualizer type</p>
 			<dfn class="definition">The visualizer type. Appearance, animations, rendering when playing music.</dfn>
-			<select id="visualizer-type" class="depth value" required>
+			<select id="visualizer-type" class="depth with-padding rounded value" required>
 				<option value="spectrogram">Spectrogram</option>
 				<option value="waveform">Waveform</option>
 			</select>
 		</section>
 		<section class="option">
-			<button id="reset-settings" class="layer grid-line" style="width: fit-content; justify-self: center;">Reset settings</button>
+			<button id="reset-settings" class="with-padding rounded grid-line">Reset settings</button>
 		</section>
 		<hr class="depth">
 		<section class="option">
 			<dfn class="definition">Your opinion is important to us.<br> Share your settings with us, so we can know your preferences. Perhaps in the next updates, it is your configuration that will be used by default.</dfn>
-			<button id="share-settings" class="layer value" style="width: fit-content; justify-self: center;">Share settings</button>
+			<button id="share-settings" class="with-padding rounded value">Share settings</button>
 		</section>
 	</div>
 </body>

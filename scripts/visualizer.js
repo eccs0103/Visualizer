@@ -97,15 +97,15 @@ try {
 			spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
 		}
 		//
-		/* Application.debug(
-			visualizer.length,
-			visualizer.FPS.toFixed(),
-			visualizer.time.toFixed(),
-			visualizer.getVolume(DataType.frequency).toFixed(2),
-			visualizer.getVolume(DataType.timeDomain).toFixed(2),
-			visualizer.getAmplitude(DataType.frequency).toFixed(2),
-			visualizer.getAmplitude(DataType.timeDomain).toFixed(2),
-		); */
+		/* Application.debug({
+			[`Length`]: visualizer.length,
+			[`FPS`]: visualizer.FPS.toFixed(),
+			[`Time`]: visualizer.time.toFixed(),
+			[`Alternating Volume`]: visualizer.getVolume(DataType.frequency).toFixed(2),
+			[`Direct Volume`]: visualizer.getVolume(DataType.timeDomain).toFixed(2),
+			[`Alternating Amplitude`]: visualizer.getAmplitude(DataType.frequency).toFixed(2),
+			[`Direct Amplitude`]: visualizer.getAmplitude(DataType.timeDomain).toFixed(2),
+		}); */
 		//
 		switch (settings.type) {
 			//#region Spectrogram

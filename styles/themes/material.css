@@ -37,7 +37,7 @@
 	--color-highlight: hsl(200deg, 100%, 50%);
 	--color-warn: hsl(60deg, 100%, 50%);
 	--color-error: hsl(0deg, 100%, 75%);
-	--color-shadow: rgba(50, 50, 50, 0.5);
+	--color-shadow: hsla(0, 0%, 0%, 0.75);
 }
 
 /* Global */
@@ -59,38 +59,36 @@ body *::placeholder {
 
 *.layer {
 	background-color: var(--color-foreground);
-	border-radius: var(--size-gap);
 }
 
 *.depth {
 	background-color: var(--color-background);
-	border-radius: var(--size-gap);
+}
+
+*.translucent {
+	background-color: var(--color-shadow);
 }
 
 *.rounded {
 	border-radius: var(--size-gap);
 }
 
-*.layer.in-top,
-*.depth.in-top {
+*.rounded.in-top {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }
 
-*.layer.in-right,
-*.depth.in-right {
+*.rounded.in-right {
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
 }
 
-*.layer.in-bottom,
-*.depth.in-bottom {
+*.rounded.in-bottom {
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 }
 
-*.layer.in-left,
-*.depth.in-left {
+*.rounded.in-left {
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 }
@@ -148,6 +146,7 @@ input[type="checkbox"]:active + label[role="checkbox"],
 button:disabled,
 *[role="button"][aria-disabled="true"],
 input:disabled,
+*[contenteditable="true"][aria-disabled="true"],
 input[type="checkbox"]:disabled + label[role="checkbox"],
 *[role="combobox"][aria-disabled="true"],
 select:disabled {
@@ -174,7 +173,11 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 dialog::backdrop {
-	background-color: rgba(0, 0, 0, 0.75);
+	background-color: rgba(0, 0, 0, 75%);
+}
+
+div#debug {
+	font-family: "Consolas", monospace;
 }
 
 a {
@@ -211,9 +214,4 @@ time {
 
 ::-webkit-scrollbar-thumb {
 	background-color: var(--color-highlight);
-}
-
-/* Local */
-div#interface {
-	background-color: var(--color-shadow);
 }
