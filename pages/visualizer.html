@@ -23,7 +23,7 @@
 <body>
 	<audio id="player" autoplay hidden></audio>
 	<canvas id="visualizer"></canvas>
-	<div id="interface"  class="translucent">
+	<div id="interface" class="translucent">
 		<div class="contents">
 			<input id="loader" type="file" accept="audio/*" hidden>
 			<label for="loader" role="button" class="flex centered with-gap with-padding -normalized">
@@ -38,6 +38,9 @@
 			<img src="../resources/play.png" alt="Status" class="icon">
 		</div>
 		<span id="time" class="-normalized"></span>
+		<button id="toggle-fullscreen" class="flex centered with-gap with-padding -normalized">
+			<img src="../resources/fullscreen-enter.png" alt="Fullscreen" class="icon">
+		</button>
 	</div>
 </body>
 

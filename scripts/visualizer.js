@@ -78,6 +78,15 @@ try {
 	});
 
 	const spanTime = (/** @type {HTMLSpanElement} */ (document.querySelector(`span#time`)));
+
+	const buttonToggleFullscreen = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#toggle-fullscreen`)));
+	buttonToggleFullscreen.addEventListener(`click`, async (event) => {
+		if (document.fullscreenElement == null) {
+			await document.body.requestFullscreen({ navigationUI: `hide` });
+		} else {
+			await document.exitFullscreen();
+		}
+	});
 	//#endregion
 	//#region Canvas
 	const canvas = (/** @type {HTMLCanvasElement} */ (document.querySelector(`canvas#visualizer`)));

@@ -63,11 +63,11 @@ audio#player:not([src]) ~ div#interface label[for="loader"] {
 	inset: 0;
 }
 
-audio#player:not([src]) ~ div#interface label[for="loader"] > img[src="../resources/upload.png"] {
+audio#player:not([src]) ~ div#interface label[for="loader"] > img[alt="Upload"] {
 	height: calc(var(--size-standart) * 3);
 }
 
-audio#player:not([src]) ~ div#interface label[for="loader"] > *:not(img[src="../resources/upload.png"]) {
+audio#player:not([src]) ~ div#interface label[for="loader"] > *:not(img[alt="Upload"]) {
 	display: none !important;
 }
 
@@ -77,28 +77,41 @@ a[href="./settings.html"] {
 
 div.-status {
 	inset: 0;
-}
-
-audio#player.-playing ~ div#interface div.-status > img.icon {
-	content: url(../../resources/pause.png);
-}
-
-audio#player.-paused ~ div#interface div.-status > img.icon {
-	content: url(../../resources/play.png);
+	pointer-events: none;
 }
 
 audio#player:not([src]) ~ div#interface div.-status {
 	display: none !important;
 }
 
-img[src="../resources/play.png"] {
+img[alt="Status"] {
 	height: calc(var(--size-standart) * 3);
+}
+
+audio#player.-playing ~ div#interface div.-status > img[alt="Status"] {
+	content: url(../../resources/pause.png);
+}
+
+audio#player.-paused ~ div#interface div.-status > img[alt="Status"] {
+	content: url(../../resources/play.png);
 }
 
 span#time {
 	inset: auto auto var(--size-large-gap) var(--size-large-gap);
 }
 
-/* select#visualizer-type:not(:has(option[value="spectrogram"]:checked)) ~ section.-spectrogram {
+button#toggle-fullscreen {
+	inset: auto var(--size-large-gap) var(--size-large-gap) auto;
+}
+
+button#toggle-fullscreen > img[alt="Fullscreen"] {
+	content: url(../../resources/fullscreen-enter.png);
+}
+
+body:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
+	content: url(../../resources/fullscreen-exit.png);
+}
+
+audio#player:not([src]) ~ div#interface button#toggle-fullscreen {
 	display: none !important;
-} */
+}
