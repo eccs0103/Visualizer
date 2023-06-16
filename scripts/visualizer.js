@@ -35,7 +35,7 @@ try {
 	 * @param {Blob} blob 
 	 * @param {Number} time 
 	 */
-	function analysys(blob, time = 0) {
+	async function analysys(blob, time = 0) {
 		return (/** @type {Promise<Boolean>} */ (new Promise((resolve) => {
 			try {
 				const url = URL.createObjectURL(blob);
@@ -46,7 +46,7 @@ try {
 					if (!Number.isNaN(audioPlayer.duration)) {
 						spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
 					}
-					resolve(true);
+
 				}, { once: true });
 			} catch (exception) {
 				resolve(false);
@@ -82,7 +82,7 @@ try {
 	const buttonToggleFullscreen = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#toggle-fullscreen`)));
 	buttonToggleFullscreen.addEventListener(`click`, async (event) => {
 		if (document.fullscreenElement == null) {
-			await document.body.requestFullscreen({ navigationUI: `hide` });
+			await document.documentElement.requestFullscreen({ navigationUI: `hide` });
 		} else {
 			await document.exitFullscreen();
 		}
