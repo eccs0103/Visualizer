@@ -51,7 +51,6 @@ div#interface *.-normalized {
 	height: -moz-fit-content;
 	height: fit-content;
 	position: absolute;
-	/* inset: auto; */
 	margin: auto;
 }
 
@@ -59,15 +58,15 @@ label[for="loader"] {
 	inset: var(--size-large-gap) auto auto var(--size-large-gap);
 }
 
-audio#player:not([src]) ~ div#interface label[for="loader"] {
+audio#player[src=""] ~ div#interface label[for="loader"] {
 	inset: 0;
 }
 
-audio#player:not([src]) ~ div#interface label[for="loader"] > img[alt="Upload"] {
+audio#player[src=""] ~ div#interface label[for="loader"] > img[alt="Upload"] {
 	height: calc(var(--size-standart) * 3);
 }
 
-audio#player:not([src]) ~ div#interface label[for="loader"] > *:not(img[alt="Upload"]) {
+audio#player[src=""] ~ div#interface label[for="loader"] > *:not(img[alt="Upload"]) {
 	display: none !important;
 }
 
@@ -80,7 +79,7 @@ div.-status {
 	pointer-events: none;
 }
 
-audio#player:not([src]) ~ div#interface div.-status {
+audio#player[src=""] ~ div#interface div.-status {
 	display: none !important;
 }
 
@@ -112,6 +111,6 @@ body:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
 	content: url(../../resources/fullscreen-exit.png);
 }
 
-audio#player:not([src]) ~ div#interface button#toggle-fullscreen {
+audio#player[src=""] ~ div#interface button#toggle-fullscreen {
 	display: none !important;
 }

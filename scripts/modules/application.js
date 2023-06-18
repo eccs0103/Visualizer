@@ -1,15 +1,16 @@
 "use strict";
+
 /** @enum {Number} */ const MessageType = {
 	/** @readonly */ log: 0,
 	/** @readonly */ warn: 1,
 	/** @readonly */ error: 2,
 };
 class Application {
-	/** @type {String} */ static #developer = `Adaptive Core`;
+	/** @type {String} */ static #developer = ``;
 	/** @readonly */ static get developer() {
 		return this.#developer;
 	}
-	/** @type {String} */ static #title = `Visualizer`;
+	/** @type {String} */ static #title = ``;
 	/** @readonly */ static get title() {
 		return this.#title;
 	}

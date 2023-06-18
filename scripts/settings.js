@@ -35,6 +35,13 @@ try {
 		settings.type = selectVisualizerType.value;
 	});
 	//#endregion
+	//#region Auto fullscreen
+	const inputToggleAutoFullscreen = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-auto-fullscreen`)));
+	inputToggleAutoFullscreen.checked = settings.autoFullscreen;
+	inputToggleAutoFullscreen.addEventListener(`change`, (event) => {
+		settings.autoFullscreen = inputToggleAutoFullscreen.checked;
+	});
+	//#endregion
 	//#region Reset settings
 	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
 	buttonResetSettings.addEventListener(`click`, async (event) => {

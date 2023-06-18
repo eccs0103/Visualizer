@@ -1,4 +1,5 @@
 "use strict";
+
 class Random {
 	/**
 	 * @param {Number} min 

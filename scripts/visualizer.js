@@ -9,16 +9,22 @@
 
 try {
 	//#region Player
-	const audioPlayer = (/** @type {HTMLAudioElement} */ (document.querySelector(`audio#player`)));
+	class MyAudioElement extends HTMLAudioElement {
+		constructor() {
+			super();
+			this.classList.add(`-paused`);
+			this.addEventListener(`play`, (event) => {
+				this.classList.replace(`-paused`, `-playing`);
+			});
+			this.addEventListener(`pause`, (event) => {
+				this.classList.replace(`-playing`, `-paused`);
+			});
+		}
+	}
+	customElements.define(`my-audio`, MyAudioElement, { extends: `audio` });
+
+	const audioPlayer = (/** @type {MyAudioElement} */ (document.querySelector(`audio#player`)));
 	audioPlayer.loop = settings.loop;
-	audioPlayer.addEventListener(`play`, (event) => {
-		audioPlayer.classList.toggle(`-playing`, true);
-		audioPlayer.classList.toggle(`-paused`, false);
-	});
-	audioPlayer.addEventListener(`pause`, (event) => {
-		audioPlayer.classList.toggle(`-playing`, false);
-		audioPlayer.classList.toggle(`-paused`, true);
-	});
 
 	/**
 	 * @param {Number} number 
@@ -28,30 +34,7 @@ try {
 		const minutes = Math.floor((number % 3600) / 60);
 		const seconds = Math.floor(number % 60);
 		const milliseconds = Math.floor((number % 1) * 100);
-		return `${hours == 0 ? `` : `${hours.toString().padStart(2, '0')}:`}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-	}
-
-	/**
-	 * @param {Blob} blob 
-	 * @param {Number} time 
-	 */
-	async function analysys(blob, time = 0) {
-		return (/** @type {Promise<Boolean>} */ (new Promise((resolve) => {
-			try {
-				const url = URL.createObjectURL(blob);
-				audioPlayer.src = url;
-				audioPlayer.currentTime = time;
-				audioPlayer.addEventListener(`canplaythrough`, () => {
-					spanTime.innerText = `${toTimeString(audioPlayer.currentTime)}`;
-					if (!Number.isNaN(audioPlayer.duration)) {
-						spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
-					}
-
-				}, { once: true });
-			} catch (exception) {
-				resolve(false);
-			}
-		})));
+		return `${hours == 0 ? `` : `${hours.toString().padStart(2, `0`)}:`}${minutes.toString().padStart(2, `0`)}:${seconds.toString().padStart(2, `0`)}`;
 	}
 	//#endregion
 	//#region Interface
@@ -63,13 +46,16 @@ try {
 	});
 
 	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
-	inputLoader.addEventListener(`change`, async (event) => {
+	inputLoader.addEventListener(`input`, (event) => {
 		event.stopPropagation();
 		if (!inputLoader.files) {
 			throw new ReferenceError(`Files list is empty.`);
 		}
 		const file = inputLoader.files[0];
-		await analysys(file);
+		audioPlayer.src = URL.createObjectURL(file);
+		if (settings.autoFullscreen) {
+			document.documentElement.requestFullscreen({ navigationUI: `hide` });
+		}
 	});
 
 	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
@@ -98,7 +84,7 @@ try {
 	//
 	const visualizer = new Visualizer(canvas, audioPlayer);
 	visualizer.quality = settings.quality;
-	const duration = 6;
+	const duration = 5;
 	//
 	visualizer.renderer((context) => {
 		spanTime.innerText = `${toTimeString(audioPlayer.currentTime)}`;
@@ -169,8 +155,8 @@ try {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//
 				const transform = context.getTransform();
-				transform.a = 1 + 0.25 * visualizer.getAmplitude();
-				transform.d = 1 + 0.25 * visualizer.getAmplitude();
+				transform.a = 1 + 0.4 * visualizer.getAmplitude();
+				transform.d = 1 + 0.4 * visualizer.getAmplitude();
 				context.setTransform(transform);
 				//
 				const data = visualizer.getData(DataType.timeDomain);
@@ -211,8 +197,8 @@ try {
 					context.lineTo(position.x, position.y);
 				}
 				context.closePath();
-				context.strokeStyle = gradientPath;
-				context.stroke();
+				context.fillStyle = gradientPath;
+				context.fill();
 			} break;
 			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);

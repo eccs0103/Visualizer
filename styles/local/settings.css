@@ -2,8 +2,6 @@ body {
 	display: grid;
 	grid-auto-rows: max-content;
 	place-items: start center;
-	gap: var(--size-gap);
-	padding: var(--size-large-gap);
 	overflow: hidden auto;
 }
 
@@ -19,7 +17,6 @@ div.-settings-panel {
 	width: fit-content;
 	height: fit-content;
 	display: grid;
-	padding: var(--size-large-gap);
 }
 
 button#reset-settings {

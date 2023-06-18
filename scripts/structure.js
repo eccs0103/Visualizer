@@ -130,6 +130,7 @@ class Visualizer extends Animator {
  * @property {Boolean | undefined} loop
  * @property {Number | undefined} quality
  * @property {VisualizerType | undefined} type
+ * @property {Boolean | undefined} autoFullscreen
  */
 class Settings {
 	/**
@@ -140,6 +141,7 @@ class Settings {
 		if (source.loop !== undefined) result.loop = source.loop;
 		if (source.quality !== undefined) result.#quality = source.quality;
 		if (source.type !== undefined) result.type = source.type;
+		if (source.autoFullscreen !== undefined) result.#autoFullscreen = source.autoFullscreen;
 		return result;
 	}
 	/**
@@ -150,6 +152,7 @@ class Settings {
 		result.loop = source.loop;
 		result.quality = source.#quality;
 		result.type = source.#type;
+		result.autoFullscreen = source.#autoFullscreen;
 		return result;
 	}
 	/** @type {Number} */ static #minQuality = 5;
@@ -164,8 +167,15 @@ class Settings {
 		this.loop = true;
 		this.quality = 10;
 		this.type = VisualizerType.spectrogram;
+		this.autoFullscreen = false;
 	}
-	loop;
+	/** @type {Boolean} */ #loop;
+	get loop() {
+		return this.#loop;
+	}
+	set loop(value) {
+		this.#loop = value;
+	}
 	/** @type {Number} */ #quality;
 	get quality() {
 		return this.#quality;
@@ -187,6 +197,13 @@ class Settings {
 		if (Object.values(VisualizerType).includes(value)) {
 			this.#type = value;
 		} else throw new TypeError(`Invalid visualizer type: '${value}'.`);
+	}
+	/** @type {Boolean} */ #autoFullscreen;
+	get autoFullscreen() {
+		return this.#autoFullscreen;
+	}
+	set autoFullscreen(value) {
+		this.#autoFullscreen = value;
 	}
 }
 //#endregion

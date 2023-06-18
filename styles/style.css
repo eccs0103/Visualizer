@@ -68,24 +68,36 @@ body {
 	display: none !important;
 }
 
-*.with-horizontal-padding,
-*.with-padding {
+*:where(.with-horizontal-padding, .with-padding) {
 	padding-inline: var(--size-gap);
 }
 
-*.with-vertical-padding,
-*.with-padding {
+*:where(.with-horizontal-padding, .with-padding).large-padding {
+	padding-inline: var(--size-large-gap);
+}
+
+*:where(.with-vertical-padding, .with-padding) {
 	padding-block: var(--size-gap);
 }
 
-*.with-horizontal-gap,
-*.with-gap {
+*:where(.with-vertical-padding, .with-padding).large-padding {
+	padding-block: var(--size-large-gap);
+}
+
+*:where(.with-horizontal-gap, .with-gap) {
 	row-gap: var(--size-gap);
 }
 
-*.with-vertical-gap,
-*.with-gap {
+*:where(.with-horizontal-gap, .with-gap).large-gap {
+	row-gap: var(--size-large-gap);
+}
+
+*:where(.with-vertical-gap, .with-gap) {
 	column-gap: var(--size-gap);
+}
+
+*:where(.with-vertical-gap, .with-gap).large-gap {
+	column-gap: var(--size-large-gap);
 }
 
 *.flex {

@@ -18,11 +18,11 @@
 	<script src="../scripts/settings.js" defer></script>
 </head>
 
-<body>
+<body class="with-gap with-padding large-padding">
 	<a href="./visualizer.html" role="button" class="flex centered with-padding">
 		<img src="../resources/return.png" alt="Return" class="icon">
 	</a>
-	<div class="layer rounded -settings-panel">
+	<div class="layer rounded with-padding large-padding -settings-panel">
 		<h1>Settings</h1>
 		<section class="option">
 			<p class="title">Loop audio</p>
@@ -44,6 +44,14 @@
 				<option value="spectrogram">Spectrogram</option>
 				<option value="waveform">Waveform</option>
 			</select>
+		</section>
+		<section class="option">
+			<p class="title">Auto fullscreen</p>
+			<dfn class="definition">Automatic enabling of fullscreen mode upon audio uploading.</dfn>
+			<input id="toggle-auto-fullscreen" type="checkbox" hidden>
+			<label for="toggle-auto-fullscreen" role="checkbox" class="depth toggle value">
+				<span class="layer knob"></span>
+			</label>
 		</section>
 		<section class="option">
 			<button id="reset-settings" class="with-padding rounded grid-line">Reset settings</button>
