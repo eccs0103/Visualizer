@@ -1,5 +1,5 @@
 # Visualizer
-Music Visualizer.
+Music Visualizer.  
 © Adaptive Core 2023  
 - - -
 ## Guide

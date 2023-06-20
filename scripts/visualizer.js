@@ -199,7 +199,7 @@ try {
 				for (let angle = 0; angle < 360; angle++) {
 					const coefficent = angle / 360;
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
-					const distance = (radius) * (0.75 + 0.25 * (datul) * (visualizer.getVolume(DataType.timeDomain)));
+					const distance = (radius) * (0.6 + 0.2 * (datul) * (visualizer.getVolume(DataType.timeDomain)));
 					const position = new Coordinate(
 						distance * Math.sin(coefficent * 2 * Math.PI),
 						distance * Math.cos(coefficent * 2 * Math.PI)
