@@ -1,9 +1,9 @@
 // @ts-ignore
-/** @typedef {import("./structure")} */
+/** @typedef {import("./structure.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/color")} */
+/** @typedef {import("./modules/color.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/coordinate")} */
+/** @typedef {import("./modules/coordinate.js")} */
 
 "use strict";
 
@@ -46,13 +46,14 @@ try {
 	});
 
 	const inputLoader = (/** @type {HTMLInputElement} */ (document.querySelector(`input#loader`)));
-	inputLoader.addEventListener(`input`, (event) => {
+	inputLoader.addEventListener(`input`, async (event) => {
 		event.stopPropagation();
 		if (!inputLoader.files) {
 			throw new ReferenceError(`Files list is empty.`);
 		}
 		const file = inputLoader.files[0];
 		audioPlayer.src = URL.createObjectURL(file);
+		// await databasePlaylist.set(`history`, file);
 		if (settings.autoFullscreen) {
 			document.documentElement.requestFullscreen({ navigationUI: `hide` });
 		}
@@ -73,6 +74,22 @@ try {
 			await document.exitFullscreen();
 		}
 	});
+
+	// void async function () {
+	// 	const history = await databasePlaylist.get(`history`);
+	// 	if (history !== undefined) {
+	// 		audioPlayer.src = URL.createObjectURL(history);
+	// 	}
+	// }();
+
+	const inputTimeTrack = (/** @type {HTMLInputElement} */ (document.querySelector(`input#time-track`)));
+	inputTimeTrack.style.setProperty(`--procent-fill`, `${Number(inputTimeTrack.value) * 100}%`);
+	inputTimeTrack.addEventListener(`input`, (event) => {
+		inputTimeTrack.style.setProperty(`--procent-fill`, `${Number(inputTimeTrack.value) * 100}%`);
+	});
+	inputTimeTrack.addEventListener(`change`, (event) => {
+		audioPlayer.currentTime = Number(inputTimeTrack.value) * audioPlayer.duration;
+	});
 	//#endregion
 	//#region Canvas
 	const canvas = (/** @type {HTMLCanvasElement} */ (document.querySelector(`canvas#visualizer`)));
@@ -91,6 +108,7 @@ try {
 		if (!Number.isNaN(audioPlayer.duration)) {
 			spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
 		}
+		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
 		//
 		/* Application.debug({
 			[`Length`]: visualizer.length,
@@ -132,14 +150,10 @@ try {
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 255;
 					const size = new Coordinate(0, canvas.height * datul);
 					const position = new Coordinate(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
-					const isPlayed = (audioPlayer.currentTime / audioPlayer.duration > coefficent);
 					const gradientPath = context.createLinearGradient(position.x, -canvas.height / 2, position.x, canvas.height / 2);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
 						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude() * (360 / duration))
 						.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
-					if (!isPlayed) {
-						highlight.lightness /= 2;
-					}
 					gradientPath.addColorStop(anchorTop, highlight.toString());
 					highlight.lightness /= 4;
 					gradientPath.addColorStop(anchor, highlight.toString());

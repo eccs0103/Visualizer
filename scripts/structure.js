@@ -1,6 +1,8 @@
 // @ts-ignore
 /** @typedef {import("./modules/archive.js")} */
 // @ts-ignore
+/** @typedef {import("./modules/database.js")} */
+// @ts-ignore
 /** @typedef {import("./modules/application.js")} */
 // @ts-ignore
 /** @typedef {import("./modules/engine.js")} */
@@ -207,39 +209,6 @@ class Settings {
 	}
 }
 //#endregion
-//#region Memory
-/**
- * @typedef MemoryNotation
- * @property {String} text
- * @property {String} type
- * @property {Number} time
- */
-class Memory {
-	/**
-	 * @param {MemoryNotation} source 
-	 */
-	static import(source) {
-		const result = new Memory();
-		result.text = source.text;
-		result.type = source.type;
-		result.time = source.time;
-		return result;
-	}
-	/**
-	 * @param {Memory} source 
-	 */
-	static export(source) {
-		const result = (/** @type {MemoryNotation} */ ({}));
-		result.text = source.text;
-		result.type = source.type;
-		result.time = source.time;
-		return result;
-	}
-	/** @type {String} */ text;
-	/** @type {String} */ type;
-	/** @type {Number} */ time;
-}
-//#endregion
 //#region Metadata
 /** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${Application.developer}\\${Application.title}\\Settings`, Settings.export(new Settings()));
 archiveSettings.change((data) => {
@@ -264,4 +233,5 @@ switch (theme) {
 		document.documentElement.dataset[`theme`] = theme;
 	} break;
 }
+/** @type {Database<Blob>} */ const databasePlaylist = new Database(`${Application.developer}\\${Application.title}\\Playlist`);
 //#endregion

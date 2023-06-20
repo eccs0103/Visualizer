@@ -1,5 +1,5 @@
 // @ts-ignore
-/** @typedef {import("./structure")} */
+/** @typedef {import("./structure.js")} */
 
 "use strict";
 

@@ -5,25 +5,25 @@
  */
 class Archive {
 	/**
-	 * @param {String} path 
-	 * @param {Notation | undefined} initial 
+	 * @param {String} key 
+	 * @param {Notation} [initial] 
 	 */
-	constructor(path, initial = undefined) {
-		this.#path = path;
-		if (localStorage.getItem(path) === null && initial !== undefined) {
-			localStorage.setItem(path, JSON.stringify(initial, undefined, `\t`));
+	constructor(key, initial) {
+		this.#key = key;
+		if (localStorage.getItem(this.#key) === null) {
+			localStorage.setItem(this.#key, JSON.stringify((initial === undefined ? `` : initial), undefined, `\t`))
 		}
 	}
-	/** @type {String} */ #path;
+	/** @type {String} */ #key;
 	get data() {
-		const item = localStorage.getItem(this.#path);
+		const item = localStorage.getItem(this.#key);
 		if (item === null) {
-			throw new ReferenceError(`Key '${this.#path}' isn't defined.`);
+			throw new ReferenceError(`Key '${this.#key}' isn't defined.`);
 		}
 		return (/** @type {Notation} */ (JSON.parse(item)));
 	}
 	set data(value) {
-		localStorage.setItem(this.#path, JSON.stringify(value, undefined, `\t`));
+		localStorage.setItem(this.#key, JSON.stringify(value, undefined, `\t`));
 	}
 	/**
 	 * @param {(value: Notation) => Notation} action 

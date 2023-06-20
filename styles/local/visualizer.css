@@ -114,3 +114,32 @@ body:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
 audio#player[src=""] ~ div#interface button#toggle-fullscreen {
 	display: none !important;
 }
+
+input#time-track {
+	inset: auto 0 0 0;
+	width: 100% !important;
+	height: 100%;
+	-webkit-appearance: none;
+	appearance: none;
+	--procent-fill: 0%;
+	position: relative;
+}
+
+audio#player[src=""] ~ input#time-track {
+	pointer-events: none;
+}
+
+input#time-track::-webkit-slider-thumb {
+	visibility: hidden;
+}
+
+input#time-track::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	width: var(--procent-fill);
+	background-color: var(--color-highlight);
+	pointer-events: none;
+}

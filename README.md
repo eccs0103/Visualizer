@@ -6,6 +6,10 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.4.11 (20.06.2023)
+- Added audio control slider.
+- Improved internal modules.
+
 ### Update 1.4.9 (18.06.2023)
 - Improved internal audio player.  
 - Added automatic fullscreen mode activation setting.  
