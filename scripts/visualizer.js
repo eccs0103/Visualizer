@@ -8,6 +8,7 @@
 "use strict";
 
 try {
+	const search = Application.search;
 	//#region Player
 	class MyAudioElement extends HTMLAudioElement {
 		constructor() {
@@ -100,6 +101,7 @@ try {
 	});
 	//
 	const visualizer = new Visualizer(canvas, audioPlayer);
+	visualizer.FPSLimit = 120;
 	visualizer.quality = settings.quality;
 	const duration = 5;
 	//
@@ -110,15 +112,27 @@ try {
 		}
 		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
 		//
-		/* Application.debug({
-			[`Length`]: visualizer.length,
-			[`FPS`]: visualizer.FPS.toFixed(),
-			[`Time`]: visualizer.time.toFixed(),
-			[`Alternating Volume`]: visualizer.getVolume(DataType.frequency).toFixed(2),
-			[`Direct Volume`]: visualizer.getVolume(DataType.timeDomain).toFixed(2),
-			[`Alternating Amplitude`]: visualizer.getAmplitude(DataType.frequency).toFixed(2),
-			[`Direct Amplitude`]: visualizer.getAmplitude(DataType.timeDomain).toFixed(2),
-		}); */
+		if (search.get(`debug`) === `on`) {
+			Application.debug({
+				[`visualizer type`]: `${settings.type}`,
+				[`frequency length`]: `${visualizer.length} bit`,
+				[`quality`]: `${visualizer.quality} level`,
+				[`launched`]: `${visualizer.launched}`,
+				[`was launched`]: `${visualizer.wasLaunched}`,
+				[`FPS limit`]: `${visualizer.FPSLimit}`,
+				[`FPS`]: `${visualizer.FPS.toFixed()}`,
+				[`audio time`]: `${(visualizer.time / 1000).toFixed(3)}s`,
+				[`audio duration`]: `${audioPlayer.duration.toFixed(3)}s`,
+				[`alternating volume`]: `${visualizer.getVolume(DataType.frequency).toFixed(3)}`,
+				[`direct volume`]: `${visualizer.getVolume(DataType.timeDomain).toFixed(3)}`,
+				[`alternating amplitude`]: `${visualizer.getAmplitude(DataType.frequency).toFixed(3)}`,
+				[`direct amplitude`]: `${visualizer.getAmplitude(DataType.timeDomain).toFixed(3)}`,
+				[`possibly bit`]: `${visualizer.isBeat()}`,
+				[`cycle duration`]: `${duration.toFixed(3)}s`,
+				[`fullscreen`]: `${document.fullscreenElement !== null}`,
+				[`auto fullscreen`]: `${settings.autoFullscreen}`,
+			});
+		}
 		//
 		switch (settings.type) {
 			//#region Spectrogram
@@ -211,8 +225,8 @@ try {
 					context.lineTo(position.x, position.y);
 				}
 				context.closePath();
-				context.fillStyle = gradientPath;
-				context.fill();
+				context.strokeStyle = gradientPath;
+				context.stroke();
 			} break;
 			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);
@@ -224,6 +238,7 @@ try {
 	});
 	audioPlayer.addEventListener(`pause`, (event) => {
 		visualizer.launched = false;
+		visualizer.invoke();
 	});
 	//#endregion
 } catch (exception) {

@@ -16,12 +16,15 @@ class Engine {
 		requestAnimationFrame(function callback(time) {
 			let current = time;
 			const difference = current - previous;
-			if (instance.#launched) {
+			const differenceLimit = 1000 / instance.#FPSLimit;
+			if (instance.#launched && difference > differenceLimit) {
 				instance.#time += difference;
 				instance.#FPS = 1000 / difference;
 				instance.#handler();
 			}
-			previous = current;
+			if (difference > differenceLimit) {
+				previous = current;
+			}
 			requestAnimationFrame(callback);
 		});
 	}
@@ -33,9 +36,22 @@ class Engine {
 		this.#handler = handler;
 		this.#handler();
 	}
+	invoke() {
+		this.#handler();
+	}
 	/** @type {DOMHighResTimeStamp} */ #time = 0;
 	/** @readonly */ get time() {
 		return this.#time;
+	}
+	/** @type {Number} */ #FPSLimit = Infinity;
+	get FPSLimit() {
+		return this.#FPSLimit;
+	}
+	set FPSLimit(value) {
+		if (value <= 0) {
+			throw new RangeError(`FPS limit must be higher then 0.`);
+		}
+		this.#FPSLimit = value;
 	}
 	/** @type {Number} */ #FPS = 0;
 	/** @readonly */ get FPS() {
@@ -47,5 +63,15 @@ class Engine {
 	}
 	set launched(value) {
 		this.#launched = value;
+		if (!this.#wasLaunched) {
+			this.#wasLaunched = true;
+		}
+	}
+	/** @type {Boolean} */ #wasLaunched = false;
+	get wasLaunched() {
+		return this.#wasLaunched;
+	}
+	set wasLaunched(value) {
+		this.#wasLaunched = value;
 	}
 }

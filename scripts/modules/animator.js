@@ -45,6 +45,9 @@ class Animator extends Engine {
 			this.#handler(this.#context);
 		});
 	}
+	invoke() {
+		this.#handler(this.#context);
+	}
 	/**
 	 * @param {Number} period time in miliseconds
 	 * @returns multiplier - [0, 1]
