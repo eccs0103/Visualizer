@@ -8,7 +8,7 @@
 "use strict";
 
 try {
-	const search = Application.search;
+
 	//#region Player
 	class MyAudioElement extends HTMLAudioElement {
 		constructor() {
@@ -75,6 +75,9 @@ try {
 			await document.exitFullscreen();
 		}
 	});
+	document.addEventListener(`fullscreenchange`, (event) => {
+		visualizer.invoke();
+	});
 
 	// void async function () {
 	// 	const history = await databasePlaylist.get(`history`);
@@ -90,6 +93,7 @@ try {
 	});
 	inputTimeTrack.addEventListener(`change`, (event) => {
 		audioPlayer.currentTime = Number(inputTimeTrack.value) * audioPlayer.duration;
+		visualizer.invoke();
 	});
 	//#endregion
 	//#region Canvas
@@ -121,7 +125,7 @@ try {
 				[`was launched`]: `${visualizer.wasLaunched}`,
 				[`FPS limit`]: `${visualizer.FPSLimit}`,
 				[`FPS`]: `${visualizer.FPS.toFixed()}`,
-				[`audio time`]: `${(visualizer.time / 1000).toFixed(3)}s`,
+				[`audio time`]: `${audioPlayer.currentTime.toFixed(3)}s`,
 				[`audio duration`]: `${audioPlayer.duration.toFixed(3)}s`,
 				[`alternating volume`]: `${visualizer.getVolume(DataType.frequency).toFixed(3)}`,
 				[`direct volume`]: `${visualizer.getVolume(DataType.timeDomain).toFixed(3)}`,

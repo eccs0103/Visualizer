@@ -136,14 +136,38 @@ class Visualizer extends Animator {
  */
 class Settings {
 	/**
-	 * @param {SettingsNotation} source 
+	 * @param {any} source 
 	 */
 	static import(source) {
 		const result = new Settings();
-		if (source.loop !== undefined) result.loop = source.loop;
-		if (source.quality !== undefined) result.#quality = source.quality;
-		if (source.type !== undefined) result.type = source.type;
-		if (source.autoFullscreen !== undefined) result.#autoFullscreen = source.autoFullscreen;
+		const loop = Reflect.get(source, `loop`);
+		if (loop !== undefined) {
+			if (typeof (loop) !== `boolean`) {
+				throw new TypeError(`Source 'loop' property must be 'Boolean' type.`);
+			}
+			result.loop = source.loop;
+		}
+		const quality = Reflect.get(source, `quality`);
+		if (quality !== undefined) {
+			if (typeof (quality) !== `number`) {
+				throw new TypeError(`Source 'quality' property must be 'Number' type.`);
+			}
+			result.quality = source.quality;
+		}
+		const type = Reflect.get(source, `type`);
+		if (type !== undefined) {
+			if (typeof (type) !== `string`) {
+				throw new TypeError(`Source 'type' property must be 'VisualizerType' type.`);
+			}
+			result.type = source.type;
+		}
+		const autoFullscreen = Reflect.get(source, `autoFullscreen`);
+		if (autoFullscreen !== undefined) {
+			if (typeof (autoFullscreen) !== `boolean`) {
+				throw new TypeError(`Source 'autoFullscreen' property must be 'Boolean' type.`);
+			}
+			result.autoFullscreen = source.autoFullscreen;
+		}
 		return result;
 	}
 	/**
@@ -152,9 +176,9 @@ class Settings {
 	static export(source) {
 		const result = (/** @type {SettingsNotation} */ ({}));
 		result.loop = source.loop;
-		result.quality = source.#quality;
-		result.type = source.#type;
-		result.autoFullscreen = source.#autoFullscreen;
+		result.quality = source.quality;
+		result.type = source.type;
+		result.autoFullscreen = source.autoFullscreen;
 		return result;
 	}
 	/** @type {Number} */ static #minQuality = 5;
@@ -226,7 +250,19 @@ archiveSettings.change((data) => {
 	}
 	return data;
 });
-let settings = Settings.import(archiveSettings.data);
+
+const search = Application.search;
+let settings = Settings.import((() => {
+	const protocol = search.get(`protocol`);
+	if (protocol === undefined) {
+		return archiveSettings.data;
+	} else {
+		const keys = Object.keys(Settings.export(new Settings()));
+		const values = protocol.split(`-`, keys.length);
+		return JSON.parse(`{ ${keys.map((key, index) => `"${key}": ${values[index]}`).join(`, `)} }`);
+	}
+})());
+
 const theme = Application.search.get(`theme`);
 switch (theme) {
 	case `light`: {
