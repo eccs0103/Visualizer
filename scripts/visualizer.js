@@ -143,43 +143,54 @@ try {
 			case VisualizerType.spectrogram: {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//
-				const anchor = 0.8 - 0.1 * visualizer.getAmplitude();
+				const anchor = 0.8;
 				const anchorTop = anchor * 2 / 3;
-				const anchorBottom = anchorTop + 1 / 3;
-				const gradientBackground = context.createLinearGradient(canvas.width / 2, -canvas.height / 2, canvas.width / 2, canvas.height / 2);
-				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor, ColorFormat.RGB);
-				gradientBackground.addColorStop(anchorTop, colorBackground.toString());
-				colorBackground.lightness /= 4;
-				gradientBackground.addColorStop(anchor, colorBackground.toString());
-				colorBackground.lightness *= 2;
-				gradientBackground.addColorStop(anchorBottom, colorBackground.toString());
-				context.fillStyle = gradientBackground;
-				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+				const anchorBottom = anchorTop + 1	 / 3;
 				//
 				const transform = context.getTransform();
-				transform.a = 1 + 0.2 * visualizer.getAmplitude();
+				transform.a = 1 + 0.2 * visualizer.getAmplitude(DataType.frequency);
 				transform.d = 1 + 0.2 * visualizer.getAmplitude();
-				transform.b = (visualizer.pulse(duration * 1000) * (0.2 * visualizer.getAmplitude()) * Math.PI / 16);
 				context.setTransform(transform);
 				//
+				context.globalCompositeOperation = `copy`;
+				const gradientPath = context.createLinearGradient(-canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2);
 				const data = visualizer.getData(DataType.frequency);
+				context.beginPath();
+				context.moveTo(-canvas.width / 2, canvas.height * (anchor - 0.5));
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / canvas.width;
-					const datul = data[Math.floor(coefficent * visualizer.length)] / 255;
+					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
 					const size = new Coordinate(0, canvas.height * datul);
 					const position = new Coordinate(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
-					const gradientPath = context.createLinearGradient(position.x, -canvas.height / 2, position.x, canvas.height / 2);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
 						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude() * (360 / duration))
 						.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
-					gradientPath.addColorStop(anchorTop, highlight.toString());
-					highlight.lightness /= 4;
-					gradientPath.addColorStop(anchor, highlight.toString());
-					highlight.lightness *= 2;
-					gradientPath.addColorStop(anchorBottom, highlight.toString());
-					context.fillStyle = gradientPath;
-					context.fillRect(position.x, position.y, 1, size.y);
+					gradientPath.addColorStop(coefficent, highlight.toString());
+					context.lineTo(position.x, position.y);
 				}
+				context.lineTo(canvas.width / 2, canvas.height * (anchor - 0.5));
+				for (let index = canvas.width - 1; index >= 0; index--) {
+					const coefficent = index / canvas.width;
+					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
+					const size = new Coordinate(0, canvas.height * datul);
+					const position = new Coordinate(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
+					context.lineTo(position.x, position.y + size.y);
+				}
+				context.closePath();
+				context.fillStyle = gradientPath;
+				context.fill();
+				//
+				context.globalCompositeOperation = `multiply`;
+				const gradientReflection = context.createLinearGradient(canvas.width / 2, -canvas.height / 2, canvas.width / 2, canvas.height / 2);
+				const colorReflection = Color.viaRGB(0, 0, 0, 0);
+				gradientReflection.addColorStop(anchorTop, colorReflection.toString(ColorFormat.HSL, true));
+				colorReflection.alpha = 0.8;
+				gradientReflection.addColorStop(anchor, colorReflection.toString(ColorFormat.HSL, true));
+				colorReflection.alpha = 0.4;
+				gradientReflection.addColorStop(anchorBottom, colorReflection.toString(ColorFormat.HSL, true));
+				context.fillStyle = gradientReflection;
+				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+		
 			} break;
 			//#endregion
 			//#region Waveform

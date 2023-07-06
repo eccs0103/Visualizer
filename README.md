@@ -6,14 +6,18 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.4.12 (06.07.2023)
+- Optimization of the "Spectrogram" visualization.
+- Improved rendering of the "Spectrogram".
+
 ### Update 1.4.11 (21.06.2023)
 - Added audio control slider.
 - Improved internal modules.
 
 ### Update 1.4.9 (18.06.2023)
-- Improved internal audio player.  
-- Added automatic fullscreen mode activation setting.  
-- Enhanced "Waveform" visualization.  
+- Improved internal audio player.
+- Added automatic fullscreen mode activation setting.
+- Enhanced "Waveform" visualization.
 
 ### Update 1.4.8 (16.06.2023)
 - Added fullscreen mode functionality.
