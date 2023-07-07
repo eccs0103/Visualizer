@@ -50,6 +50,7 @@ try {
 			inputToggleLoop.checked = settings.loop;
 			selectQuality.value = `${settings.quality}`;
 			selectVisualizerType.value = `${settings.type}`;
+			inputToggleAutoFullscreen.checked = settings.autoFullscreen;
 		}
 	});
 	//#endregion

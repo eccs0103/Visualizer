@@ -213,6 +213,7 @@ try {
 					.illuminate(0.8 + 0.2 * visualizer.getVolume(DataType.frequency));
 				context.strokeStyle = colorBackground.toString();
 				context.beginPath();
+				context.moveTo(-canvas.width / 2, 0);
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / canvas.width;
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
@@ -222,6 +223,7 @@ try {
 					);
 					context.lineTo(position.x, position.y);
 				}
+				context.lineTo(canvas.width / 2, 0);
 				context.stroke();
 				//
 				const gradientBackgroundShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);

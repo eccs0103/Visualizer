@@ -6,6 +6,10 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.4.14 (08.07.2023)
+- Fixed an issue where the auto-fullscreen toggle did not respond after restoring factory settings.
+- Fixed an issue where the sound wave in the "Waveform" visualization was distorted.
+
 ### Update 1.4.13 (07.07.2023)
 - Improved visualization of the "Waveform".
 - Added dynamic effects and shadows to the "Waveform" visualization.
