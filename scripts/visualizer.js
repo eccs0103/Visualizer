@@ -105,7 +105,7 @@ try {
 	});
 	//
 	const visualizer = new Visualizer(canvas, audioPlayer);
-	visualizer.FPSLimit = 120;
+	visualizer.FPSLimit = Infinity;
 	visualizer.quality = settings.quality;
 	const duration = 5;
 	//
@@ -145,14 +145,14 @@ try {
 				//
 				const anchor = 0.8;
 				const anchorTop = anchor * 2 / 3;
-				const anchorBottom = anchorTop + 1	 / 3;
+				const anchorBottom = anchorTop + 1 / 3;
 				//
 				const transform = context.getTransform();
 				transform.a = 1 + 0.2 * visualizer.getAmplitude(DataType.frequency);
 				transform.d = 1 + 0.2 * visualizer.getAmplitude();
 				context.setTransform(transform);
 				//
-				context.globalCompositeOperation = `copy`;
+				context.globalCompositeOperation = `source-over`;
 				const gradientPath = context.createLinearGradient(-canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2);
 				const data = visualizer.getData(DataType.frequency);
 				context.beginPath();
@@ -190,7 +190,7 @@ try {
 				gradientReflection.addColorStop(anchorBottom, colorReflection.toString(ColorFormat.HSL, true));
 				context.fillStyle = gradientReflection;
 				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-		
+
 			} break;
 			//#endregion
 			//#region Waveform
@@ -204,31 +204,41 @@ try {
 				//
 				const data = visualizer.getData(DataType.timeDomain);
 				const radius = Math.min(canvas.width, canvas.height) / 2;
-				context.lineWidth = radius / 256;
-				//
-				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor, ColorFormat.RGB);
-				context.fillStyle = colorBackground
+				const line = radius / 256;
+				context.lineWidth = line;
+				//#region Background
+				context.globalCompositeOperation = `source-over`;
+				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor, ColorFormat.RGB)
 					.invert()
-					.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency))
-					.toString();
+					.illuminate(0.8 + 0.2 * visualizer.getVolume(DataType.frequency));
+				context.strokeStyle = colorBackground.toString();
 				context.beginPath();
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / canvas.width;
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
 					const position = new Coordinate(
 						index - canvas.width / 2,
-						(radius / 2) * (datul) * (visualizer.getVolume(DataType.timeDomain))
+						(radius / 2) * datul * visualizer.getVolume(DataType.timeDomain)
 					);
 					context.lineTo(position.x, position.y);
 				}
-				context.fill();
+				context.stroke();
 				//
-				const gradientPath = context.createConicGradient(0, 0, 0);
+				const gradientBackgroundShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
+				gradientBackgroundShadow.addColorStop(0, colorBackground.pass(0).toString(ColorFormat.RGB, true));
+				gradientBackgroundShadow.addColorStop(1, colorBackground.pass(0.5).toString(ColorFormat.RGB, true));
+				context.fillStyle = gradientBackgroundShadow;
+				context.fill();
+				//#endregion
+				//#region Foreground
+				context.globalCompositeOperation = `xor`;
+				const colorForeground = Color.BLACK;
+				const gradientForegroundPath = context.createConicGradient(0, 0, 0);
 				context.beginPath();
 				for (let angle = 0; angle < 360; angle++) {
 					const coefficent = angle / 360;
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
-					const distance = (radius) * (0.6 + 0.2 * (datul) * (visualizer.getVolume(DataType.timeDomain)));
+					const distance = radius * (0.6 + 0.4 * datul * visualizer.getVolume(DataType.timeDomain));
 					const position = new Coordinate(
 						distance * Math.sin(coefficent * 2 * Math.PI),
 						distance * Math.cos(coefficent * 2 * Math.PI)
@@ -236,12 +246,20 @@ try {
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
 						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude() * (360 / duration))
 						.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
-					gradientPath.addColorStop(coefficent, highlight.toString(ColorFormat.RGB, true));
+					gradientForegroundPath.addColorStop(coefficent, highlight.toString(ColorFormat.RGB, true));
 					context.lineTo(position.x, position.y);
 				}
 				context.closePath();
-				context.strokeStyle = gradientPath;
-				context.stroke();
+				context.fillStyle = gradientForegroundPath;
+				context.fill();
+				//
+				context.globalCompositeOperation = `destination-out`;
+				const gradientForegroundShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
+				gradientForegroundShadow.addColorStop(0, colorForeground.pass(1).toString(ColorFormat.RGB, true));
+				gradientForegroundShadow.addColorStop(1, colorForeground.pass(0).toString(ColorFormat.RGB, true));
+				context.fillStyle = gradientForegroundShadow;
+				context.fill();
+				//#endregion
 			} break;
 			//#endregion
 			default: throw new TypeError(`Invalid visualizer type: '${settings.type}'.`);

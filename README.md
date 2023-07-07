@@ -6,6 +6,10 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.4.13 (07.07.2023)
+- Improved visualization of the "Waveform".
+- Added dynamic effects and shadows to the "Waveform" visualization.
+
 ### Update 1.4.12 (06.07.2023)
 - Optimization of the "Spectrogram" visualization.
 - Improved rendering of the "Spectrogram".
