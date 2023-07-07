@@ -6,11 +6,11 @@
 	/** @readonly */ error: 2,
 };
 class Application {
-	/** @type {String} */ static #developer = ``;
+	/** @type {String} */ static #developer = `Adaptive Core`;
 	/** @readonly */ static get developer() {
 		return this.#developer;
 	}
-	/** @type {String} */ static #title = ``;
+	/** @type {String} */ static #title = `Visualizer`;
 	/** @readonly */ static get title() {
 		return this.#title;
 	}
