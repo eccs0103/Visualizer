@@ -33,7 +33,8 @@ class Visualizer extends Animator {
 
 		const audioContext = new AudioContext();
 		this.#analyser = audioContext.createAnalyser();
-		audioContext.createMediaElementSource(media).connect(this.#analyser);
+		const source = audioContext.createMediaElementSource(media);
+		source.connect(this.#analyser);
 		this.#analyser.connect(audioContext.destination);
 		media.addEventListener(`play`, async (event) => {
 			await audioContext.resume();
@@ -44,7 +45,48 @@ class Visualizer extends Animator {
 		this.#arrayTimeDomainData = new Uint8Array(this.length);
 		this.#volumeFrequency = 0;
 		this.#volumeTimeDomain = 0;
+		//
+		// const reader = new FileReader();
+		// reader.addEventListener(`loadend`, (event) => {
+		// 	const uint8Array = new Uint8Array(/** @type {ArrayBuffer} */(reader.result));
+		// 	const mp4File = new File([uint8Array], `${Date.now()}.mp4`, {
+		// 		type: `video/mp4`
+		// 	});
+		// 	Application.download(mp4File);
+		// });
+		// //
+		// const stream = canvas.captureStream(); // Get video stream from canvas
+		// const destination = audioContext.createMediaStreamDestination();
+		// stream.addTrack(destination.stream.getAudioTracks()[0]);
+
+		// this.#recorder = new MediaRecorder(stream, {
+		// 	mimeType: `video/webm`,
+		// });
+
+		// const chunks = [];
+		// this.#recorder.addEventListener(`dataavailable`, (event) => {
+		// 	chunks.push(event.data);
+		// });
+		// this.#recorder.addEventListener(`stop`, (event) => {
+		// 	const webmFile = new File(chunks, `${Date.now()}.webm`, {
+		// 		type: `video/webm`
+		// 	});
+		// 	reader.readAsArrayBuffer(webmFile);
+		// });
 	}
+	// #recorder;
+	// get launched() {
+	// 	return super.launched;
+	// }
+	// set launched(value) {
+	// 	if (value) {
+	// 		this.#recorder.start();
+	// 		super.launched = true;
+	// 	} else {
+	// 		super.launched = false;
+	// 		this.#recorder.stop();
+	// 	}
+	// }
 	/** @type {AnalyserNode} */ #analyser;
 	/** @readonly */ get length() {
 		return this.#analyser.frequencyBinCount;
@@ -94,8 +136,7 @@ class Visualizer extends Animator {
 		}
 	}
 	isBeat() {
-		const threshold = 0.5;
-		return (this.#amplitudeTimeDomain > threshold);
+		return (this.#amplitudeTimeDomain > this.#volumeFrequency);
 	}
 	/**
 	 * @param {VisualizerHandler} handler 
@@ -115,8 +156,8 @@ class Visualizer extends Animator {
 			}
 			this.#volumeFrequency = (summaryFrequency / this.length);
 			this.#volumeTimeDomain = (summaryTimeDomain / this.length);
-			this.#amplitudeTimeDomain = Math.sqrt(summarySquareTimeDomain / this.length);
 			this.#amplitudeFrequency = Math.sqrt(summarySquareFrequency / this.length);
+			this.#amplitudeTimeDomain = Math.sqrt(summarySquareTimeDomain / this.length);
 			handler(context);
 		});
 	}

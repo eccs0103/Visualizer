@@ -171,7 +171,7 @@ class Application {
 	static #debug = (() => {
 		const debug = document.body.appendChild(document.createElement(`div`));
 		debug.id = `debug`;
-		debug.classList.add(`layer`, `rounded`, `in-top`, `in-right`, `with-padding`);
+		debug.classList.add(`layer`, `rounded`, `in-top`, `in-right`, `with-vertical-gap`, `with-padding`);
 		debug.hidden = true;
 		return debug;
 	})();
@@ -185,7 +185,11 @@ class Application {
 			Application.#debug.hidden = false;
 		}
 		if (object !== undefined && !Application.#debug.hidden) {
-			Application.#debug.innerText = Object.entries(object).map(([key, value]) => `${key}:\t${value}`).join(`\n`);
+			Application.#debug.replaceChildren(...Object.entries(object).flat().map((item) => {
+				const span = document.createElement(`span`);
+				span.innerText = item;
+				return span;
+			}));
 		}
 	}
 	/**

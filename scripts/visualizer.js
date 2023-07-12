@@ -56,7 +56,7 @@ try {
 		audioPlayer.src = URL.createObjectURL(file);
 		// await databasePlaylist.set(`history`, file);
 		if (settings.autoFullscreen) {
-			document.documentElement.requestFullscreen({ navigationUI: `hide` });
+			await document.documentElement.requestFullscreen({ navigationUI: `hide` });
 		}
 	});
 
@@ -209,8 +209,7 @@ try {
 				//#region Background
 				context.globalCompositeOperation = `source-over`;
 				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor, ColorFormat.RGB)
-					.invert()
-					.illuminate(0.8 + 0.2 * visualizer.getVolume(DataType.frequency));
+					.invert();
 				context.strokeStyle = colorBackground.toString();
 				context.beginPath();
 				context.moveTo(-canvas.width / 2, 0);
@@ -240,7 +239,7 @@ try {
 				for (let angle = 0; angle < 360; angle++) {
 					const coefficent = angle / 360;
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
-					const distance = radius * (0.6 + 0.4 * datul * visualizer.getVolume(DataType.timeDomain));
+					const distance = radius * (0.75 + 0.25 * datul * visualizer.getVolume(DataType.timeDomain));
 					const position = new Coordinate(
 						distance * Math.sin(coefficent * 2 * Math.PI),
 						distance * Math.cos(coefficent * 2 * Math.PI)

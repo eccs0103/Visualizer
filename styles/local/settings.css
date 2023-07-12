@@ -14,17 +14,28 @@ a[href="./visualizer.html"] {
 div.-settings-panel {
 	min-width: var(--size-large-standart);
 	max-width: calc(100vmin - 2 * var(--size-large-gap));
+	width: -moz-fit-content;
 	width: fit-content;
 	height: fit-content;
 	display: grid;
 }
 
+select#visualizer-type:not(:has(option[value="spectrogram"]:checked)) ~ div.-spectrogram {
+	display: none !important;
+}
+
+select#visualizer-type:not(:has(option[value="waveform"]:checked)) ~ div.-waveform {
+	display: none !important;
+}
+
 button#reset-settings {
+	width: -moz-fit-content;
 	width: fit-content;
 	justify-self: center;
 }
 
 button#share-settings {
+	width: -moz-fit-content;
 	width: fit-content;
 	justify-self: center;
 }

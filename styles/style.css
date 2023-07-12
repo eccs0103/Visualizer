@@ -231,6 +231,11 @@ dialog.pop-up div.footer:empty {
 div#debug {
 	position: fixed;
 	inset: 0 0 auto auto;
+	display: grid;
+	grid-template-columns: repeat(2, auto);
+}
+
+div#debug *:nth-child(2n) {
 	text-align: right;
 }
 
