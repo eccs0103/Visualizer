@@ -60,6 +60,14 @@ try {
 		}
 	});
 
+	audioPlayer.addEventListener(`loadstart`, (event) => {
+		// application.alert(`loading...`);
+	});
+
+	audioPlayer.addEventListener(`loadeddata`, (event) => {
+		// application.alert(`loading completed`);
+	});
+
 	const aSettings = (/** @type {HTMLAnchorElement} */ (document.querySelector(`a[href="./settings.html"]`)));
 	aSettings.addEventListener(`click`, (event) => {
 		event.stopPropagation();
@@ -151,46 +159,46 @@ try {
 				transform.a = 1 + 0.2 * visualizer.getAmplitude(DataType.frequency);
 				transform.d = 1 + 0.2 * visualizer.getAmplitude(DataType.timeDomain);
 				context.setTransform(transform);
-				//
+				//#region Foreground
 				context.globalCompositeOperation = `source-over`;
 				const gradientPath = context.createLinearGradient(-canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2);
 				const data = visualizer.getData(DataType.frequency);
 				context.beginPath();
-				context.moveTo(-canvas.width / 2, canvas.height * (anchor - 0.5));
-				for (let index = 0; index < canvas.width; index++) {
+				for (let counter = -canvas.width; counter < canvas.width; counter++) {
+					let index = counter;
+					if (counter < 0) {
+						index = Math.abs(counter) - 1;
+					}
 					const coefficent = index / canvas.width;
 					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
 					const size = new Point2X(0, canvas.height * datul);
 					const position = new Point2X(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
-					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
-						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(DataType.timeDomain) * (360 / duration))
-						.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
-					gradientPath.addColorStop(coefficent, highlight.toString());
-					context.lineTo(position.x, position.y);
-				}
-				context.lineTo(canvas.width / 2, canvas.height * (anchor - 0.5));
-				for (let index = canvas.width - 1; index >= 0; index--) {
-					const coefficent = index / canvas.width;
-					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
-					const size = new Point2X(0, canvas.height * datul);
-					const position = new Point2X(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
-					context.lineTo(position.x, position.y + size.y);
+					if (counter < 0) {
+						context.lineTo(position.x, position.y + size.y);
+					} else {
+						const highlight = Color.viaHSL(coefficent * 360, 100, 50)
+							.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(DataType.timeDomain) * (360 / duration))
+							.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
+						gradientPath.addColorStop(coefficent, highlight.toString());
+						context.lineTo(position.x, position.y);
+					}
 				}
 				context.closePath();
 				context.fillStyle = gradientPath;
 				context.fill();
-				//
+				//#endregion
+				//#region Shadow
 				context.globalCompositeOperation = `multiply`;
-				const gradientReflection = context.createLinearGradient(canvas.width / 2, -canvas.height / 2, canvas.width / 2, canvas.height / 2);
-				const colorReflection = Color.viaRGB(0, 0, 0, 0);
-				gradientReflection.addColorStop(anchorTop, colorReflection.toString(ColorFormats.HSL, true));
-				colorReflection.alpha = 0.8;
-				gradientReflection.addColorStop(anchor, colorReflection.toString(ColorFormats.HSL, true));
-				colorReflection.alpha = 0.4;
-				gradientReflection.addColorStop(anchorBottom, colorReflection.toString(ColorFormats.HSL, true));
-				context.fillStyle = gradientReflection;
+				const gradientShadow = context.createLinearGradient(canvas.width / 2, -canvas.height / 2, canvas.width / 2, canvas.height / 2);
+				const colorShadow = Color.viaRGB(0, 0, 0, 0);
+				gradientShadow.addColorStop(anchorTop, colorShadow.toString(ColorFormats.HSL, true));
+				colorShadow.alpha = 0.8;
+				gradientShadow.addColorStop(anchor, colorShadow.toString(ColorFormats.HSL, true));
+				colorShadow.alpha = 0.4;
+				gradientShadow.addColorStop(anchorBottom, colorShadow.toString(ColorFormats.HSL, true));
+				context.fillStyle = gradientShadow;
 				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-
+				//#endregion
 			} break;
 			//#endregion
 			//#region Waveform
@@ -202,7 +210,7 @@ try {
 				transform.d = 1 + 0.4 * visualizer.getAmplitude(DataType.timeDomain);
 				context.setTransform(transform);
 				//
-				// const data = visualizer.getData(DataType.frequency);
+				const data = visualizer.getData(DataType.timeDomain);
 				const radius = Math.min(canvas.width, canvas.height) / 2;
 				const line = radius / 256;
 				context.lineWidth = line;
@@ -215,7 +223,7 @@ try {
 				context.moveTo(-canvas.width / 2, 0);
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / canvas.width;
-					const datul = visualizer.getData(DataType.timeDomain)[Math.floor(coefficent * visualizer.length)] / 128 - 1;
+					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
 					const position = new Point2X(
 						index - canvas.width / 2,
 						(radius / 2) * datul * visualizer.getVolume(DataType.frequency)
@@ -238,7 +246,7 @@ try {
 				context.beginPath();
 				for (let angle = 0; angle < 360; angle++) {
 					const coefficent = angle / 360;
-					const datul = visualizer.getData(DataType.timeDomain)[Math.floor(coefficent * visualizer.length)] / 128 - 1;
+					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
 					const distance = radius * (0.75 + 0.25 * datul * visualizer.getVolume(DataType.frequency));
 					const position = new Point2X(
 						distance * Math.sin(coefficent * 2 * Math.PI),
