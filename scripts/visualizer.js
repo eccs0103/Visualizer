@@ -3,7 +3,7 @@
 // @ts-ignore
 /** @typedef {import("./modules/color.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/coordinate.js")} */
+/** @typedef {import("./modules/deprecated/measures.js")} */
 
 "use strict";
 
@@ -117,7 +117,7 @@ try {
 		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
 		//
 		if (search.get(`debug`) === `on`) {
-			Application.debug({
+			application.debug({
 				[`visualizer type`]: `${settings.type}`,
 				[`frequency length`]: `${visualizer.length} bit`,
 				[`quality`]: `${visualizer.quality} level`,
@@ -149,7 +149,7 @@ try {
 				//
 				const transform = context.getTransform();
 				transform.a = 1 + 0.2 * visualizer.getAmplitude(DataType.frequency);
-				transform.d = 1 + 0.2 * visualizer.getAmplitude();
+				transform.d = 1 + 0.2 * visualizer.getAmplitude(DataType.timeDomain);
 				context.setTransform(transform);
 				//
 				context.globalCompositeOperation = `source-over`;
@@ -160,10 +160,10 @@ try {
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / canvas.width;
 					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
-					const size = new Coordinate(0, canvas.height * datul);
-					const position = new Coordinate(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
+					const size = new Point2X(0, canvas.height * datul);
+					const position = new Point2X(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
-						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude() * (360 / duration))
+						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(DataType.timeDomain) * (360 / duration))
 						.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
 					gradientPath.addColorStop(coefficent, highlight.toString());
 					context.lineTo(position.x, position.y);
@@ -172,8 +172,8 @@ try {
 				for (let index = canvas.width - 1; index >= 0; index--) {
 					const coefficent = index / canvas.width;
 					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
-					const size = new Coordinate(0, canvas.height * datul);
-					const position = new Coordinate(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
+					const size = new Point2X(0, canvas.height * datul);
+					const position = new Point2X(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
 					context.lineTo(position.x, position.y + size.y);
 				}
 				context.closePath();
@@ -183,11 +183,11 @@ try {
 				context.globalCompositeOperation = `multiply`;
 				const gradientReflection = context.createLinearGradient(canvas.width / 2, -canvas.height / 2, canvas.width / 2, canvas.height / 2);
 				const colorReflection = Color.viaRGB(0, 0, 0, 0);
-				gradientReflection.addColorStop(anchorTop, colorReflection.toString(ColorFormat.HSL, true));
+				gradientReflection.addColorStop(anchorTop, colorReflection.toString(ColorFormats.HSL, true));
 				colorReflection.alpha = 0.8;
-				gradientReflection.addColorStop(anchor, colorReflection.toString(ColorFormat.HSL, true));
+				gradientReflection.addColorStop(anchor, colorReflection.toString(ColorFormats.HSL, true));
 				colorReflection.alpha = 0.4;
-				gradientReflection.addColorStop(anchorBottom, colorReflection.toString(ColorFormat.HSL, true));
+				gradientReflection.addColorStop(anchorBottom, colorReflection.toString(ColorFormats.HSL, true));
 				context.fillStyle = gradientReflection;
 				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 
@@ -198,27 +198,27 @@ try {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//
 				const transform = context.getTransform();
-				transform.a = 1 + 0.4 * visualizer.getAmplitude();
-				transform.d = 1 + 0.4 * visualizer.getAmplitude();
+				transform.a = 1 + 0.4 * visualizer.getAmplitude(DataType.timeDomain);
+				transform.d = 1 + 0.4 * visualizer.getAmplitude(DataType.timeDomain);
 				context.setTransform(transform);
 				//
-				const data = visualizer.getData(DataType.timeDomain);
+				// const data = visualizer.getData(DataType.frequency);
 				const radius = Math.min(canvas.width, canvas.height) / 2;
 				const line = radius / 256;
 				context.lineWidth = line;
 				//#region Background
 				context.globalCompositeOperation = `source-over`;
-				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor, ColorFormat.RGB)
+				const colorBackground = Color.parse(getComputedStyle(document.body).backgroundColor, ColorFormats.RGB)
 					.invert();
 				context.strokeStyle = colorBackground.toString();
 				context.beginPath();
 				context.moveTo(-canvas.width / 2, 0);
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / canvas.width;
-					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
-					const position = new Coordinate(
+					const datul = visualizer.getData(DataType.timeDomain)[Math.floor(coefficent * visualizer.length)] / 128 - 1;
+					const position = new Point2X(
 						index - canvas.width / 2,
-						(radius / 2) * datul * visualizer.getVolume(DataType.timeDomain)
+						(radius / 2) * datul * visualizer.getVolume(DataType.frequency)
 					);
 					context.lineTo(position.x, position.y);
 				}
@@ -226,8 +226,8 @@ try {
 				context.stroke();
 				//
 				const gradientBackgroundShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
-				gradientBackgroundShadow.addColorStop(0, colorBackground.pass(0).toString(ColorFormat.RGB, true));
-				gradientBackgroundShadow.addColorStop(1, colorBackground.pass(0.5).toString(ColorFormat.RGB, true));
+				gradientBackgroundShadow.addColorStop(0, colorBackground.pass(0).toString(ColorFormats.RGB, true));
+				gradientBackgroundShadow.addColorStop(1, colorBackground.pass(0.5).toString(ColorFormats.RGB, true));
 				context.fillStyle = gradientBackgroundShadow;
 				context.fill();
 				//#endregion
@@ -238,16 +238,16 @@ try {
 				context.beginPath();
 				for (let angle = 0; angle < 360; angle++) {
 					const coefficent = angle / 360;
-					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
-					const distance = radius * (0.75 + 0.25 * datul * visualizer.getVolume(DataType.timeDomain));
-					const position = new Coordinate(
+					const datul = visualizer.getData(DataType.timeDomain)[Math.floor(coefficent * visualizer.length)] / 128 - 1;
+					const distance = radius * (0.75 + 0.25 * datul * visualizer.getVolume(DataType.frequency));
+					const position = new Point2X(
 						distance * Math.sin(coefficent * 2 * Math.PI),
 						distance * Math.cos(coefficent * 2 * Math.PI)
 					);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
-						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude() * (360 / duration))
+						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(DataType.timeDomain) * (360 / duration))
 						.illuminate(0.2 + 0.8 * visualizer.getVolume(DataType.frequency));
-					gradientForegroundPath.addColorStop(coefficent, highlight.toString(ColorFormat.RGB, true));
+					gradientForegroundPath.addColorStop(coefficent, highlight.toString(ColorFormats.RGB, true));
 					context.lineTo(position.x, position.y);
 				}
 				context.closePath();
@@ -256,8 +256,12 @@ try {
 				//
 				context.globalCompositeOperation = `destination-out`;
 				const gradientForegroundShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
-				gradientForegroundShadow.addColorStop(0, colorForeground.pass(1).toString(ColorFormat.RGB, true));
-				gradientForegroundShadow.addColorStop(1, colorForeground.pass(0).toString(ColorFormat.RGB, true));
+				const parts = 5;
+				for (let index = 0; index <= parts; index++) {
+					const coefficent = index / parts;
+					const patency = Math.sqrt(1 - coefficent);
+					gradientForegroundShadow.addColorStop(coefficent, colorForeground.pass(patency).toString(ColorFormats.RGB, true));
+				}
 				context.fillStyle = gradientForegroundShadow;
 				context.fill();
 				//#endregion
@@ -276,5 +280,5 @@ try {
 	});
 	//#endregion
 } catch (exception) {
-	Application.prevent(exception);
+	application.prevent(exception);
 }

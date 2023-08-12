@@ -1,10 +1,12 @@
 "use strict";
 
-/** @enum {String} */ const ColorFormat = {
+/** @enum {String} */ const ColorFormats = {
 	/** @readonly */ RGB: `RGB`,
 	/** @readonly */ HSL: `HSL`,
 	/** @readonly */ HEX: `HEX`,
 };
+Object.freeze(ColorFormats);
+
 class Color {
 	//#region Converters
 	/**
@@ -22,9 +24,9 @@ class Color {
 			return lightness - (saturation * Math.min(lightness, 1 - lightness)) * Math.max(-1, Math.min(sector - 3, 9 - sector, 1));
 		}
 		return [
-			Math.floor(transform(0) * 255),
-			Math.floor(transform(8) * 255),
-			Math.floor(transform(4) * 255)
+			Math.trunc(transform(0) * 255),
+			Math.trunc(transform(8) * 255),
+			Math.trunc(transform(4) * 255)
 		];
 	}
 	/**
@@ -40,32 +42,32 @@ class Color {
 		const value = Math.max(red, green, blue), level = value - Math.min(red, green, blue), f = (1 - Math.abs(value + value - level - 1));
 		const hue = level && ((value == red) ? (green - blue) / level : ((value == green) ? 2 + (blue - red) / level : 4 + (red - green) / level));
 		return [
-			Math.floor((hue < 0 ? hue + 6 : hue) * 60),
-			Math.floor((f ? level / f : 0) * 100),
-			Math.floor(((value + value - level) / 2) * 100)
+			Math.trunc((hue < 0 ? hue + 6 : hue) * 60),
+			Math.trunc((f ? level / f : 0) * 100),
+			Math.trunc(((value + value - level) / 2) * 100)
 		];
 	}
 	/**
 	 * @param {Color} source 
-	 * @param {ColorFormat} format 
+	 * @param {ColorFormats} format 
 	 * @param {Boolean} deep 
 	 */
-	static stringify(source, format = ColorFormat.RGB, deep = false) {
+	static stringify(source, format = ColorFormats.RGB, deep = false) {
 		switch (format) {
-			case ColorFormat.RGB: return `rgb${deep ? `a` : ``}(${source.#red}, ${source.#green}, ${source.#blue}${deep ? `, ${source.#alpha}` : ``})`;
-			case ColorFormat.HSL: return `hsl${deep ? `a` : ``}(${source.#hue}deg, ${source.#saturation}%, ${source.#lightness}%${deep ? `, ${source.#alpha}` : ``})`;
-			case ColorFormat.HEX: return `#${source.#red.toString(16).replace(/^(?!.{2})/, `0`)}${source.#green.toString(16).replace(/^(?!.{2})/, `0`)}${source.#blue.toString(16).replace(/^(?!.{2})/, `0`)}${deep ? (source.#alpha * 255).toString(16).replace(/^(?!.{2})/, `0`) : ``}`;
+			case ColorFormats.RGB: return `rgb${deep ? `a` : ``}(${source.#red}, ${source.#green}, ${source.#blue}${deep ? `, ${source.#alpha}` : ``})`;
+			case ColorFormats.HSL: return `hsl${deep ? `a` : ``}(${source.#hue}deg, ${source.#saturation}%, ${source.#lightness}%${deep ? `, ${source.#alpha}` : ``})`;
+			case ColorFormats.HEX: return `#${source.#red.toString(16).replace(/^(?!.{2})/, `0`)}${source.#green.toString(16).replace(/^(?!.{2})/, `0`)}${source.#blue.toString(16).replace(/^(?!.{2})/, `0`)}${deep ? (source.#alpha * 255).toString(16).replace(/^(?!.{2})/, `0`) : ``}`;
 			default: throw new TypeError(`Invalid color format: '${format}'.`);
 		}
 	}
 	/**
 	 * @param {String} source 
-	 * @param {ColorFormat} format 
+	 * @param {ColorFormats} format 
 	 * @param {Boolean} deep 
 	 */
-	static parse(source, format = ColorFormat.RGB, deep = false) {
+	static parse(source, format = ColorFormats.RGB, deep = false) {
 		switch (format) {
-			case ColorFormat.RGB: {
+			case ColorFormats.RGB: {
 				const regex = new RegExp(`rgb${deep ? `a` : ``}\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*${deep ? `,\\s*(0(\\.\\d+)?|1(\\.0+)?)\\s*` : ``}\\)`, `i`);
 				const matches = regex.exec(source);
 				if (!matches) {
@@ -74,7 +76,7 @@ class Color {
 				const [, red, green, blue, alpha] = matches.map((item) => Number.parseInt(item));
 				return Color.viaRGB(red, green, blue, deep ? alpha : 1);
 			};
-			case ColorFormat.HSL: {
+			case ColorFormats.HSL: {
 				const regex = new RegExp(`hsl${deep ? `a` : ``}\\(\\s*(\\d+)(?:deg)?\\s*,\\s*(\\d+)(?:%)?\\s*,\\s*(\\d+)(?:%)?\\s*${deep ? `,\\s*(0(\\.\\d+)?|1(\\.0+)?)\\s*` : ``}\\)`, `i`);
 				const matches = regex.exec(source);
 				if (!matches) {
@@ -83,7 +85,7 @@ class Color {
 				const [, hue, saturation, lightness, alpha] = matches.map((item) => Number.parseInt(item));
 				return Color.viaHSL(hue, saturation, lightness, deep ? alpha : 1);
 			};
-			case ColorFormat.HEX: {
+			case ColorFormats.HEX: {
 				const regex = new RegExp(`#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})${deep ? `([0-9a-f]{2})` : ``}`, `i`);
 				const matches = regex.exec(source);
 				if (!matches) {
@@ -100,7 +102,7 @@ class Color {
 	 */
 	static tryParse(source) {
 		let result = null;
-		for (const [format, deep] of Object.keys(ColorFormat).flatMap((format) => (/** @type {Array<[String, Boolean]>} */ ([[format, false], [format, true]])))) {
+		for (const [format, deep] of Object.values(ColorFormats).flatMap((format) => (/** @type {Array<[String, Boolean]>} */ ([[format, false], [format, true]])))) {
 			try {
 				result = Color.parse(source, format, deep);
 				break;
@@ -124,9 +126,9 @@ class Color {
 		if (green < 0 || green > 255) throw new RangeError(`Property 'green' out of range: ${green}`);
 		if (blue < 0 || blue > 255) throw new RangeError(`Property 'blue' out of range: ${blue}`);
 		if (alpha < 0 || alpha > 1) throw new RangeError(`Property 'alpha' out of range: ${alpha}`);
-		result.#green = Math.floor(green);
-		result.#red = Math.floor(red);
-		result.#blue = Math.floor(blue);
+		result.#green = Math.trunc(green);
+		result.#red = Math.trunc(red);
+		result.#blue = Math.trunc(blue);
 		[result.#hue, result.#saturation, result.#lightness] = Color.#RGBtoHSL(result.#red, result.#green, result.#blue);
 		result.#alpha = alpha;
 		return result;
@@ -143,9 +145,9 @@ class Color {
 		if (saturation < 0 || saturation > 100) throw new RangeError(`Property 'saturation' out of range: ${saturation}`);
 		if (lightness < 0 || lightness > 100) throw new RangeError(`Property 'lightness' out of range: ${lightness}`);
 		if (alpha < 0 || alpha > 1) throw new RangeError(`Property 'alpha' out of range: ${alpha}`);
-		result.#hue = Math.floor(hue);
-		result.#saturation = Math.floor(saturation);
-		result.#lightness = Math.floor(lightness);
+		result.#hue = Math.trunc(hue);
+		result.#saturation = Math.trunc(saturation);
+		result.#lightness = Math.trunc(lightness);
 		[result.#red, result.#green, result.#blue] = Color.#HSLtoRGB(result.#hue, result.#saturation, result.#lightness);
 		result.#alpha = alpha;
 		return result;
@@ -247,7 +249,7 @@ class Color {
 	 * @param {Number} angle 
 	 */
 	static rotate(source, angle) {
-		const temp = Math.floor(source.#hue + angle) % 361;
+		const temp = Math.trunc(source.#hue + angle) % 361;
 		source.hue = (temp < 0) ? temp + 360 : temp;
 		return source;
 	}
@@ -286,7 +288,7 @@ class Color {
 	}
 	set red(value) {
 		if (value < 0 || value > 255) throw new RangeError(`Property 'red' out of range: ${value}`);
-		this.#red = Math.floor(value);
+		this.#red = Math.trunc(value);
 		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
 	}
 	/** @type {Number} */ #green = 0;
@@ -295,7 +297,7 @@ class Color {
 	}
 	set green(value) {
 		if (value < 0 || value > 255) throw new RangeError(`Property 'green' out of range: ${value}`);
-		this.#green = Math.floor(value);
+		this.#green = Math.trunc(value);
 		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
 	}
 	/** @type {Number} */ #blue = 0;
@@ -304,7 +306,7 @@ class Color {
 	}
 	set blue(value) {
 		if (value < 0 || value > 255) throw new RangeError(`Property 'blue' out of range: ${value}`);
-		this.#blue = Math.floor(value);
+		this.#blue = Math.trunc(value);
 		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
 	}
 	/** @type {Number} */ #hue = 0;
@@ -313,7 +315,7 @@ class Color {
 	}
 	set hue(value) {
 		if (value < 0 || value > 360) throw new RangeError(`Property 'hue' out of range: ${value}`);
-		this.#hue = Math.floor(value);
+		this.#hue = Math.trunc(value);
 		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
 	}
 	/** @type {Number} */ #saturation = 0;
@@ -322,7 +324,7 @@ class Color {
 	}
 	set saturation(value) {
 		if (value < 0 || value > 100) throw new RangeError(`Property 'saturation' out of range: ${value}`);
-		this.#saturation = Math.floor(value);
+		this.#saturation = Math.trunc(value);
 		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
 	}
 	/** @type {Number} */ #lightness = 0;
@@ -331,7 +333,7 @@ class Color {
 	}
 	set lightness(value) {
 		if (value < 0 || value > 100) throw new RangeError(`Property 'lightness' out of range: ${value}`);
-		this.#lightness = Math.floor(value);
+		this.#lightness = Math.trunc(value);
 		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
 	}
 	/** @type {Number} */ #alpha = 1;
@@ -345,22 +347,10 @@ class Color {
 	//#endregion
 	//#region Methods
 	/**
-	 * @param {Color} value 
-	 */
-	assign(value) {
-		this.#red = value.#red;
-		this.#green = value.#green;
-		this.#blue = value.#blue;
-		this.#hue = value.#hue;
-		this.#saturation = value.#saturation;
-		this.#lightness = value.#lightness;
-		this.#alpha = value.#alpha;
-	}
-	/**
-	 * @param {ColorFormat} format 
+	 * @param {ColorFormats} format 
 	 * @param {Boolean} deep
 	 */
-	toString(format = ColorFormat.RGB, deep = false) {
+	toString(format = ColorFormats.RGB, deep = false) {
 		return Color.stringify(this, format, deep);
 	}
 	/**

@@ -11,7 +11,7 @@ class Archive {
 	constructor(key, initial) {
 		this.#key = key;
 		if (localStorage.getItem(this.#key) === null) {
-			localStorage.setItem(this.#key, JSON.stringify((initial === undefined ? `` : initial), undefined, `\t`))
+			localStorage.setItem(this.#key, JSON.stringify((initial === undefined ? `` : initial), undefined, `\t`));
 		}
 	}
 	/** @type {String} */ #key;

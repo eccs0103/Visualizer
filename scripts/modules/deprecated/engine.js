@@ -17,12 +17,12 @@ class Engine {
 			let current = time;
 			const difference = current - previous;
 			const differenceLimit = 1000 / instance.#FPSLimit;
-			if (instance.#launched && difference > differenceLimit) {
-				instance.#time += difference;
-				instance.#FPS = 1000 / difference;
-				instance.#handler();
-			}
 			if (difference > differenceLimit) {
+				if (instance.#launched) {
+					instance.#time += difference;
+					instance.#FPS = 1000 / difference;
+					instance.#handler();
+				}
 				previous = current;
 			}
 			requestAnimationFrame(callback);

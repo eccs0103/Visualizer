@@ -18,7 +18,6 @@ class Random {
 	/**
 	 * @template Item 
 	 * @param {Map<Item, Number>} cases 
-	 * @returns 
 	 */
 	static case(cases) {
 		const summary = Array.from(cases).reduce((previous, [, percentage]) => previous + percentage, 0);

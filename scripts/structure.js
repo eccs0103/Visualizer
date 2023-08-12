@@ -1,21 +1,22 @@
 // @ts-ignore
-/** @typedef {import("./modules/archive.js")} */
+/** @typedef {import("./modules/deprecated/archive.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/database.js")} */
+/** @typedef {import("./modules/deprecated/database.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/application.js")} */
+/** @typedef {import("./modules/deprecated/application.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/engine.js")} */
+/** @typedef {import("./modules/deprecated/engine.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/animator.js")} */
+/** @typedef {import("./modules/deprecated/animator.js")} */
 
 "use strict";
 
 //#region Visualizer
 /** @enum {String} */ const DataType = {
 	/** @readonly */ frequency: `frequency`,
-	/** @readonly */ timeDomain: `time domain`,
+	/** @readonly */ timeDomain: `timeDomain`,
 };
+Object.freeze(DataType);
 
 /**
  * @callback VisualizerHandler
@@ -45,48 +46,7 @@ class Visualizer extends Animator {
 		this.#arrayTimeDomainData = new Uint8Array(this.length);
 		this.#volumeFrequency = 0;
 		this.#volumeTimeDomain = 0;
-		//
-		// const reader = new FileReader();
-		// reader.addEventListener(`loadend`, (event) => {
-		// 	const uint8Array = new Uint8Array(/** @type {ArrayBuffer} */(reader.result));
-		// 	const mp4File = new File([uint8Array], `${Date.now()}.mp4`, {
-		// 		type: `video/mp4`
-		// 	});
-		// 	Application.download(mp4File);
-		// });
-		// //
-		// const stream = canvas.captureStream(); // Get video stream from canvas
-		// const destination = audioContext.createMediaStreamDestination();
-		// stream.addTrack(destination.stream.getAudioTracks()[0]);
-
-		// this.#recorder = new MediaRecorder(stream, {
-		// 	mimeType: `video/webm`,
-		// });
-
-		// const chunks = [];
-		// this.#recorder.addEventListener(`dataavailable`, (event) => {
-		// 	chunks.push(event.data);
-		// });
-		// this.#recorder.addEventListener(`stop`, (event) => {
-		// 	const webmFile = new File(chunks, `${Date.now()}.webm`, {
-		// 		type: `video/webm`
-		// 	});
-		// 	reader.readAsArrayBuffer(webmFile);
-		// });
 	}
-	// #recorder;
-	// get launched() {
-	// 	return super.launched;
-	// }
-	// set launched(value) {
-	// 	if (value) {
-	// 		this.#recorder.start();
-	// 		super.launched = true;
-	// 	} else {
-	// 		super.launched = false;
-	// 		this.#recorder.stop();
-	// 	}
-	// }
 	/** @type {AnalyserNode} */ #analyser;
 	/** @readonly */ get length() {
 		return this.#analyser.frequencyBinCount;
@@ -102,7 +62,7 @@ class Visualizer extends Animator {
 	/** @type {Uint8Array} */ #arrayFrequencyData;
 	/** @type {Uint8Array} */ #arrayTimeDomainData;
 	/**
-	 * @param {DataType} type lengthvolume
+	 * @param {DataType} type 
 	 */
 	getData(type) {
 		switch (type) {
@@ -128,13 +88,16 @@ class Visualizer extends Animator {
 	/**
 	 * @param {DataType} type 
 	 */
-	getAmplitude(type = DataType.timeDomain) {
+	getAmplitude(type) {
 		switch (type) {
 			case DataType.frequency: return this.#amplitudeFrequency;
 			case DataType.timeDomain: return this.#amplitudeTimeDomain;
 			default: throw new TypeError(`Invalid data type: '${type}'.`);
 		}
 	}
+	/**
+	 * Not perfect filter
+	 */
 	isBeat() {
 		return (this.#amplitudeTimeDomain > this.#volumeFrequency);
 	}
@@ -275,7 +238,8 @@ class Settings {
 }
 //#endregion
 //#region Metadata
-/** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${Application.developer}\\${Application.title}\\Settings`, Settings.export(new Settings()));
+const application = new Application(`Adaptive Core`, `Visualizer`);
+/** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${application.developer}\\${application.title}\\Settings`, Settings.export(new Settings()));
 archiveSettings.change((data) => {
 	switch (data.type) {
 		case `classic`: {
@@ -292,7 +256,7 @@ archiveSettings.change((data) => {
 	return data;
 });
 
-const search = Application.search;
+const search = application.search;
 let settings = Settings.import((() => {
 	const protocol = search.get(`protocol`);
 	if (protocol === undefined) {
@@ -304,11 +268,11 @@ let settings = Settings.import((() => {
 	}
 })());
 
-const theme = Application.search.get(`theme`);
+const theme = application.search.get(`theme`);
 switch (theme) {
 	case `light`: {
 		document.documentElement.dataset[`theme`] = theme;
 	} break;
 }
-/** @type {Database<Blob>} */ const databasePlaylist = new Database(`${Application.developer}\\${Application.title}\\Playlist`);
+/** @type {Database<Blob>} */ const databasePlaylist = new Database(`${application.developer}\\${application.title}\\Playlist`);
 //#endregion

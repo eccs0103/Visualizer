@@ -107,11 +107,6 @@ body *::placeholder {
 	filter: invert(1);
 }
 
-button,
-*[role="button"] {
-	color: var(--color-highlight);
-}
-
 *[role="combobox"] {
 	color: var(--color-text) !important;
 }

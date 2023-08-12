@@ -6,16 +6,24 @@
 	/** @readonly */ error: 2,
 };
 class Application {
-	/** @type {String} */ static #developer = `Adaptive Core`;
-	/** @readonly */ static get developer() {
+	/**
+	 * @param {String} developer 
+	 * @param {String} title 
+	 */
+	constructor(developer, title) {
+		this.#developer = developer;
+		this.#title = title;
+	}
+	/** @type {String} */ #developer;
+	/** @readonly */ get developer() {
 		return this.#developer;
 	}
-	/** @type {String} */ static #title = `Visualizer`;
-	/** @readonly */ static get title() {
+	/** @type {String} */ #title;
+	/** @readonly */ get title() {
 		return this.#title;
 	}
-	static #locked = true;
-	/** @readonly */ static get search() {
+	#locked = true;
+	/** @readonly */ get search() {
 		return new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {
 			const [key, value] = item.split(`=`);
 			return [key, value];
@@ -24,7 +32,7 @@ class Application {
 	/**
 	 * @param {File} file 
 	 */
-	static download(file) {
+	download(file) {
 		const aLink = document.createElement(`a`);
 		aLink.download = file.name;
 		aLink.href = URL.createObjectURL(file);
@@ -35,7 +43,7 @@ class Application {
 	/**
 	 * @param {MessageType} type 
 	 */
-	static #popup(type) {
+	#popup(type) {
 		const dialog = document.body.appendChild(document.createElement(`dialog`));
 		dialog.classList.add(`layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`, `pop-up`);
 		dialog.showModal();
@@ -74,7 +82,7 @@ class Application {
 	 * @param {String} message 
 	 * @param {MessageType} type 
 	 */
-	static async alert(message, type = MessageType.log) {
+	alert(message, type = MessageType.log) {
 		const dialog = this.#popup(type);
 		{
 			const divMain = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.main`)));
@@ -95,7 +103,7 @@ class Application {
 	 * @param {String} message 
 	 * @param {MessageType} type 
 	 */
-	static async confirm(message, type = MessageType.log) {
+	confirm(message, type = MessageType.log) {
 		const dialog = this.#popup(type);
 		{
 			const divMain = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.main`)));
@@ -135,7 +143,7 @@ class Application {
 	 * @param {String} message 
 	 * @param {MessageType} type 
 	 */
-	static async prompt(message, type = MessageType.log) {
+	prompt(message, type = MessageType.log) {
 		const dialog = this.#popup(type);
 		{
 			const divMain = (/** @type {HTMLDivElement} */ (dialog.querySelector(`div.main`)));
@@ -168,7 +176,7 @@ class Application {
 			}
 		}
 	}
-	static #debug = (() => {
+	#debug = (() => {
 		const debug = document.body.appendChild(document.createElement(`div`));
 		debug.id = `debug`;
 		debug.classList.add(`layer`, `rounded`, `in-top`, `in-right`, `with-vertical-gap`, `with-padding`);
@@ -178,14 +186,14 @@ class Application {
 	/**
 	 * @param {Object} [object]
 	 */
-	static debug(object) {
-		if (object === undefined && !Application.#debug.hidden) {
-			Application.#debug.hidden = true;
-		} else if (object !== undefined && Application.#debug.hidden) {
-			Application.#debug.hidden = false;
+	debug(object) {
+		if (object === undefined && !this.#debug.hidden) {
+			this.#debug.hidden = true;
+		} else if (object !== undefined && this.#debug.hidden) {
+			this.#debug.hidden = false;
 		}
-		if (object !== undefined && !Application.#debug.hidden) {
-			Application.#debug.replaceChildren(...Object.entries(object).flat().map((item) => {
+		if (object !== undefined && !this.#debug.hidden) {
+			this.#debug.replaceChildren(...Object.entries(object).flat().map((item) => {
 				const span = document.createElement(`span`);
 				span.innerText = item;
 				return span;
@@ -195,9 +203,9 @@ class Application {
 	/**
 	 * @param {any} exception 
 	 */
-	static async prevent(exception) {
+	async prevent(exception) {
 		if (this.#locked) {
-			await Application.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`, MessageType.error);
+			await this.alert(exception instanceof Error ? exception.stack ?? `${exception.name}: ${exception.message}` : `Invalid exception type.`, MessageType.error);
 			location.reload();
 		} else console.error(exception);
 	}

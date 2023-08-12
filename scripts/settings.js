@@ -45,7 +45,7 @@ try {
 	//#region Reset settings
 	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
 	buttonResetSettings.addEventListener(`click`, async (event) => {
-		if (await Application.confirm(`The settings will be reset to factory defaults. Are you sure?`, MessageType.warn)) {
+		if (await application.confirm(`The settings will be reset to factory defaults. Are you sure?`, MessageType.warn)) {
 			settings = new Settings();
 			inputToggleLoop.checked = settings.loop;
 			selectQuality.value = `${settings.quality}`;
@@ -65,17 +65,17 @@ try {
 		// const link = location.href;
 		location.assign(window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`));
 		// if (location.href == link) {
-		// 	if (await Application.confirm(`Your browser does not support mail sharing. Do you want to share it manualy?`, MessageType.warn)) {
+		// 	if (await application.confirm(`Your browser does not support mail sharing. Do you want to share it manualy?`, MessageType.warn)) {
 		// 		navigator.share({
 		// 			title: subject,
 		// 			text: message,
 		// 		}).catch((reason) => {
-		// 			Application.prevent(reason);
+		// 			application.prevent(reason);
 		// 		})
 		// 	}
 		// }
 	});
 	//#endregion
 } catch (exception) {
-	Application.prevent(exception);
+	application.prevent(exception);
 }

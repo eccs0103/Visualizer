@@ -6,6 +6,12 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.4.17 (12.08.2023)
+- Metadata has been modified.
+- Now it's possible to upload audio and video.
+- Modules have been updated.
+- "Waveform" visualization has been improved.
+
 ### Update 1.4.15 (12.07.2023)
 - Added descriptions for visualization types in the settings.
 - Fixed an issue where the "Waveform" visualization was displayed incorrectly in the light theme.
