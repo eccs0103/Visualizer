@@ -1,6 +1,10 @@
 "use strict";
 
 class ACPanelElement extends HTMLElement {
+	connectedCallback() {
+		this.animate([{ opacity: `0` }], { duration: 0, fill: `both` });
+		this.hidden = true;
+	}
 	/** @type {Number} */ #duration = 250;
 	get duration() {
 		return this.#duration;
@@ -17,8 +21,8 @@ class ACPanelElement extends HTMLElement {
 	}
 	async close() {
 		await this.animate([
-			{ opacity: `0` },
 			{ opacity: `1` },
+			{ opacity: `0` },
 		], { duration: this.duration, fill: `both` }).finished;
 		this.hidden = true;
 	}
