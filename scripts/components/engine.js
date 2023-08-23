@@ -1,43 +1,29 @@
 "use strict";
 
-/**
- * @callback EngineHandler
- * @returns {void}
- */
-
-class Engine {
+class Engine extends EventTarget {
 	/**
 	 * @param {Boolean} launch
 	 */
 	constructor(launch = false) {
-		const instance = this;
-		instance.#launched = launch;
+		super();
+		const $this = this;
 		let previous = 0;
 		requestAnimationFrame(function callback(time) {
 			let current = time;
 			const difference = current - previous;
-			const differenceLimit = 1000 / instance.#FPSLimit;
+			const differenceLimit = 1000 / $this.#FPSLimit;
 			if (difference > differenceLimit) {
-				if (instance.#launched) {
-					instance.#time += difference;
-					instance.#FPS = 1000 / difference;
-					instance.#handler();
+				if ($this.launched) {
+					$this.#time += difference;
+					$this.#FPS = 1000 / difference;
+					$this.dispatchEvent(new Event(`render`));
 				}
 				previous = current;
 			}
 			requestAnimationFrame(callback);
 		});
-	}
-	/** @type {EngineHandler} */ #handler = () => { };
-	/**
-	 * @param {EngineHandler} handler 
-	 */
-	renderer(handler) {
-		this.#handler = handler;
-		this.#handler();
-	}
-	invoke() {
-		this.#handler();
+
+		this.launched = launch;
 	}
 	/** @type {DOMHighResTimeStamp} */ #time = 0;
 	/** @readonly */ get time() {
@@ -63,15 +49,27 @@ class Engine {
 	}
 	set launched(value) {
 		this.#launched = value;
-		if (!this.#wasLaunched) {
-			this.#wasLaunched = true;
-		}
+		this.dispatchEvent(new Event(`launch`));
 	}
-	/** @type {Boolean} */ #wasLaunched = false;
-	get wasLaunched() {
-		return this.#wasLaunched;
+	/**
+	 * @param {Number} period time in miliseconds
+	 * @returns multiplier - [0, 1]
+	 */
+	impulse(period) {
+		return this.time % period / period;
 	}
-	set wasLaunched(value) {
-		this.#wasLaunched = value;
+	/**
+	 * @param {Number} period time in miliseconds
+	 * @returns multiplier - [-1, 1]
+	 */
+	pulse(period) {
+		return Math.sin(this.impulse(period) * 2 * Math.PI);
+	}
+	/**
+	 * @param {Number} period time in miliseconds
+	 * @returns multiplier - [0, 1]
+	 */
+	bounce(period) {
+		return Math.abs(this.pulse(period));
 	}
 }

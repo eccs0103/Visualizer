@@ -40,7 +40,7 @@ class Color {
 		green /= 255;
 		blue /= 255;
 		const value = Math.max(red, green, blue), level = value - Math.min(red, green, blue), f = (1 - Math.abs(value + value - level - 1));
-		const hue = level && ((value == red) ? (green - blue) / level : ((value == green) ? 2 + (blue - red) / level : 4 + (red - green) / level));
+		const hue = level && ((value === red) ? (green - blue) / level : ((value === green) ? 2 + (blue - red) / level : 4 + (red - green) / level));
 		return [
 			Math.trunc((hue < 0 ? hue + 6 : hue) * 60),
 			Math.trunc((f ? level / f : 0) * 100),

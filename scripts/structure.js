@@ -1,36 +1,26 @@
 // @ts-ignore
-/** @typedef {import("./modules/deprecated/archive.js")} */
+/** @typedef {import("./components/archive.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/deprecated/database.js")} */
+/** @typedef {import("./components/manager.js")} */
 // @ts-ignore
-/** @typedef {import("./modules/deprecated/application.js")} */
-// @ts-ignore
-/** @typedef {import("./modules/deprecated/engine.js")} */
-// @ts-ignore
-/** @typedef {import("./modules/deprecated/animator.js")} */
+/** @typedef {import("./components/animator.js")} */
 
 "use strict";
 
 //#region Visualizer
-/** @enum {String} */ const DataType = {
+/** @enum {String} */ const Datalist = {
 	/** @readonly */ frequency: `frequency`,
 	/** @readonly */ timeDomain: `timeDomain`,
 };
-Object.freeze(DataType);
-
-/**
- * @callback VisualizerHandler
- * @param {CanvasRenderingContext2D} context
- * @returns {void}
- */
+Object.freeze(Datalist);
 
 class Visualizer extends Animator {
 	/**
-	 * @param {HTMLCanvasElement} canvas 
+	 * @param {CanvasRenderingContext2D} context 
 	 * @param {HTMLMediaElement} media 
 	 */
-	constructor(canvas, media) {
-		super(canvas);
+	constructor(context, media) {
+		super(context);
 
 		const audioContext = new AudioContext();
 		this.#analyser = audioContext.createAnalyser();
@@ -46,6 +36,24 @@ class Visualizer extends Animator {
 		this.#arrayTimeDomainData = new Uint8Array(this.length);
 		this.#volumeFrequency = 0;
 		this.#volumeTimeDomain = 0;
+
+		this.addEventListener(`render`, (event) => {
+			this.#analyser.getByteFrequencyData(this.#arrayFrequencyData);
+			this.#analyser.getByteTimeDomainData(this.#arrayTimeDomainData);
+			let summaryFrequency = 0, summaryTimeDomain = 0;
+			let summarySquareFrequency = 0, summarySquareTimeDomain = 0;
+			for (let index = 0; index < this.length; index++) {
+				const dataFrequency = this.#arrayFrequencyData[index] / 255, dataTimeDomain = this.#arrayTimeDomainData[index] / 128 - 1;
+				summaryFrequency += dataFrequency;
+				summaryTimeDomain += dataTimeDomain;
+				summarySquareTimeDomain += dataTimeDomain * dataTimeDomain;
+				summarySquareFrequency += dataFrequency * dataFrequency;
+			}
+			this.#volumeFrequency = (summaryFrequency / this.length);
+			this.#volumeTimeDomain = (summaryTimeDomain / this.length);
+			this.#amplitudeFrequency = Math.sqrt(summarySquareFrequency / this.length);
+			this.#amplitudeTimeDomain = Math.sqrt(summarySquareTimeDomain / this.length);
+		});
 	}
 	/** @type {AnalyserNode} */ #analyser;
 	/** @readonly */ get length() {
@@ -62,36 +70,36 @@ class Visualizer extends Animator {
 	/** @type {Uint8Array} */ #arrayFrequencyData;
 	/** @type {Uint8Array} */ #arrayTimeDomainData;
 	/**
-	 * @param {DataType} type 
+	 * @param {Datalist} type 
 	 */
 	getData(type) {
 		switch (type) {
-			case DataType.frequency: return this.#arrayFrequencyData;
-			case DataType.timeDomain: return this.#arrayTimeDomainData;
+			case Datalist.frequency: return this.#arrayFrequencyData;
+			case Datalist.timeDomain: return this.#arrayTimeDomainData;
 			default: throw new TypeError(`Invalid data type: '${type}'.`);
 		}
 	}
 	/** @type {Number} */ #volumeFrequency;
 	/** @type {Number} */ #volumeTimeDomain;
 	/**
-	 * @param {DataType} type 
+	 * @param {Datalist} type 
 	 */
 	getVolume(type) {
 		switch (type) {
-			case DataType.frequency: return this.#volumeFrequency;
-			case DataType.timeDomain: return this.#volumeTimeDomain;
+			case Datalist.frequency: return this.#volumeFrequency;
+			case Datalist.timeDomain: return this.#volumeTimeDomain;
 			default: throw new TypeError(`Invalid data type: '${type}'.`);
 		}
 	}
 	/** @type {Number} */ #amplitudeFrequency;
 	/** @type {Number} */ #amplitudeTimeDomain;
 	/**
-	 * @param {DataType} type 
+	 * @param {Datalist} type 
 	 */
 	getAmplitude(type) {
 		switch (type) {
-			case DataType.frequency: return this.#amplitudeFrequency;
-			case DataType.timeDomain: return this.#amplitudeTimeDomain;
+			case Datalist.frequency: return this.#amplitudeFrequency;
+			case Datalist.timeDomain: return this.#amplitudeTimeDomain;
 			default: throw new TypeError(`Invalid data type: '${type}'.`);
 		}
 	}
@@ -101,43 +109,24 @@ class Visualizer extends Animator {
 	isBeat() {
 		return (this.#amplitudeTimeDomain > this.#volumeFrequency);
 	}
-	/**
-	 * @param {VisualizerHandler} handler 
-	 */
-	renderer(handler) {
-		super.renderer((context) => {
-			this.#analyser.getByteFrequencyData(this.#arrayFrequencyData);
-			this.#analyser.getByteTimeDomainData(this.#arrayTimeDomainData);
-			let summaryFrequency = 0, summaryTimeDomain = 0;
-			let summarySquareFrequency = 0, summarySquareTimeDomain = 0;
-			for (let index = 0; index < this.length; index++) {
-				const dataFrequency = this.#arrayFrequencyData[index] / 255, dataTimeDomain = this.#arrayTimeDomainData[index] / 128 - 1;
-				summaryFrequency += dataFrequency;
-				summaryTimeDomain += dataTimeDomain;
-				summarySquareTimeDomain += dataTimeDomain * dataTimeDomain;
-				summarySquareFrequency += dataFrequency * dataFrequency;
-			}
-			this.#volumeFrequency = (summaryFrequency / this.length);
-			this.#volumeTimeDomain = (summaryTimeDomain / this.length);
-			this.#amplitudeFrequency = Math.sqrt(summarySquareFrequency / this.length);
-			this.#amplitudeTimeDomain = Math.sqrt(summarySquareTimeDomain / this.length);
-			handler(context);
-		});
-	}
 }
 //#endregion
 //#region Settings
-/** @enum {String} */ const VisualizerType = {
+
+/** @enum {String} */ const Visualizations = {
 	/** @readonly */ spectrogram: `spectrogram`,
 	/** @readonly */ waveform: `waveform`,
 };
+Object.freeze(Visualizations);
+
 /**
  * @typedef SettingsNotation
- * @property {Boolean | undefined} loop
- * @property {Number | undefined} quality
- * @property {VisualizerType | undefined} type
- * @property {Boolean | undefined} autoFullscreen
+ * @property {Boolean} [loop]
+ * @property {Number | undefined} [quality]
+ * @property {Visualizations} [type]
+ * @property {Boolean} [autoplay]
  */
+
 class Settings {
 	/**
 	 * @param {any} source 
@@ -149,28 +138,28 @@ class Settings {
 			if (typeof (loop) !== `boolean`) {
 				throw new TypeError(`Source 'loop' property must be 'Boolean' type.`);
 			}
-			result.loop = source.loop;
+			result.loop = loop;
 		}
 		const quality = Reflect.get(source, `quality`);
 		if (quality !== undefined) {
 			if (typeof (quality) !== `number`) {
 				throw new TypeError(`Source 'quality' property must be 'Number' type.`);
 			}
-			result.quality = source.quality;
+			result.quality = quality;
 		}
 		const type = Reflect.get(source, `type`);
 		if (type !== undefined) {
 			if (typeof (type) !== `string`) {
-				throw new TypeError(`Source 'type' property must be 'VisualizerType' type.`);
+				throw new TypeError(`Source 'type' property must be 'Visualization' type.`);
 			}
-			result.type = source.type;
+			result.type = type;
 		}
-		const autoFullscreen = Reflect.get(source, `autoFullscreen`);
-		if (autoFullscreen !== undefined) {
-			if (typeof (autoFullscreen) !== `boolean`) {
-				throw new TypeError(`Source 'autoFullscreen' property must be 'Boolean' type.`);
+		const autoplay = Reflect.get(source, `autoplay`);
+		if (autoplay !== undefined) {
+			if (typeof (autoplay) !== `boolean`) {
+				throw new TypeError(`Source 'autoplay' property must be 'Boolean' type.`);
 			}
-			result.autoFullscreen = source.autoFullscreen;
+			result.autoplay = autoplay;
 		}
 		return result;
 	}
@@ -182,7 +171,7 @@ class Settings {
 		result.loop = source.loop;
 		result.quality = source.quality;
 		result.type = source.type;
-		result.autoFullscreen = source.autoFullscreen;
+		result.autoplay = source.autoplay;
 		return result;
 	}
 	/** @type {Number} */ static #minQuality = 5;
@@ -193,20 +182,14 @@ class Settings {
 	/** @readonly */ static get maxQuality() {
 		return this.#maxQuality;
 	}
-	constructor() {
-		this.loop = true;
-		this.quality = 10;
-		this.type = VisualizerType.spectrogram;
-		this.autoFullscreen = false;
-	}
-	/** @type {Boolean} */ #loop;
+	/** @type {Boolean} */ #loop = true;
 	get loop() {
 		return this.#loop;
 	}
 	set loop(value) {
 		this.#loop = value;
 	}
-	/** @type {Number} */ #quality;
+	/** @type {Number} */ #quality = 10;
 	get quality() {
 		return this.#quality;
 	}
@@ -219,45 +202,49 @@ class Settings {
 		}
 		this.#quality = value;
 	}
-	/** @type {VisualizerType} */ #type;
+	/** @type {Visualizations} */ #type = Visualizations.spectrogram;
 	get type() {
 		return this.#type;
 	}
 	set type(value) {
-		if (Object.values(VisualizerType).includes(value)) {
+		if (Object.values(Visualizations).includes(value)) {
 			this.#type = value;
-		} else throw new TypeError(`Invalid visualizer type: '${value}'.`);
+		} else throw new TypeError(`Invalid visualization: '${value}'.`);
 	}
-	/** @type {Boolean} */ #autoFullscreen;
-	get autoFullscreen() {
-		return this.#autoFullscreen;
+	/** @type {Boolean} */ #autoplay = true;
+	get autoplay() {
+		return this.#autoplay;
 	}
-	set autoFullscreen(value) {
-		this.#autoFullscreen = value;
+	set autoplay(value) {
+		this.#autoplay = value;
+	}
+	reset() {
+		const settings = new Settings();
+		this.loop = settings.loop;
+		this.quality = settings.quality;
+		this.type = settings.type;
+		this.autoplay = settings.autoplay;
 	}
 }
 //#endregion
 //#region Metadata
-const application = new Application(`Adaptive Core`, `Visualizer`);
-/** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${application.developer}\\${application.title}\\Settings`, Settings.export(new Settings()));
-archiveSettings.change((data) => {
-	switch (data.type) {
-		case `classic`: {
-			data.type = VisualizerType.spectrogram;
-		} break;
-		case `pulsar`: {
-			data.type = VisualizerType.waveform;
-		} break;
-	}
-	const fftSize = data[`FFTSize`];
-	if (fftSize !== undefined) {
-		data.quality = Math.log2(fftSize);
-	}
-	return data;
-});
+const metaAuthor = document.querySelector(`meta[name="author"]`);
+if (!(metaAuthor instanceof HTMLMetaElement)) {
+	throw new TypeError(`Invalid element: ${metaAuthor}`);
+}
+const developer = metaAuthor.content;
 
-const search = application.search;
-let settings = Settings.import((() => {
+const metaApplicationName = document.querySelector(`meta[name="application-name"]`);
+if (!(metaApplicationName instanceof HTMLMetaElement)) {
+	throw new TypeError(`Invalid element: ${metaApplicationName}`);
+}
+const title = metaApplicationName.content;
+
+/** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${developer}.${title}.Settings`, Settings.export(new Settings()));
+// /** @type {Database<Blob>} */ const databasePlaylist = new Database(`${developer}.${title}.Playlist`);
+
+const search = Manager.getSearch();
+const settings = Settings.import((() => {
 	const protocol = search.get(`protocol`);
 	if (protocol === undefined) {
 		return archiveSettings.data;
@@ -267,12 +254,10 @@ let settings = Settings.import((() => {
 		return JSON.parse(`{ ${keys.map((key, index) => `"${key}": ${values[index]}`).join(`, `)} }`);
 	}
 })());
-
-const theme = application.search.get(`theme`);
+const theme = search.get(`theme`);
 switch (theme) {
 	case `light`: {
 		document.documentElement.dataset[`theme`] = theme;
 	} break;
 }
-/** @type {Database<Blob>} */ const databasePlaylist = new Database(`${application.developer}\\${application.title}\\Playlist`);
 //#endregion

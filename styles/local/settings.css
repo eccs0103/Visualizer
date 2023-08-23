@@ -20,11 +20,11 @@ div.-settings-panel {
 	display: grid;
 }
 
-select#visualizer-type:not(:has(option[value="spectrogram"]:checked)) ~ div.-spectrogram {
+select#visualization:not(:has(option[value="spectrogram"]:checked)) ~ div.-spectrogram {
 	display: none !important;
 }
 
-select#visualizer-type:not(:has(option[value="waveform"]:checked)) ~ div.-waveform {
+select#visualization:not(:has(option[value="waveform"]:checked)) ~ div.-waveform {
 	display: none !important;
 }
 

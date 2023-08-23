@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Type: text/html">
+	<meta http-equiv="Content-Type: text/html; charset=UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="application-name" content="Visualizer">
 	<meta name="author" content="Adaptive Core">
@@ -15,12 +15,13 @@
 	<link rel="stylesheet" href="../styles/style.css">
 	<link rel="stylesheet" href="../styles/themes/material.css">
 	<link rel="stylesheet" href="../styles/local/settings.css">
-	<script src="../scripts/modules/deprecated/archive.js" defer></script>
-	<script src="../scripts/modules/deprecated/database.js" defer></script>
-	<script src="../scripts/modules/deprecated/application.js" defer></script>
-	<script src="../scripts/modules/deprecated/engine.js" defer></script>
-	<script src="../scripts/modules/deprecated/animator.js" defer></script>
-	<!-- <script src="../scripts/modules/loading.js" defer></script> -->
+	<script src="../scripts/components/archive.js" defer></script>
+	<script src="../scripts/components/informant.js" defer></script>
+	<script src="../scripts/components/panel.js" defer></script>
+	<script src="../scripts/components/manager.js" defer></script>
+	<script src="../scripts/components/loader.js" defer></script>
+	<script src="../scripts/components/engine.js" defer></script>
+	<script src="../scripts/components/animator.js" defer></script>
 	<script src="../scripts/structure.js" defer></script>
 	<script src="../scripts/settings.js" defer></script>
 </head>
@@ -45,9 +46,9 @@
 			<select id="quality" title="Quality" class="depth with-padding rounded value" required> </select>
 		</section>
 		<section class="option">
-			<p class="title">Visualizer type</p>
-			<dfn class="definition">The visualizer type. Appearance, animations, rendering when playing music.</dfn>
-			<select id="visualizer-type" title="Visualizer type" class="depth with-padding rounded value" required>
+			<p class="title">Visualization</p>
+			<dfn class="definition">The visualization. Appearance, animations, rendering when playing music.</dfn>
+			<select id="visualization" title="Visualization" class="depth with-padding rounded value" required>
 				<option value="spectrogram">Spectrogram</option>
 				<option value="waveform">Waveform</option>
 			</select>
@@ -59,10 +60,10 @@
 			</div>
 		</section>
 		<section class="option">
-			<p class="title">Auto fullscreen</p>
-			<dfn class="definition">Automatic enabling of fullscreen mode upon audio uploading.</dfn>
-			<input id="toggle-auto-fullscreen" type="checkbox" hidden>
-			<label for="toggle-auto-fullscreen" role="checkbox" class="depth toggle value">
+			<p class="title">Autoplay</p>
+			<dfn class="definition">Autoplay on audio uploading.</dfn>
+			<input id="toggle-autoplay" type="checkbox" hidden>
+			<label for="toggle-autoplay" role="checkbox" class="depth toggle value">
 				<span class="layer knob"></span>
 			</label>
 		</section>
@@ -75,6 +76,20 @@
 			<button id="share-settings" class="with-padding rounded value">Share settings</button>
 		</section>
 	</div>
+	<dialog class="console layer rounded in-top in-right with-padding with-vertical-gap"></dialog>
+	<dialog class="pop-up layer rounded with-padding with-gap flex column">
+		<div class="header flex centered">
+			<h3>Title</h3>
+		</div>
+		<div class="container">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Blanditiis dolorum aliquid deserunt enim ab quas fugiat adipisci. Repellendus, sapiente hic perspiciatis atque quod iure, debitis eius in neque dolor exercitationem!</div>
+		<div class="footer flex centered with-gap">
+			<button class="layer rounded flex with-padding">Button</button>
+			<input type="text" placeholder="Enter text..." class="depth rounded flex with-padding">
+		</div>
+	</dialog>
+	<ac-panel class="loader layer with-padding large-padding flex primary-centered" hidden>
+		<div class="flex column primary-centered with-gap with-padding">
+			<img src="../resources/Circuit (Transparent).gif" alt="Logo">
+		</div>
+	</ac-panel>
 </body>
-
-</html>

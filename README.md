@@ -6,6 +6,16 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.5.6 (23.08.2023)
+- Core modified.
+- Code adapted for IOS devices.
+- Replaced the function of automatic fullscreen mode with automatic playback due to unstable functionality.
+- Added a loading panel.
+- Program structure rebuilt.
+- Improved metadata.
+- Enhanced "Spectrogram" visualization.
+- Revamped popup window styles.
+
 ### Update 1.4.17 (12.08.2023)
 - Metadata has been modified.
 - Now it's possible to upload audio and video.

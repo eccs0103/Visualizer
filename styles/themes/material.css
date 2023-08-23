@@ -190,7 +190,7 @@ mark,
 	color: var(--color-warn);
 }
 
-*.alert {
+*.invalid {
 	color: var(--color-error);
 }
 

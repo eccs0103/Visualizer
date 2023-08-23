@@ -3,20 +3,48 @@
 
 "use strict";
 
-window.addEventListener(`beforeunload`, (event) => {
-	archiveSettings.data = Settings.export(settings);
-});
-
 try {
-	//#region Loop audio
-	const inputToggleLoop = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-loop`)));
+	//#region Definition
+	const inputToggleLoop = document.querySelector(`input#toggle-loop`);
+	if (!(inputToggleLoop instanceof HTMLInputElement)) {
+		throw new TypeError(`Invalid element: ${inputToggleLoop}`);
+	}
+
+	const selectQuality = document.querySelector(`select#quality`);
+	if (!(selectQuality instanceof HTMLSelectElement)) {
+		throw new TypeError(`Invalid element: ${selectQuality}`);
+	}
+
+	const selectVisualization = document.querySelector(`select#visualization`);
+	if (!(selectVisualization instanceof HTMLSelectElement)) {
+		throw new TypeError(`Invalid element: ${selectVisualization}`);
+	}
+
+	const inputToggleAutoplay = document.querySelector(`input#toggle-autoplay`);
+	if (!(inputToggleAutoplay instanceof HTMLInputElement)) {
+		throw new TypeError(`Invalid element: ${inputToggleAutoplay}`);
+	}
+
+	const buttonResetSettings = document.querySelector(`button#reset-settings`);
+	if (!(buttonResetSettings instanceof HTMLButtonElement)) {
+		throw new TypeError(`Invalid element: ${buttonResetSettings}`);
+	}
+
+	const buttonShareSettings = document.querySelector(`button#share-settings`);
+	if (!(buttonShareSettings instanceof HTMLButtonElement)) {
+		throw new TypeError(`Invalid element: ${buttonShareSettings}`);
+	}
+	//#endregion
+	//#region Initialize
+	window.addEventListener(`beforeunload`, (event) => {
+		archiveSettings.data = Settings.export(settings);
+	});
+
 	inputToggleLoop.checked = settings.loop;
 	inputToggleLoop.addEventListener(`change`, (event) => {
 		settings.loop = inputToggleLoop.checked;
 	});
-	//#endregion
-	//#region Quality
-	const selectQuality = (/** @type {HTMLSelectElement} */ (document.querySelector(`select#quality`)));
+
 	for (let quality = Settings.minQuality; quality <= Settings.maxQuality; quality++) {
 		const optionQuality = selectQuality.appendChild(document.createElement(`option`));
 		optionQuality.value = `${quality}`;
@@ -27,55 +55,48 @@ try {
 	selectQuality.addEventListener(`change`, (event) => {
 		settings.quality = Number(selectQuality.value);
 	});
-	//#endregion
-	//#region Visualizer type
-	const selectVisualizerType = (/** @type {HTMLSelectElement} */ (document.querySelector(`select#visualizer-type`)));
-	selectVisualizerType.value = `${settings.type}`;
-	selectVisualizerType.addEventListener(`change`, (event) => {
-		settings.type = selectVisualizerType.value;
+
+	selectVisualization.value = `${settings.type}`;
+	selectVisualization.addEventListener(`change`, (event) => {
+		settings.type = selectVisualization.value;
 	});
-	//#endregion
-	//#region Auto fullscreen
-	const inputToggleAutoFullscreen = (/** @type {HTMLInputElement} */ (document.querySelector(`input#toggle-auto-fullscreen`)));
-	inputToggleAutoFullscreen.checked = settings.autoFullscreen;
-	inputToggleAutoFullscreen.addEventListener(`change`, (event) => {
-		settings.autoFullscreen = inputToggleAutoFullscreen.checked;
+
+	inputToggleAutoplay.checked = settings.autoplay;
+	inputToggleAutoplay.addEventListener(`change`, (event) => {
+		settings.autoplay = inputToggleAutoplay.checked;
 	});
-	//#endregion
-	//#region Reset settings
-	const buttonResetSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#reset-settings`)));
+
 	buttonResetSettings.addEventListener(`click`, async (event) => {
-		if (await application.confirm(`The settings will be reset to factory defaults. Are you sure?`, MessageType.warn)) {
-			settings = new Settings();
+		if (await Manager.confirm(`The settings will be reset to factory defaults. Are you sure?`, `Warning`)) {
+			settings.reset();
 			inputToggleLoop.checked = settings.loop;
 			selectQuality.value = `${settings.quality}`;
-			selectVisualizerType.value = `${settings.type}`;
-			inputToggleAutoFullscreen.checked = settings.autoFullscreen;
+			selectVisualization.value = `${settings.type}`;
+			inputToggleAutoplay.checked = settings.autoplay;
 		}
 	});
-	//#endregion
-	//#region Share settings
-	const buttonShareSettings = (/** @type {HTMLButtonElement} */ (document.querySelector(`button#share-settings`)));
+
 	buttonShareSettings.addEventListener(`click`, async (event) => {
 		const addressee = `eccs0103@gmail.com`;
 		const subject = `Visualizer preferred configuration`;
 		const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => {
 			return `${key}: ${value}`;
 		}).join(`\n`)}`;
-		// const link = location.href;
-		location.assign(window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`));
-		// if (location.href == link) {
-		// 	if (await application.confirm(`Your browser does not support mail sharing. Do you want to share it manualy?`, MessageType.warn)) {
-		// 		navigator.share({
-		// 			title: subject,
-		// 			text: message,
-		// 		}).catch((reason) => {
-		// 			application.prevent(reason);
-		// 		})
-		// 	}
-		// }
+		const link = window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`);
+		const href = String(location.href);
+		location.assign(link);
+		if (location.href === href) {
+			try {
+				/** @type {ShareData} */ const data = { title: subject, text: message };
+				if (navigator.canShare(data)) {
+					await navigator.share({ title: subject, text: message });
+				}
+			} catch (error) {
+				await Manager.prevent(error);
+			}
+		}
 	});
 	//#endregion
-} catch (exception) {
-	application.prevent(exception);
+} catch (error) {
+	Manager.prevent(error);
 }
