@@ -18,9 +18,13 @@ class Manager extends Informant {
 	 * @param {Promise<unknown>} task 
 	 */
 	static async load(task) {
-		Manager.#panelLoader.open();
-		await task;
-		await Manager.#panelLoader.close();
+		try {
+			Manager.#panelLoader.open();
+			await task;
+			await Manager.#panelLoader.close();
+		} catch (error) {
+			await Manager.prevent(error);
+		}
 	}
 	static getSearch() {
 		return new Map(window.decodeURI(location.search.replace(/^\??/, ``)).split(`&`).filter(item => item).map((item) => {

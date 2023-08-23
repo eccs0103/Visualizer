@@ -65,14 +65,15 @@ try {
 		visualizer.launched = false;
 	});
 	audioPlayer.loop = settings.loop;
-	audioPlayer.autoplay = settings.autoplay
+	audioPlayer.autoplay = settings.autoplay;
 	audioPlayer.addEventListener(`loadstart`, (event) => {
-		console.log(`a`);
-		Manager.load(new Promise((resolve) => {
-			audioPlayer.addEventListener(`loadeddata`, (event) => {
-				resolve(undefined);
-			}, { once: true });
-		}));
+		if (!audioPlayer.src) {
+			Manager.load(new Promise((resolve) => {
+				audioPlayer.addEventListener(`loadeddata`, (event) => {
+					resolve(undefined);
+				}, { once: true });
+			}));
+		}
 	});
 
 	canvas.addEventListener(`click`, (event) => {
