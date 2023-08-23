@@ -67,6 +67,7 @@ try {
 	audioPlayer.loop = settings.loop;
 	audioPlayer.autoplay = settings.autoplay
 	audioPlayer.addEventListener(`loadstart`, (event) => {
+		console.log(`a`);
 		Manager.load(new Promise((resolve) => {
 			audioPlayer.addEventListener(`loadeddata`, (event) => {
 				resolve(undefined);
