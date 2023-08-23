@@ -82,19 +82,14 @@ try {
 		const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => {
 			return `${key}: ${value}`;
 		}).join(`\n`)}`;
-		const link = window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`);
-		// const href = String(location.href);
+		// const link = window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`);
+		// console.log(link);
 		// location.assign(link);
-		// if (location.href === href) {
 		try {
-			// /** @type {ShareData} */ const data = { title: subject, text: message, url: link };
-			// if (navigator.canShare(data)) {
-			await navigator.share({ title: subject, text: message, url: link });
-			// }
+			await navigator.share({ title: subject, text: message, url: `https://mail.google.com/` });
 		} catch (error) {
 			await Manager.prevent(error);
 		}
-		// }
 	});
 	//#endregion
 } catch (error) {
