@@ -245,6 +245,10 @@ ac-panel {
 	inset: 0;
 }
 
+ac-panel:not([open]) {
+	display: none !important;
+}
+
 *.grid-line {
 	grid-column: 1 / -1;
 }

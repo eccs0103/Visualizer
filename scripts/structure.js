@@ -112,7 +112,6 @@ class Visualizer extends Animator {
 }
 //#endregion
 //#region Settings
-
 /** @enum {String} */ const Visualizations = {
 	/** @readonly */ spectrogram: `spectrogram`,
 	/** @readonly */ waveform: `waveform`,
