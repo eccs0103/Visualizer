@@ -13,13 +13,13 @@ class ACPanelElement extends HTMLElement {
 		await this.animate([
 			{ opacity: `0` },
 			{ opacity: `1` },
-		], { duration: this.duration, fill: `both` }).finished;
+		], { duration: this.duration, fill: `forwards` }).finished;
 	}
 	async close() {
 		await this.animate([
 			{ opacity: `1` },
 			{ opacity: `0` },
-		], { duration: this.duration, fill: `both` }).finished;
+		], { duration: this.duration, fill: `forwards` }).finished;
 		this.toggleAttribute(`open`, false);
 	}
 }
