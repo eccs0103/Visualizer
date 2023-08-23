@@ -77,18 +77,20 @@ try {
 	});
 
 	buttonShareSettings.addEventListener(`click`, async (event) => {
-		const addressee = `eccs0103@gmail.com`;
-		const subject = `Visualizer preferred configuration`;
-		const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => {
-			return `${key}: ${value}`;
-		}).join(`\n`)}`;
-		// const link = window.encodeURI(`mailto:${addressee}?subject=${subject}&body=${message}`);
-		// console.log(link);
-		// location.assign(link);
 		try {
-			await navigator.share({ title: subject, text: message, url: `https://mail.google.com/` });
+			const addressee = `eccs0103@gmail.com`;
+			const subject = `Visualizer preferred configuration`;
+			const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => `${key}: ${value}`).join(`\n`)}`;
+			if (buttonShareSettings.dataset[`manual`] === undefined) {
+				await Manager.alert(`Now the browser will try to create an automatic email for you. If there are problems, it will cancel the operation and return you to the page. By clicking on the button for the second time, manual sending will be opened and the address will be copied to the clipboard. You will have to send the email manually.\nThis feature is related to the browser and we can not influence it in any way.`, `Warning`);
+				location.href = `mailto:${addressee}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+				buttonShareSettings.dataset[`manual`] = ``;
+			} else {
+				await navigator.clipboard.writeText(addressee);
+				await navigator.share({ title: subject, text: message });
+			}
 		} catch (error) {
-			await Manager.prevent(error);
+			Manager.prevent(error);
 		}
 	});
 	//#endregion
