@@ -67,13 +67,11 @@ try {
 	audioPlayer.loop = settings.loop;
 	audioPlayer.autoplay = settings.autoplay;
 	audioPlayer.addEventListener(`loadstart`, (event) => {
-		if (!audioPlayer.src) {
-			Manager.load(new Promise((resolve) => {
-				audioPlayer.addEventListener(`loadeddata`, (event) => {
-					resolve(undefined);
-				}, { once: true });
-			}));
-		}
+		Manager.load(new Promise((resolve) => {
+			audioPlayer.addEventListener(`loadeddata`, (event) => {
+				resolve(undefined);
+			}, { once: true });
+		}));
 	});
 
 	canvas.addEventListener(`click`, (event) => {
