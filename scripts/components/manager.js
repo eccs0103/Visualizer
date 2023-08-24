@@ -15,12 +15,12 @@ class Manager extends Informant {
 		Manager.#panelLoader = panelLoader;
 	}
 	/**
-	 * @param {Promise<unknown>} task 
+	 * @param {Promise<unknown>} promise 
 	 */
-	static async load(task) {
+	static async load(promise) {
 		try {
 			Manager.#panelLoader.open();
-			await task;
+			await promise;
 			await Manager.#panelLoader.close();
 		} catch (error) {
 			await Manager.prevent(error);

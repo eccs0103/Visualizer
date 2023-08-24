@@ -37,12 +37,12 @@ div#interface {
 	}
 }
 
-audio#player.-playing ~ div#interface {
-	animation: -hide-interface 0.5s ease-out 0s 1 both;
+audio#player:not([data-playing]) ~ div#interface {
+	animation: -show-interface 0.1s ease-in 0s 1 both;
 }
 
-audio#player.-paused ~ div#interface {
-	animation: -show-interface 0.1s ease-in 0s 1 both;
+audio#player[data-playing] ~ div#interface {
+	animation: -hide-interface 0.3s ease-out 0s 1 both;
 }
 
 div#interface *.-normalized {
@@ -58,15 +58,15 @@ label[for="loader"] {
 	inset: var(--size-large-gap) auto auto var(--size-large-gap);
 }
 
-audio#player[src=""] ~ div#interface label[for="loader"] {
+audio#player:not([data-ready]) ~ div#interface label[for="loader"] {
 	inset: 0;
 }
 
-audio#player[src=""] ~ div#interface label[for="loader"] > img[alt="Upload"] {
+audio#player:not([data-ready]) ~ div#interface label[for="loader"] > img[alt="Upload"] {
 	height: calc(var(--size-standart) * 3);
 }
 
-audio#player[src=""] ~ div#interface label[for="loader"] > *:not(img[alt="Upload"]) {
+audio#player:not([data-ready]) ~ div#interface label[for="loader"] > *:not(img[alt="Upload"]) {
 	display: none !important;
 }
 
@@ -79,7 +79,7 @@ div.-status {
 	pointer-events: none;
 }
 
-audio#player[src=""] ~ div#interface div.-status {
+audio#player:not([data-ready]) ~ div#interface div.-status {
 	display: none !important;
 }
 
@@ -87,11 +87,11 @@ img[alt="Status"] {
 	height: calc(var(--size-standart) * 3);
 }
 
-audio#player.-playing ~ div#interface div.-status > img[alt="Status"] {
+audio#player[data-playing] ~ div#interface div.-status > img[alt="Status"] {
 	content: url(../../resources/pause.png);
 }
 
-audio#player.-paused ~ div#interface div.-status > img[alt="Status"] {
+audio#player:not([data-playing]) ~ div#interface div.-status > img[alt="Status"] {
 	content: url(../../resources/play.png);
 }
 
@@ -111,7 +111,7 @@ body:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
 	content: url(../../resources/fullscreen-exit.png);
 }
 
-audio#player[src=""] ~ div#interface button#toggle-fullscreen {
+audio#player:not([data-ready]) ~ div#interface button#toggle-fullscreen {
 	display: none !important;
 }
 
@@ -125,7 +125,7 @@ input#time-track {
 	position: relative;
 }
 
-audio#player[src=""] ~ input#time-track {
+audio#player:not([data-ready]) ~ input#time-track {
 	pointer-events: none;
 }
 

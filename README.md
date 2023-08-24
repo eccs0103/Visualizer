@@ -6,6 +6,9 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.5.7 (24.08.2023)
+- Bug fixes.
+
 ### Update 1.5.6 (23.08.2023)
 - Core modified.
 - Code adapted for IOS devices.

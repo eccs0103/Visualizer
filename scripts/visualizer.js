@@ -55,17 +55,23 @@ try {
 	}
 	//#endregion
 	//#region Initialize
-	audioPlayer.classList.add(`-paused`);
+	audioPlayer.loop = settings.loop;
+	audioPlayer.autoplay = settings.autoplay;
 	audioPlayer.addEventListener(`play`, (event) => {
-		audioPlayer.classList.replace(`-paused`, `-playing`);
+		audioPlayer.dataset[`playing`] = ``;
 		visualizer.launched = true;
 	});
 	audioPlayer.addEventListener(`pause`, (event) => {
-		audioPlayer.classList.replace(`-playing`, `-paused`);
+		delete audioPlayer.dataset[`playing`];
 		visualizer.launched = false;
+		visualizer.dispatchEvent(new Event(`render`));
 	});
-	audioPlayer.loop = settings.loop;
-	audioPlayer.autoplay = settings.autoplay;
+	audioPlayer.addEventListener(`canplay`, (event) => {
+		audioPlayer.dataset[`ready`] = ``;
+	});
+	audioPlayer.addEventListener(`emptied`, (event) => {
+		delete audioPlayer.dataset[`ready`];
+	});
 	audioPlayer.addEventListener(`loadstart`, (event) => {
 		Manager.load(new Promise((resolve) => {
 			audioPlayer.addEventListener(`loadeddata`, (event) => {
@@ -152,7 +158,7 @@ try {
 					}
 					const coefficent = index / canvas.width;
 					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
-					/** [0 - 1] */ const value = Math.pow(datul, 2) * Math.pow(datul, 1 / 2);
+					/** [0 - 1] */ const value = Math.pow(Math.pow(datul, 2) * visualizer.getVolume(Datalist.frequency), 1 / 2);
 					const size = new Point2D(0, canvas.height * value);
 					const position = new Point2D(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
 					if (counter < 0) {
@@ -262,6 +268,7 @@ try {
 			default: throw new TypeError(`Invalid visualization: '${settings.type}'.`);
 		}
 	});
+	visualizer.dispatchEvent(new Event(`render`));
 
 	divInterface.addEventListener(`click`, (event) => {
 		if (event.eventPhase !== Event.BUBBLING_PHASE && audioPlayer.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA && audioPlayer.paused) {
