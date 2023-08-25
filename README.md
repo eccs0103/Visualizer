@@ -6,6 +6,10 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## News
+### Update 1.5.8 (26.08.2023)
+- Added smoothing effect to "Waveform" visualization.
+- Fixed minor errors.
+
 ### Update 1.5.7 (24.08.2023)
 - Bug fixes.
 

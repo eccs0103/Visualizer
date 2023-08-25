@@ -156,7 +156,7 @@ try {
 					if (counter < 0) {
 						index = Math.abs(counter) - 1;
 					}
-					const coefficent = index / canvas.width;
+					const coefficent = index / (canvas.width - 1);
 					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
 					/** [0 - 1] */ const value = Math.pow(Math.pow(datul, 2) * visualizer.getVolume(Datalist.frequency), 1 / 2);
 					const size = new Point2D(0, canvas.height * value);
@@ -210,7 +210,7 @@ try {
 				context.beginPath();
 				context.moveTo(-canvas.width / 2, 0);
 				for (let index = 0; index < canvas.width; index++) {
-					const coefficent = index / canvas.width;
+					const coefficent = index / (canvas.width - 1);
 					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
 					/** [0 - 1] */ const value = datul * visualizer.getVolume(Datalist.frequency);
 					const position = new Point2D(
@@ -233,9 +233,14 @@ try {
 				const colorForeground = Color.BLACK;
 				const gradientForegroundPath = context.createConicGradient(0, 0, 0);
 				context.beginPath();
-				for (let angle = 0; angle < 360; angle++) {
-					const coefficent = angle / 360;
-					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
+				const ring = 360
+				const smoothing = ring / 2;
+				for (let angle = 0; angle < ring; angle++) {
+					const coefficent = angle / (ring - 1);
+					const ratio = Math.pow(Math.abs(angle - smoothing) / smoothing, 16);
+					const index = Math.floor(coefficent * visualizer.length);
+					const average = (data[index] + data[data.length - 1 - index]) / 2;
+					const datul = (data[index] + + (average - data[index]) * ratio) / 128 - 1;
 					/** [0 - 1] */ const value = (0.75 + 0.25 * datul * visualizer.getVolume(Datalist.frequency));
 					const distance = radius * value;
 					const position = new Point2D(
@@ -255,8 +260,8 @@ try {
 				context.globalCompositeOperation = `destination-out`;
 				const gradientForegroundShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
 				const parts = 2;
-				for (let index = 0; index <= parts; index++) {
-					const coefficent = index / parts;
+				for (let index = 0; index < parts; index++) {
+					const coefficent = index / (parts - 1);
 					const patency = Math.sqrt(1 - coefficent);
 					gradientForegroundShadow.addColorStop(coefficent, colorForeground.pass(patency).toString(ColorFormats.RGB, true));
 				}
