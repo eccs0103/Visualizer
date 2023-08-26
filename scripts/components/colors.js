@@ -121,11 +121,11 @@ class Color {
 	 * @param {Number} alpha [0 - 1]
 	 */
 	static viaRGB(red, green, blue, alpha = 1) {
-		const result = new Color();
 		if (red < 0 || red > 255) throw new RangeError(`Property 'red' out of range: ${red}`);
 		if (green < 0 || green > 255) throw new RangeError(`Property 'green' out of range: ${green}`);
 		if (blue < 0 || blue > 255) throw new RangeError(`Property 'blue' out of range: ${blue}`);
 		if (alpha < 0 || alpha > 1) throw new RangeError(`Property 'alpha' out of range: ${alpha}`);
+		const result = new Color();
 		result.#green = Math.trunc(green);
 		result.#red = Math.trunc(red);
 		result.#blue = Math.trunc(blue);
@@ -140,11 +140,11 @@ class Color {
 	 * @param {Number} alpha [0 - 1]
 	 */
 	static viaHSL(hue, saturation, lightness, alpha = 1) {
-		const result = new Color();
 		if (hue < 0 || hue > 360) throw new RangeError(`Property 'hue' out of range: ${hue}`);
 		if (saturation < 0 || saturation > 100) throw new RangeError(`Property 'saturation' out of range: ${saturation}`);
 		if (lightness < 0 || lightness > 100) throw new RangeError(`Property 'lightness' out of range: ${lightness}`);
 		if (alpha < 0 || alpha > 1) throw new RangeError(`Property 'alpha' out of range: ${alpha}`);
+		const result = new Color();
 		result.#hue = Math.trunc(hue);
 		result.#saturation = Math.trunc(saturation);
 		result.#lightness = Math.trunc(lightness);
