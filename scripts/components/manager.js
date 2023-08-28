@@ -1,27 +1,35 @@
 // @ts-ignore
 /** @typedef {import("./informant.js")} */
-// @ts-ignore
-/** @typedef {import("./panel.js")} */
 
 "use strict";
 
 class Manager extends Informant {
-	/** @type {ACPanelElement} */ static #panelLoader;
+	/** @type {HTMLDialogElement} */ static #dialogLoader;
 	static {
-		const panelLoader = document.querySelector(`ac-panel.loader`);
-		if (!(panelLoader instanceof ACPanelElement)) {
-			throw new TypeError(`Invalid element: ${panelLoader}`);
+		const dialogLoader = document.querySelector(`dialog.loader`);
+		if (!(dialogLoader instanceof HTMLDialogElement)) {
+			throw new TypeError(`Invalid element: ${dialogLoader}`);
 		}
-		Manager.#panelLoader = panelLoader;
+		Manager.#dialogLoader = dialogLoader;
 	}
 	/**
 	 * @param {Promise<unknown>} promise 
+	 * @param {Number} duration default 200
+	 * @param {Number} delay default 0
 	 */
-	static async load(promise) {
+	static async load(promise, duration = 200, delay = 0) {
 		try {
-			Manager.#panelLoader.open();
+			Manager.#dialogLoader.showModal();
+			await Manager.#dialogLoader.animate([
+				{ opacity: `0` },
+				{ opacity: `1` },
+			], { duration: duration, fill: `both` }).finished;
 			await promise;
-			await Manager.#panelLoader.close();
+			await Manager.#dialogLoader.animate([
+				{ opacity: `1` },
+				{ opacity: `0` },
+			], { duration: duration, fill: `both`, delay: delay }).finished;
+			Manager.#dialogLoader.close();
 		} catch (error) {
 			await Manager.prevent(error);
 		}
