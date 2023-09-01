@@ -35,9 +35,9 @@
 :root {
 	--time-duration: 100ms;
 	--color-highlight: hsl(200deg, 100%, 50%);
-	--color-warn: hsl(60deg, 100%, 50%);
-	--color-error: hsl(0deg, 100%, 75%);
-	--color-shadow: hsla(0, 0%, 0%, 0.75);
+	--color-warn: hsl(60deg 100% 40%);
+	--color-error: hsl(0deg, 100%, 60%);
+	--color-shadow: hsla(0deg, 0%, 0%, 75%);
 }
 
 /* Global */
@@ -184,14 +184,26 @@ a:any-link {
 	color: var(--color-highlight);
 }
 
+*.highlight-background {
+	background-color: var(--color-highlight);
+}
+
 mark,
 *.warn,
 *.mark {
 	color: var(--color-warn);
 }
 
+*.warn-background {
+	background-color: var(--color-warn);
+}
+
 *.invalid {
 	color: var(--color-error);
+}
+
+*.invalid-background {
+	background-color: var(--color-error);
 }
 
 hr {

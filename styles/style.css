@@ -55,7 +55,7 @@
 	--size-gap: calc(var(--size-standart) / 4);
 	--size-large-standart: calc(var(--size-standart) * 2);
 	--size-large-gap: calc(var(--size-gap) * 2);
-	--size-serpator: 0.25vmin;
+	--size-serpator: calc(var(--size-gap) / 3)
 }
 
 body {

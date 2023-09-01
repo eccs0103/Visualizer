@@ -5,7 +5,11 @@ Music Visualizer.
 ## Guide
 Upload any song to visualize it.  
 - - -
-## News
+## Feed
+### Update 1.5.10 (01.09.2023)
+- Updated the core.
+- Fixed an issue where fullscreen mode wasn't displaying in the button.
+
 ### Update 1.5.9 (26.08.2023)
 - Core updated.
 

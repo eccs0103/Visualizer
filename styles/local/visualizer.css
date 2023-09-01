@@ -107,7 +107,7 @@ button#toggle-fullscreen > img[alt="Fullscreen"] {
 	content: url(../../resources/fullscreen-enter.png);
 }
 
-body:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
+:root:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
 	content: url(../../resources/fullscreen-exit.png);
 }
 

@@ -239,10 +239,25 @@ if (!(metaApplicationName instanceof HTMLMetaElement)) {
 }
 const title = metaApplicationName.content;
 
+const search = Manager.getSearch();
+const reset = search.get(`reset`);
+if (reset !== undefined) {
+	if (reset === `all`) {
+		for (let index = 0; index < localStorage.length; index++) {
+			const value = localStorage.key(index);
+			if (value === null) {
+				throw new RangeError(`Index out of range`);
+			}
+			localStorage.removeItem(value);
+		}
+	} else {
+		localStorage.removeItem(reset);
+	}
+}
+
 /** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${developer}.${title}.Settings`, Settings.export(new Settings()));
 // /** @type {Database<Blob>} */ const databasePlaylist = new Database(`${developer}.${title}.Playlist`);
 
-const search = Manager.getSearch();
 const settings = Settings.import((() => {
 	const protocol = search.get(`protocol`);
 	if (protocol === undefined) {
