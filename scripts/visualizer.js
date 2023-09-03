@@ -4,6 +4,8 @@
 /** @typedef {import("./components/colors.js")} */
 // @ts-ignore
 /** @typedef {import("./components/measures.js")} */
+// @ts-ignore
+/** @typedef {import("./components/timespan.js")} */
 
 "use strict";
 
@@ -72,12 +74,16 @@ try {
 	audioPlayer.addEventListener(`emptied`, (event) => {
 		delete audioPlayer.dataset[`ready`];
 	});
-	audioPlayer.addEventListener(`loadstart`, (event) => {
-		Manager.load(new Promise((resolve) => {
+	audioPlayer.addEventListener(`loadstart`, async (event) => {
+		await Manager.load(new Promise((resolve, reject) => {
 			audioPlayer.addEventListener(`loadeddata`, (event) => {
 				resolve(undefined);
 			}, { once: true });
+			audioPlayer.addEventListener(`error`, (event) => {
+				reject(event.error);
+			}, { once: true });
 		}));
+		visualizer.dispatchEvent(new Event(`render`));
 	});
 
 	canvas.addEventListener(`click`, (event) => {
@@ -90,38 +96,30 @@ try {
 	visualizer.quality = settings.quality;
 	const duration = 5;
 
-	/**
-	 * @param {Number} number 
-	 */
-	function toTimeString(number) {
-		const hours = Math.floor(number / 3600);
-		const minutes = Math.floor((number % 3600) / 60);
-		const seconds = Math.floor(number % 60);
-		const milliseconds = Math.floor((number % 1) * 100);
-		return `${hours === 0 ? `` : `${hours.toString().padStart(2, `0`)}:`}${minutes.toString().padStart(2, `0`)}:${seconds.toString().padStart(2, `0`)}`;
-	}
-
 	context.translate(canvas.width / 2, canvas.height / 2);
 	visualizer.addEventListener(`resize`, (event) => {
 		context.translate(canvas.width / 2, canvas.height / 2);
 	});
 	visualizer.addEventListener(`render`, (event) => {
-		spanTime.innerText = `${toTimeString(audioPlayer.currentTime)}`;
-		if (!Number.isNaN(audioPlayer.duration)) {
-			spanTime.innerText += ` • ${toTimeString(audioPlayer.duration)}`;
+		const timespanCurrent = Timespan.viaDuration(audioPlayer.currentTime * 1000);
+		const timespanDuration = Timespan.viaDuration(audioPlayer.duration * 1000);
+		spanTime.innerText = `${timespanCurrent.toString()}`;
+		if (!Number.isNaN(timespanDuration.duration)) {
+			spanTime.innerText += ` • ${timespanDuration.toString()}`;
 		}
 		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
 		//
 		if (search.get(`debug`) === `on`) {
 			Manager.log({
+				[`loop`]: `${settings.loop}`,
 				[`visualization`]: `${settings.type}`,
 				[`frequency length`]: `${visualizer.length} bit`,
 				[`quality`]: `${visualizer.quality} level`,
 				[`launched`]: `${visualizer.launched}`,
 				[`FPS limit`]: `${visualizer.FPSLimit}`,
 				[`FPS`]: `${visualizer.FPS.toFixed()}`,
-				[`audio time`]: `${audioPlayer.currentTime.toFixed(3)}s`,
-				[`audio duration`]: `${audioPlayer.duration.toFixed(3)}s`,
+				[`audio time`]: `${timespanCurrent.toString()}s`,
+				[`audio duration`]: `${Number.isNaN(timespanDuration.duration) ? NaN : timespanDuration.toString()}s`,
 				[`alternating volume`]: `${visualizer.getVolume(Datalist.frequency).toFixed(3)}`,
 				[`direct volume`]: `${visualizer.getVolume(Datalist.timeDomain).toFixed(3)}`,
 				[`alternating amplitude`]: `${visualizer.getAmplitude(Datalist.frequency).toFixed(3)}`,
@@ -233,7 +231,7 @@ try {
 				const colorForeground = Color.BLACK;
 				const gradientForegroundPath = context.createConicGradient(0, 0, 0);
 				context.beginPath();
-				const ring = 360
+				const ring = 360;
 				const smoothing = ring / 2;
 				for (let angle = 0; angle < ring; angle++) {
 					const coefficent = angle / (ring - 1);
@@ -282,13 +280,18 @@ try {
 	});
 
 	inputLoader.addEventListener(`input`, async (event) => {
-		event.stopPropagation();
-		if (!inputLoader.files) {
-			throw new ReferenceError(`Files list is empty.`);
+		try {
+			event.stopPropagation();
+			if (!inputLoader.files) {
+				throw new ReferenceError(`Files list is empty.`);
+			}
+			const file = inputLoader.files[0];
+			URL.revokeObjectURL(audioPlayer.src);
+			audioPlayer.src = URL.createObjectURL(file);
+			// await databasePlaylist.set(`history`, file);
+		} catch (error) {
+			Manager.prevent(error);
 		}
-		const file = inputLoader.files[0];
-		audioPlayer.src = URL.createObjectURL(file);
-		// await databasePlaylist.set(`history`, file);
 	});
 
 	aSettings.addEventListener(`click`, (event) => {
