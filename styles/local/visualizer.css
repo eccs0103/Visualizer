@@ -88,11 +88,11 @@ img[alt="Status"] {
 }
 
 audio#player[data-playing] ~ div#interface div.-status > img[alt="Status"] {
-	content: url(/resources/pause.png);
+	content: url(../resources/pause.png);
 }
 
 audio#player:not([data-playing]) ~ div#interface div.-status > img[alt="Status"] {
-	content: url(/resources/play.png);
+	content: url(../resources/play.png);
 }
 
 span#time {
@@ -104,11 +104,11 @@ button#toggle-fullscreen {
 }
 
 button#toggle-fullscreen > img[alt="Fullscreen"] {
-	content: url(/resources/fullscreen-enter.png);
+	content: url(../resources/fullscreen-enter.png);
 }
 
 :root:fullscreen button#toggle-fullscreen > img[alt="Fullscreen"] {
-	content: url(/resources/fullscreen-exit.png);
+	content: url(../resources/fullscreen-exit.png);
 }
 
 audio#player:not([data-ready]) ~ div#interface button#toggle-fullscreen {
