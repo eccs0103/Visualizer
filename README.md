@@ -6,6 +6,11 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 1.5.12 (19.09.2023)
+- Updated the core.
+- Fixed the timer.
+- Fixed music uploading.
+
 ### Update 1.5.10 (01.09.2023)
 - Updated the core.
 - Fixed an issue where fullscreen mode wasn't displaying in the button.

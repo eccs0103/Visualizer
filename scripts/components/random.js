@@ -18,15 +18,15 @@ class Random {
 		return Math.trunc(Random.number(min, max));
 	}
 	/**
-	 * @template Item 
-	 * @param {Array<Item>} array 
+	 * @template T 
+	 * @param {Array<T>} array 
 	 */
 	static item(array) {
 		return array[Random.integer(0, array.length)];
 	}
 	/**
-	 * @template Item 
-	 * @param {Map<Item, Number>} cases 
+	 * @template T 
+	 * @param {Map<T, Number>} cases 
 	 */
 	static case(cases) {
 		const summary = Array.from(cases).reduce((previous, [, percentage]) => previous + percentage, 0);

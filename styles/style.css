@@ -6,8 +6,8 @@
 	-webkit-user-select: none;
 	user-select: none;
 	-webkit-user-drag: none;
-	border: none;
-	outline: none;
+	border-style: none;
+	outline-style: none;
 	border-width: var(--size-serpator);
 	outline-width: var(--size-serpator);
 	outline-offset: calc(-1 * var(--size-serpator));
@@ -121,35 +121,32 @@ body {
 	display: contents;
 }
 
-button,
-*[role="button"],
-input,
-*[contenteditable=true],
-input[type="checkbox"] + label[role="checkbox"],
-*[role="combobox"],
-select {
+:enabled,
+:disabled,
+:enabled + label,
+:disabled + label,
+[role="button"],
+[role="checkbox"],
+[role="combobox"],
+[contenteditable="true"] {
 	cursor: pointer;
 	font-family: inherit;
 	font-size: inherit;
 	font-weight: bold;
+	resize: none;
 }
 
-*[role="combobox"][aria-checked="true"] {
-	pointer-events: none;
+:read-write {
+	cursor: text;
 }
 
-*::placeholder,
-*[contenteditable=true]:empty::before {
-	font-weight: normal;
-}
-
-*[contenteditable=true]:empty::before {
+*[contenteditable="true"]:empty::before {
 	content: attr(aria-placeholder);
 }
 
-input:read-write,
-[contenteditable="true"]:read-write {
-	cursor: text;
+*::placeholder,
+*[contenteditable="true"]:empty::before {
+	font-weight: normal;
 }
 
 *[contenteditable="true"].single-line {
@@ -199,10 +196,6 @@ input[type="range"]::-webkit-slider-thumb {
 	width: var(--size-gap);
 	height: var(--size-gap);
 	border-radius: 50vmin;
-}
-
-textarea {
-	resize: none;
 }
 
 dialog {
@@ -316,11 +309,13 @@ kbd {
 }
 
 code {
+	white-space: pre;
 	tab-size: 4;
-	list-style: none inside;
-	counter-reset: index;
+	counter-reset: line;
 	-webkit-user-select: text;
 	user-select: text;
+	overflow-x: auto;
+	text-overflow: revert;
 }
 
 code * {

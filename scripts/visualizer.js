@@ -103,9 +103,9 @@ try {
 	visualizer.addEventListener(`render`, (event) => {
 		const timespanCurrent = Timespan.viaDuration(audioPlayer.currentTime * 1000);
 		const timespanDuration = Timespan.viaDuration(audioPlayer.duration * 1000);
-		spanTime.innerText = `${timespanCurrent.toString()}`;
+		spanTime.innerText = `${(timespanCurrent.hours * 60 + timespanCurrent.minutes).toString().padStart(2, `0`)}:${(timespanCurrent.seconds).toString().padStart(2, `0`)}`;
 		if (!Number.isNaN(timespanDuration.duration)) {
-			spanTime.innerText += ` • ${timespanDuration.toString()}`;
+			spanTime.innerText += ` • ${(timespanCurrent.hours * 60 + timespanDuration.minutes).toString().padStart(2, `0`)}:${(timespanDuration.seconds).toString().padStart(2, `0`)}`;
 		}
 		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
 		//
@@ -279,16 +279,17 @@ try {
 		}
 	});
 
-	inputLoader.addEventListener(`input`, async (event) => {
+	inputLoader.addEventListener(`change`, async (event) => {
 		try {
 			event.stopPropagation();
-			if (!inputLoader.files) {
+			if (inputLoader.files === null) {
 				throw new ReferenceError(`Files list is empty.`);
 			}
 			const file = inputLoader.files[0];
-			URL.revokeObjectURL(audioPlayer.src);
-			audioPlayer.src = URL.createObjectURL(file);
-			// await databasePlaylist.set(`history`, file);
+			if (file) {
+				URL.revokeObjectURL(audioPlayer.src);
+				audioPlayer.src = URL.createObjectURL(file);
+			}
 		} catch (error) {
 			Manager.prevent(error);
 		}

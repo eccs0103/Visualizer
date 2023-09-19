@@ -45,7 +45,6 @@ class Database {
 	/**
 	 * @param {String} key 
 	 * @param {any} value 
-	 * @virtual
 	 */
 	async set(key, value) {
 		const $store = await this.#getStore(this.#database, this.#store);
@@ -59,7 +58,7 @@ class Database {
 }
 
 /**
- * @template Notation
+ * @template T
  */
 class Locker extends Database {
 	/**
@@ -73,13 +72,13 @@ class Locker extends Database {
 	}
 	/** @type {String} */ #key;
 	/**
-	 * @returns {Promise<Notation>}
+	 * @returns {Promise<T>}
 	 */
 	async get() {
 		return await super.get(this.#key);
 	}
 	/**
-	 * @param {Notation} value 
+	 * @param {T} value 
 	 */
 	// @ts-ignore
 	async set(value) {

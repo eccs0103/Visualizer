@@ -43,7 +43,10 @@ class Engine extends EventTarget {
 	/** @readonly */ get FPS() {
 		return this.#FPS;
 	}
-	/** @type {Boolean} */ #launched;
+	/** @readonly */ get delta() {
+		return 1 / this.#FPS;
+	}
+	/** @type {Boolean} */ #launched = false;
 	get launched() {
 		return this.#launched;
 	}

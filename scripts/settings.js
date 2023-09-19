@@ -76,22 +76,11 @@ try {
 		}
 	});
 
-	buttonShareSettings.addEventListener(`click`, async (event) => {
-		try {
-			const addressee = `eccs0103@gmail.com`;
-			const subject = `Visualizer preferred configuration`;
-			const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => `${key}: ${value}`).join(`\n`)}`;
-			if (buttonShareSettings.dataset[`manual`] === undefined) {
-				await Manager.alert(`Now the browser will try to create an automatic email for you. If there are problems, it will cancel the operation and return you to the page. By clicking on the button for the second time, manual sending will be opened and the address will be copied to the clipboard. You will have to send the email manually.\nThis feature is related to the browser and we can not influence it in any way.`, `Warning`);
-				location.href = `mailto:${addressee}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
-				buttonShareSettings.dataset[`manual`] = ``;
-			} else {
-				await navigator.clipboard.writeText(addressee);
-				await navigator.share({ title: subject, text: message });
-			}
-		} catch (error) {
-			Manager.prevent(error);
-		}
+	buttonShareSettings.addEventListener(`click`, (event) => {
+		const addressee = `eccs0103@gmail.com`;
+		const subject = `Visualizer preferred configuration`;
+		const message = `${Object.entries(Settings.export(settings)).map(([key, value]) => `${key}: ${value}`).join(`\n`)}`;
+		location.href = `mailto:${addressee}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
 	});
 	//#endregion
 } catch (error) {
