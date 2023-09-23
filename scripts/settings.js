@@ -56,6 +56,12 @@ try {
 		settings.quality = Number(selectQuality.value);
 	});
 
+	for (const type of Object.values(Visualizations)) {
+		const optionVisualization = selectVisualization.appendChild(document.createElement(`option`));
+		optionVisualization.value = `${type}`;
+		optionVisualization.innerText = `${type[0].toUpperCase()}${type.substring(1)}`;
+		optionVisualization.title = optionVisualization.innerText;
+	}
 	selectVisualization.value = `${settings.type}`;
 	selectVisualization.addEventListener(`change`, (event) => {
 		settings.type = selectVisualization.value;

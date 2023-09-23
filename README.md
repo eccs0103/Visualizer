@@ -6,6 +6,10 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 1.5.13 (24.09.2023)
+- Stabilized visualizations.
+- And some optimization.
+
 ### Update 1.5.12 (19.09.2023)
 - Updated the core.
 - Fixed the timer.

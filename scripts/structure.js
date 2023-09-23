@@ -43,7 +43,7 @@ class Visualizer extends Animator {
 			let summaryFrequency = 0, summaryTimeDomain = 0;
 			let summarySquareFrequency = 0, summarySquareTimeDomain = 0;
 			for (let index = 0; index < this.length; index++) {
-				const dataFrequency = this.#arrayFrequencyData[index] / 255, dataTimeDomain = this.#arrayTimeDomainData[index] / 128 - 1;
+				const dataFrequency = this.#arrayFrequencyData[index] / 256, dataTimeDomain = this.#arrayTimeDomainData[index] / 128 - 1;
 				summaryFrequency += dataFrequency;
 				summaryTimeDomain += dataTimeDomain;
 				summarySquareTimeDomain += dataTimeDomain * dataTimeDomain;
@@ -115,13 +115,14 @@ class Visualizer extends Animator {
 /** @enum {String} */ const Visualizations = {
 	/** @readonly */ spectrogram: `spectrogram`,
 	/** @readonly */ waveform: `waveform`,
+	// /** @readonly */ mixed: `mixed`,
 };
 Object.freeze(Visualizations);
 
 /**
  * @typedef SettingsNotation
  * @property {Boolean} [loop]
- * @property {Number | undefined} [quality]
+ * @property {Number} [quality]
  * @property {Visualizations} [type]
  * @property {Boolean} [autoplay]
  */
@@ -193,7 +194,7 @@ class Settings {
 		return this.#quality;
 	}
 	set quality(value) {
-		if (Math.floor(value) !== value) {
+		if (Math.trunc(value) !== value) {
 			throw new TypeError(`Value of 'quality' property must be integer number.`);
 		}
 		if (Settings.minQuality > value || value > Settings.maxQuality) {

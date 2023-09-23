@@ -91,25 +91,25 @@ try {
 			audioPlayer.pause();
 		}
 	});
-	const visualizer = new Visualizer(context, audioPlayer);
-	visualizer.FPSLimit = Infinity;
-	visualizer.quality = settings.quality;
-	const duration = 5;
 
+	const visualizer = new Visualizer(context, audioPlayer);
+	const timespanCurrent = Timespan.viaDuration(audioPlayer.currentTime * 1000);
+	const timespanDuration = Timespan.viaDuration(audioPlayer.duration * 1000);
 	context.translate(canvas.width / 2, canvas.height / 2);
 	visualizer.addEventListener(`resize`, (event) => {
 		context.translate(canvas.width / 2, canvas.height / 2);
 	});
 	visualizer.addEventListener(`render`, (event) => {
-		const timespanCurrent = Timespan.viaDuration(audioPlayer.currentTime * 1000);
-		const timespanDuration = Timespan.viaDuration(audioPlayer.duration * 1000);
+		timespanCurrent.duration = audioPlayer.currentTime * 1000;
+		timespanDuration.duration = audioPlayer.duration * 1000;
 		spanTime.innerText = `${(timespanCurrent.hours * 60 + timespanCurrent.minutes).toString().padStart(2, `0`)}:${(timespanCurrent.seconds).toString().padStart(2, `0`)}`;
 		if (!Number.isNaN(timespanDuration.duration)) {
 			spanTime.innerText += ` • ${(timespanCurrent.hours * 60 + timespanDuration.minutes).toString().padStart(2, `0`)}:${(timespanDuration.seconds).toString().padStart(2, `0`)}`;
 		}
 		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
-		//
-		if (search.get(`debug`) === `on`) {
+	});
+	if (search.get(`debug`) === `on`) {
+		visualizer.addEventListener(`render`, (event) => {
 			Manager.log({
 				[`loop`]: `${settings.loop}`,
 				[`visualization`]: `${settings.type}`,
@@ -129,16 +129,21 @@ try {
 				[`fullscreen`]: `${document.fullscreenElement !== null}`,
 				[`autoplay`]: `${settings.autoplay}`,
 			});
-		}
-		//
-		switch (settings.type) {
-			//#region Spectrogram
-			case Visualizations.spectrogram: {
+		});
+	}
+
+	visualizer.FPSLimit = Infinity;
+	visualizer.quality = settings.quality;
+	const duration = 5;
+	switch (settings.type) {
+		//#region Spectrogram
+		case Visualizations.spectrogram: {
+			const anchor = 0.8;
+			const anchorTop = anchor * 2 / 3;
+			const anchorBottom = anchorTop + 1 / 3;
+			//
+			visualizer.addEventListener(`render`, (event) => {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-				//
-				const anchor = 0.8;
-				const anchorTop = anchor * 2 / 3;
-				const anchorBottom = anchorTop + 1 / 3;
 				//
 				const transform = context.getTransform();
 				transform.a = 1 + 0.2 * visualizer.getAmplitude(Datalist.frequency);
@@ -155,7 +160,7 @@ try {
 						index = Math.abs(counter) - 1;
 					}
 					const coefficent = index / (canvas.width - 1);
-					const datul = data[Math.floor(coefficent * visualizer.length * 0.7)] / 255;
+					const datul = data[Math.trunc(coefficent * visualizer.length * 0.7)] / 256;
 					/** [0 - 1] */ const value = Math.pow(Math.pow(datul, 2) * visualizer.getVolume(Datalist.frequency), 1 / 2);
 					const size = new Point2D(0, canvas.height * value);
 					const position = new Point2D(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
@@ -164,7 +169,7 @@ try {
 					} else {
 						const highlight = Color.viaHSL(coefficent * 360, 100, 50)
 							.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(Datalist.timeDomain) * (360 / duration))
-							.illuminate(0.2 + 0.8 * visualizer.getVolume(Datalist.frequency));
+							.illuminate(0.2 + 0.5 * visualizer.getVolume(Datalist.frequency));
 						gradientPath.addColorStop(coefficent, highlight.toString());
 						context.lineTo(position.x, position.y);
 					}
@@ -185,20 +190,29 @@ try {
 				context.fillStyle = gradientShadow;
 				context.fillRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//#endregion
-			} break;
-			//#endregion
-			//#region Waveform
-			case Visualizations.waveform: {
+
+			});
+		} break;
+		//#endregion
+		//#region Waveform
+		case Visualizations.waveform: {
+			let radius = Math.min(canvas.width, canvas.height) / 2;
+			let line = radius / 256;
+			//
+			visualizer.addEventListener(`resize`, (event) => {
+				radius = Math.min(canvas.width, canvas.height) / 2;
+				line = radius / 256;
+			});
+			//
+			visualizer.addEventListener(`render`, (event) => {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//
 				const transform = context.getTransform();
-				transform.a = 1 + 0.4 * visualizer.getAmplitude(Datalist.timeDomain);
-				transform.d = 1 + 0.4 * visualizer.getAmplitude(Datalist.timeDomain);
+				transform.a = 1 + 0.5 * visualizer.getAmplitude(Datalist.timeDomain);
+				transform.d = 1 + 0.5 * visualizer.getAmplitude(Datalist.timeDomain);
 				context.setTransform(transform);
 				//
 				const data = visualizer.getData(Datalist.timeDomain);
-				const radius = Math.min(canvas.width, canvas.height) / 2;
-				const line = radius / 256;
 				context.lineWidth = line;
 				//#region Background
 				context.globalCompositeOperation = `source-over`;
@@ -209,8 +223,8 @@ try {
 				context.moveTo(-canvas.width / 2, 0);
 				for (let index = 0; index < canvas.width; index++) {
 					const coefficent = index / (canvas.width - 1);
-					const datul = data[Math.floor(coefficent * visualizer.length)] / 128 - 1;
-					/** [0 - 1] */ const value = datul * visualizer.getVolume(Datalist.frequency);
+					const datul = data[Math.trunc(coefficent * visualizer.length)] / 128 - 1;
+					/** [0 - 1] */ const value = (datul * Math.pow(visualizer.getVolume(Datalist.frequency), 2));
 					const position = new Point2D(
 						index - canvas.width / 2,
 						(radius / 2) * value
@@ -236,10 +250,10 @@ try {
 				for (let angle = 0; angle < ring; angle++) {
 					const coefficent = angle / (ring - 1);
 					const ratio = Math.pow(Math.abs(angle - smoothing) / smoothing, 16);
-					const index = Math.floor(coefficent * visualizer.length);
+					const index = Math.trunc(coefficent * visualizer.length);
 					const average = (data[index] + data[data.length - 1 - index]) / 2;
 					const datul = (data[index] + + (average - data[index]) * ratio) / 128 - 1;
-					/** [0 - 1] */ const value = (0.75 + 0.25 * datul * visualizer.getVolume(Datalist.frequency));
+					/** [0 - 1] */ const value = (0.75 + 0.25 * datul * Math.pow(visualizer.getVolume(Datalist.frequency), 2));
 					const distance = radius * value;
 					const position = new Point2D(
 						distance * Math.sin(coefficent * 2 * Math.PI),
@@ -247,7 +261,7 @@ try {
 					);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
 						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(Datalist.timeDomain) * (360 / duration))
-						.illuminate(0.2 + 0.8 * visualizer.getVolume(Datalist.frequency));
+						.illuminate(0.2 + 0.5 * visualizer.getVolume(Datalist.frequency));
 					gradientForegroundPath.addColorStop(coefficent, highlight.toString(ColorFormats.RGB, true));
 					context.lineTo(position.x, position.y);
 				}
@@ -266,11 +280,38 @@ try {
 				context.fillStyle = gradientForegroundShadow;
 				context.fill();
 				//#endregion
-			} break;
-			//#endregion
-			default: throw new TypeError(`Invalid visualization: '${settings.type}'.`);
-		}
-	});
+			});
+		} break;
+		//#endregion
+		//#region Mixed
+		// case Visualizations.mixed: {
+		// 	const side = Math.min(canvas.width, canvas.height) / 49;
+		// 	const count = new Point2D(Math.trunc(canvas.width / side) + 1, Math.trunc(canvas.height / side) + 1);
+		// 	const width = canvas.width / 10;
+		// 	const height = canvas.height / 10;
+		// 	visualizer.addEventListener(`render`, (event) => {
+		// 		context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+		// 		//
+		// 		const dataFrequency = visualizer.getData(Datalist.frequency);
+		// 		const dataTimeDomain = visualizer.getData(Datalist.timeDomain);
+		// 		for (let y = 0; y < count.y; y++) {
+		// 			for (let x = 0; x < count.x; x++) {
+		// 				const coefficent = (x + y) / (count.x + count.y);
+		// 				const color = Color.viaHSL(
+		// 					coefficent * 360,
+		// 					(dataFrequency[Math.trunc(x / count.x)] / 256) * 100,
+		// 					(dataTimeDomain[Math.trunc(y / count.y)] / 256) * 50,
+		// 				).rotate(visualizer.impulse(duration * 1000) * 360);
+		// 				context.fillStyle = color.toString(ColorFormats.RGB, true);
+		// 				context.fillRect((x - count.x / 2) * side, (y - count.y / 2) * side, side, side);
+		// 			}
+		// 		}
+		// 		// context.fill();
+		// 	});
+		// } break;
+		//#endregion
+		default: throw new TypeError(`Invalid visualization: '${settings.type}'.`);
+	}
 	visualizer.dispatchEvent(new Event(`render`));
 
 	divInterface.addEventListener(`click`, (event) => {
