@@ -40,22 +40,6 @@
 			</label>
 		</section>
 		<section class="option">
-			<p class="title">Quality</p>
-			<dfn class="definition">Audio processing quality. Recommended level 10.</dfn>
-			<select id="quality" title="Quality" class="depth with-padding rounded value" required></select>
-		</section>
-		<section class="option">
-			<p class="title">Visualization</p>
-			<dfn class="definition">The visualization. Appearance, animations, rendering when playing music.</dfn>
-			<select id="visualization" title="Visualization" class="depth with-padding rounded value" required></select>
-			<div class="grid-line -spectrogram">
-				<small class="warn">This is more suitable for calm songs where the beat is not prominent and/or the music is primarily instrumental.</small>
-			</div>
-			<div class="grid-line -waveform">
-				<small class="warn">This is more suitable for active songs where the beat is distinct and/or loud, separated music is playing.</small>
-			</div>
-		</section>
-		<section class="option">
 			<p class="title">Autoplay</p>
 			<dfn class="definition">Autoplay on audio uploading.</dfn>
 			<input id="toggle-autoplay" type="checkbox" hidden>
@@ -63,13 +47,46 @@
 				<span class="layer knob"></span>
 			</label>
 		</section>
+		<hr class="depth">
 		<section class="option">
-			<button id="reset-settings" class="layer rounded with-padding grid-line">Reset settings</button>
+			<p class="title">Visualization</p>
+			<select id="visualization" title="Visualization" class="depth with-padding rounded value" required></select>
+			<dfn class="definition">
+				The visualization. Appearance, animations, rendering when playing music.<br>
+				<span class="-spectrogram">This is more suitable for calm songs where the beat is not prominent and/or the music is primarily instrumental.</span>
+				<span class="-waveform">This is more suitable for active songs where the beat is distinct and/or loud, separated music is playing.</span>
+			</dfn>
+			<section class="option">
+				<p class="title">Quality</p>
+				<dfn class="definition">Audio processing quality. Recommended level 10. Levels before 8 and after 12 are not recommended.</dfn>
+				<select id="quality" title="Quality" class="depth with-padding rounded value" required></select>
+			</section>
+			<section class="option">
+				<p class="title">Smoothing</p>
+				<dfn class="definition">A smoother set of visualizations changes over time. In the range from 0 to 1. 0 changes instantly, 1 changes with great smoothness. Values before 0.1 and after 0.9 are not recommended.</dfn>
+				<input id="smoothing" type="range" min="0" max="1" step="0.01" class="depth rounded value">
+			</section>
+			<section class="option">
+				<p class="title">Limiters</p>
+				<dfn class="definition">Sound range limiters. Values are in decibels.</dfn>
+				<div class="flex column with-gap value">
+					<input id="min-decibels" type="number" placeholder="Min decibels value" class="depth rounded with-padding">
+					<input id="max-decibels" type="number" placeholder="Max decibels value" class="depth rounded with-padding">
+				</div>
+			</section>
+			<section class="option">
+				<p class="title">Anchor</p>
+				<dfn class="definition">Anchor between visualization and reflection in relation to page height.</dfn>
+				<input id="spectrogram-anchor" type="range" min="0" max="1" step="0.01" class="depth rounded value">
+			</section>
 		</section>
 		<hr class="depth">
 		<section class="option">
+			<button id="reset-settings" class="layer rounded with-padding grid-line warn-background">Reset settings</button>
+		</section>
+		<section class="option">
 			<dfn class="definition">Your opinion is important to us.<br> Share your settings with us, so we can know your preferences. Perhaps in the next updates, it is your configuration that will be used by default.</dfn>
-			<button id="share-settings" class="layer rounded with-padding value">Share settings</button>
+			<button id="share-settings" class="layer rounded with-padding value highlight-background">Share settings</button>
 		</section>
 	</div>
 </body>

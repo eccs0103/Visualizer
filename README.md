@@ -6,6 +6,14 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 1.6.2 (26.09.2023)
+- Settings have been sorted.
+- Added smoothness and limiters settings.
+- Added an anchor setting for the "Spectrogram" visualization.
+- Now configuring settings are saved separately for each visualization.
+- Added an enhanced shake effect for the "Spectrogram" visualization.
+- The quality processing algorithm has been changed.
+
 ### Update 1.5.13 (24.09.2023)
 - Stabilized visualizations.
 - And some optimization.

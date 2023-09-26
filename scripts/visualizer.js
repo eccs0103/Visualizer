@@ -112,33 +112,43 @@ try {
 		visualizer.addEventListener(`render`, (event) => {
 			Manager.log({
 				[`loop`]: `${settings.loop}`,
+				[`autoplay`]: `${settings.autoplay}`,
 				[`visualization`]: `${settings.type}`,
 				[`frequency length`]: `${visualizer.length} bit`,
 				[`quality`]: `${visualizer.quality} level`,
+				[`smoothing`]: `${visualizer.smoothing}`,
+				[`min decibels`]: `${visualizer.minDecibels}`,
+				[`max decibels`]: `${visualizer.maxDecibels}`,
 				[`launched`]: `${visualizer.launched}`,
 				[`FPS limit`]: `${visualizer.FPSLimit}`,
 				[`FPS`]: `${visualizer.FPS.toFixed()}`,
 				[`audio time`]: `${timespanCurrent.toString()}s`,
 				[`audio duration`]: `${Number.isNaN(timespanDuration.duration) ? NaN : timespanDuration.toString()}s`,
-				[`alternating volume`]: `${visualizer.getVolume(Datalist.frequency).toFixed(3)}`,
-				[`direct volume`]: `${visualizer.getVolume(Datalist.timeDomain).toFixed(3)}`,
-				[`alternating amplitude`]: `${visualizer.getAmplitude(Datalist.frequency).toFixed(3)}`,
-				[`direct amplitude`]: `${visualizer.getAmplitude(Datalist.timeDomain).toFixed(3)}`,
+				[`alternating volume`]: `${visualizer.toFactor(visualizer.getVolume(Datalist.frequency)).toFixed(3)}`,
+				[`direct volume`]: `${visualizer.toSignedFactor(visualizer.getVolume(Datalist.timeDomain)).toFixed(3)}`,
+				[`alternating amplitude`]: `${visualizer.toFactor(visualizer.getAmplitude(Datalist.frequency)).toFixed(3)}`,
+				[`direct amplitude`]: `${visualizer.toSignedFactor(visualizer.getAmplitude(Datalist.timeDomain)).toFixed(3)}`,
 				[`possibly bit`]: `${visualizer.isBeat()}`,
 				[`cycle duration`]: `${duration.toFixed(3)}s`,
 				[`fullscreen`]: `${document.fullscreenElement !== null}`,
-				[`autoplay`]: `${settings.autoplay}`,
 			});
 		});
 	}
 
 	visualizer.FPSLimit = Infinity;
-	visualizer.quality = settings.quality;
+	visualizer.quality = settings.visualization.quality;
+	visualizer.smoothing = settings.visualization.smoothing;
+	visualizer.minDecibels = settings.visualization.minDecibels;
+	visualizer.maxDecibels = settings.visualization.maxDecibels;
 	const duration = 5;
 	switch (settings.type) {
 		//#region Spectrogram
 		case Visualizations.spectrogram: {
-			const anchor = 0.8;
+			const anchor = (() => {
+				if (settings.visualization instanceof SpectrogramVisualizationSettings) {
+					return settings.visualization.anchor;
+				} else throw new TypeError(`Invalid settings type`);
+			})();
 			const anchorTop = anchor * 2 / 3;
 			const anchorBottom = anchorTop + 1 / 3;
 			//
@@ -146,30 +156,33 @@ try {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//
 				const transform = context.getTransform();
-				transform.a = 1 + 0.2 * visualizer.getAmplitude(Datalist.frequency);
-				transform.d = 1 + 0.2 * visualizer.getAmplitude(Datalist.timeDomain);
+				transform.a = 1 + 0.2 * visualizer.toFactor(visualizer.getAmplitude(Datalist.frequency));
+				transform.d = 1 + 0.4 * visualizer.toFactor(visualizer.getAmplitude(Datalist.timeDomain));
 				context.setTransform(transform);
 				//#region Foreground
 				context.globalCompositeOperation = `source-over`;
 				const gradientPath = context.createLinearGradient(-canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2);
 				const data = visualizer.getData(Datalist.frequency);
 				context.beginPath();
-				for (let counter = -canvas.width; counter < canvas.width; counter++) {
+				for (let counter = -visualizer.length; counter < visualizer.length; counter++) {
 					let index = counter;
 					if (counter < 0) {
 						index = Math.abs(counter) - 1;
 					}
-					const coefficent = index / (canvas.width - 1);
-					const datul = data[Math.trunc(coefficent * visualizer.length * 0.7)] / 256;
-					/** [0 - 1] */ const value = Math.pow(Math.pow(datul, 2) * visualizer.getVolume(Datalist.frequency), 1 / 2);
+					const coefficent = visualizer.toFactor(index, visualizer.length);
+					const datul = visualizer.toFactor(data[Math.trunc(visualizer.length * coefficent * 0.7)]);
+					/** [0 - 1] */ const value = Math.pow(Math.pow(datul, 2) * visualizer.toFactor(visualizer.getVolume(Datalist.frequency)), 1 / 2);
 					const size = new Point2D(0, canvas.height * value);
-					const position = new Point2D(index - canvas.width / 2, (canvas.height - size.y) * anchor - canvas.height / 2);
+					const position = new Point2D(
+						canvas.width * (coefficent - 0.5),
+						(canvas.height - size.y) * anchor - canvas.height / 2
+					);
 					if (counter < 0) {
 						context.lineTo(position.x, position.y + size.y);
 					} else {
 						const highlight = Color.viaHSL(coefficent * 360, 100, 50)
-							.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(Datalist.timeDomain) * (360 / duration))
-							.illuminate(0.2 + 0.5 * visualizer.getVolume(Datalist.frequency));
+							.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.toSignedFactor(visualizer.getAmplitude(Datalist.timeDomain)) * (360 / duration))
+							.illuminate(0.2 + 0.5 * visualizer.toFactor(visualizer.getVolume(Datalist.frequency)));
 						gradientPath.addColorStop(coefficent, highlight.toString());
 						context.lineTo(position.x, position.y);
 					}
@@ -208,8 +221,8 @@ try {
 				context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 				//
 				const transform = context.getTransform();
-				transform.a = 1 + 0.5 * visualizer.getAmplitude(Datalist.timeDomain);
-				transform.d = 1 + 0.5 * visualizer.getAmplitude(Datalist.timeDomain);
+				transform.a = 1 + 0.5 * visualizer.toSignedFactor(visualizer.getAmplitude(Datalist.timeDomain));
+				transform.d = 1 + 0.5 * visualizer.toSignedFactor(visualizer.getAmplitude(Datalist.timeDomain));
 				context.setTransform(transform);
 				//
 				const data = visualizer.getData(Datalist.timeDomain);
@@ -221,12 +234,12 @@ try {
 				context.strokeStyle = colorBackground.toString();
 				context.beginPath();
 				context.moveTo(-canvas.width / 2, 0);
-				for (let index = 0; index < canvas.width; index++) {
-					const coefficent = index / (canvas.width - 1);
-					const datul = data[Math.trunc(coefficent * visualizer.length)] / 128 - 1;
-					/** [0 - 1] */ const value = (datul * Math.pow(visualizer.getVolume(Datalist.frequency), 2));
+				for (let index = 0; index < visualizer.length; index++) {
+					const coefficent = visualizer.toFactor(index, visualizer.length);
+					const datul = visualizer.toSignedFactor(data[Math.trunc(coefficent * visualizer.length)]);
+					/** [0 - 1] */ const value = (datul * visualizer.toFactor(visualizer.getVolume(Datalist.frequency)));
 					const position = new Point2D(
-						index - canvas.width / 2,
+						canvas.width * (coefficent - 0.5),
 						(radius / 2) * value
 					);
 					context.lineTo(position.x, position.y);
@@ -245,23 +258,22 @@ try {
 				const colorForeground = Color.BLACK;
 				const gradientForegroundPath = context.createConicGradient(0, 0, 0);
 				context.beginPath();
-				const ring = 360;
-				const smoothing = ring / 2;
-				for (let angle = 0; angle < ring; angle++) {
-					const coefficent = angle / (ring - 1);
+				const smoothing = visualizer.length / 2;
+				for (let angle = 0; angle < visualizer.length; angle++) {
+					const coefficent = visualizer.toFactor(angle, visualizer.length);
 					const ratio = Math.pow(Math.abs(angle - smoothing) / smoothing, 16);
 					const index = Math.trunc(coefficent * visualizer.length);
 					const average = (data[index] + data[data.length - 1 - index]) / 2;
-					const datul = (data[index] + + (average - data[index]) * ratio) / 128 - 1;
-					/** [0 - 1] */ const value = (0.75 + 0.25 * datul * Math.pow(visualizer.getVolume(Datalist.frequency), 2));
+					const datul = visualizer.toSignedFactor((data[index] + + (average - data[index]) * ratio));
+					/** [0 - 1] */ const value = (0.75 + 0.25 * datul * visualizer.toFactor(visualizer.getVolume(Datalist.frequency)));
 					const distance = radius * value;
 					const position = new Point2D(
 						distance * Math.sin(coefficent * 2 * Math.PI),
 						distance * Math.cos(coefficent * 2 * Math.PI)
 					);
 					const highlight = Color.viaHSL(coefficent * 360, 100, 50)
-						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.getAmplitude(Datalist.timeDomain) * (360 / duration))
-						.illuminate(0.2 + 0.5 * visualizer.getVolume(Datalist.frequency));
+						.rotate(-visualizer.impulse(duration * 1000) * 360 + visualizer.toSignedFactor(visualizer.getAmplitude(Datalist.timeDomain)) * (360 / duration))
+						.illuminate(0.2 + 0.5 * visualizer.toFactor(visualizer.getVolume(Datalist.frequency)));
 					gradientForegroundPath.addColorStop(coefficent, highlight.toString(ColorFormats.RGB, true));
 					context.lineTo(position.x, position.y);
 				}
@@ -282,33 +294,6 @@ try {
 				//#endregion
 			});
 		} break;
-		//#endregion
-		//#region Mixed
-		// case Visualizations.mixed: {
-		// 	const side = Math.min(canvas.width, canvas.height) / 49;
-		// 	const count = new Point2D(Math.trunc(canvas.width / side) + 1, Math.trunc(canvas.height / side) + 1);
-		// 	const width = canvas.width / 10;
-		// 	const height = canvas.height / 10;
-		// 	visualizer.addEventListener(`render`, (event) => {
-		// 		context.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-		// 		//
-		// 		const dataFrequency = visualizer.getData(Datalist.frequency);
-		// 		const dataTimeDomain = visualizer.getData(Datalist.timeDomain);
-		// 		for (let y = 0; y < count.y; y++) {
-		// 			for (let x = 0; x < count.x; x++) {
-		// 				const coefficent = (x + y) / (count.x + count.y);
-		// 				const color = Color.viaHSL(
-		// 					coefficent * 360,
-		// 					(dataFrequency[Math.trunc(x / count.x)] / 256) * 100,
-		// 					(dataTimeDomain[Math.trunc(y / count.y)] / 256) * 50,
-		// 				).rotate(visualizer.impulse(duration * 1000) * 360);
-		// 				context.fillStyle = color.toString(ColorFormats.RGB, true);
-		// 				context.fillRect((x - count.x / 2) * side, (y - count.y / 2) * side, side, side);
-		// 			}
-		// 		}
-		// 		// context.fill();
-		// 	});
-		// } break;
 		//#endregion
 		default: throw new TypeError(`Invalid visualization: '${settings.type}'.`);
 	}

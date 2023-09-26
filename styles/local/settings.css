@@ -20,12 +20,17 @@ div.-settings-panel {
 	display: grid;
 }
 
-select#visualization:not(:has(option[value="spectrogram"]:checked)) ~ div.-spectrogram {
+select#visualization:not(:has(option[value="spectrogram"]:checked)) ~ dfn.definition *.-spectrogram {
 	display: none !important;
 }
 
-select#visualization:not(:has(option[value="waveform"]:checked)) ~ div.-waveform {
+select#visualization:not(:has(option[value="waveform"]:checked)) ~ dfn.definition *.-waveform {
 	display: none !important;
+}
+
+input#min-decibels,
+input#max-decibels {
+	width: 6em;
 }
 
 button#reset-settings {

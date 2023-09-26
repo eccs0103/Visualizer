@@ -239,19 +239,26 @@ dialog.pop-up div.container {
 
 section.option {
 	display: grid;
-	grid: 'title value' max-content 'definition	value' max-content / 1fr auto;
-	align-items: center;
+	grid-template:
+		'title		value' max-content
+		'definition	value' 1fr
+		/ 1fr auto;
 	gap: var(--size-serpator) var(--size-gap);
 	padding-top: var(--size-gap);
 }
 
 section.option > section.option {
+	width: 100%;
 	padding-left: 1em;
-	grid-column: auto / span 2;
+	grid-column: 1 / -1;
 }
 
 section.option > input:not(:checked) ~ section.option {
 	display: none !important;
+}
+
+section.option > * {
+	place-self: start;
 }
 
 section.option > *.title {
@@ -260,6 +267,7 @@ section.option > *.title {
 
 section.option > *.value {
 	grid-area: value;
+	align-self: center;
 }
 
 section.option > *.definition {
