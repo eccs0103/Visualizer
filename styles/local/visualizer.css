@@ -15,7 +15,7 @@ div#interface {
 	inset: 0;
 }
 
-@keyframes -show-interface {
+@keyframes -show-panel {
 	0% {
 		pointer-events: none;
 		opacity: 0;
@@ -26,7 +26,7 @@ div#interface {
 	}
 }
 
-@keyframes -hide-interface {
+@keyframes -hide-panel {
 	0% {
 		opacity: 1;
 	}
@@ -38,11 +38,11 @@ div#interface {
 }
 
 audio#player:not([data-playing]) ~ div#interface {
-	animation: -show-interface 0.1s ease-in 0s 1 both;
+	animation: -show-panel 0.1s ease-in 0s 1 both;
 }
 
 audio#player[data-playing] ~ div#interface {
-	animation: -hide-interface 0.3s ease-out 0s 1 both;
+	animation: -hide-panel 0.3s ease-out 0s 1 both;
 }
 
 div#interface *.-normalized {
@@ -142,4 +142,26 @@ input#time-track::after {
 	width: var(--procent-fill);
 	background-color: var(--color-highlight);
 	pointer-events: none;
+}
+
+div#information {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-content: end start;
+	animation: -hide-panel 0s ease-out 0s 1 both;
+	pointer-events: none;
+}
+
+div#information * {
+	opacity: 0.5;
+}
+
+audio#player[data-ready][data-playing] ~ div#information[data-intro] {
+	animation: -show-panel 0.3s ease-out 0s 1 both;
+}
+
+audio#player[data-ready]:not([data-playing]) ~ div#information,
+div#information:not([data-intro]) {
+	animation: -hide-panel 0.3s ease-out 0s 1 both;
 }

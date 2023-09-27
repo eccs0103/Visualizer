@@ -6,6 +6,10 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 1.6.3 (27.09.2023)
+- Added a feature to display the author and title of the composition.
+- Added corresponding configuration in the settings.
+
 ### Update 1.6.2 (26.09.2023)
 - Settings have been sorted.
 - Added smoothness and limiters settings.

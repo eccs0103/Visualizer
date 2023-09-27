@@ -55,6 +55,21 @@ try {
 	if (!(inputTimeTrack instanceof HTMLInputElement)) {
 		throw new TypeError(`Invalid element: ${inputTimeTrack}`);
 	}
+
+	const divInformation = document.querySelector(`div#information`);
+	if (!(divInformation instanceof HTMLDivElement)) {
+		throw new TypeError(`Invalid element: ${divInformation}`);
+	}
+
+	const h1MediaTitle = document.querySelector(`h1#media-title`);
+	if (!(h1MediaTitle instanceof HTMLHeadingElement)) {
+		throw new TypeError(`Invalid element: ${h1MediaTitle}`);
+	}
+
+	const h3MediaAuthor = document.querySelector(`h3#media-author`);
+	if (!(h3MediaAuthor instanceof HTMLHeadingElement)) {
+		throw new TypeError(`Invalid element: ${h3MediaAuthor}`);
+	}
 	//#endregion
 	//#region Initialize
 	audioPlayer.loop = settings.loop;
@@ -107,6 +122,8 @@ try {
 			spanTime.innerText += ` • ${(timespanCurrent.hours * 60 + timespanDuration.minutes).toString().padStart(2, `0`)}:${(timespanDuration.seconds).toString().padStart(2, `0`)}`;
 		}
 		inputTimeTrack.style.setProperty(`--procent-fill`, `${(audioPlayer.currentTime / audioPlayer.duration) * 100}%`);
+		//
+		divInformation.toggleAttribute(`data-intro`, (timespanCurrent.duration < information));
 	});
 	if (search.get(`debug`) === `on`) {
 		visualizer.addEventListener(`render`, (event) => {
@@ -141,6 +158,7 @@ try {
 	visualizer.minDecibels = settings.visualization.minDecibels;
 	visualizer.maxDecibels = settings.visualization.maxDecibels;
 	const duration = 5;
+	const information = settings.information * 1000;
 	switch (settings.type) {
 		//#region Spectrogram
 		case Visualizations.spectrogram: {
@@ -315,6 +333,11 @@ try {
 			if (file) {
 				URL.revokeObjectURL(audioPlayer.src);
 				audioPlayer.src = URL.createObjectURL(file);
+				const [author, title] = file.name.replace(/\.\w+$/, ``).split(/\s+-\s+/, 2);
+				if (author && title) {
+					h1MediaTitle.innerText = title;
+					h3MediaAuthor.innerText = author;
+				}
 			}
 		} catch (error) {
 			Manager.prevent(error);

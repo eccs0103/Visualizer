@@ -28,8 +28,7 @@ select#visualization:not(:has(option[value="waveform"]:checked)) ~ dfn.definitio
 	display: none !important;
 }
 
-input#min-decibels,
-input#max-decibels {
+input[type="number"] {
 	width: 6em;
 }
 

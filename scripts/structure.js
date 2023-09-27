@@ -192,10 +192,10 @@ class VisualizationSettings {
 	 */
 	static export(source) {
 		const result = (/** @type {VisualizationSettingsNotation} */ ({}));
-		result.quality = source.quality;
-		result.smoothing = source.smoothing;
-		result.minDecibels = source.minDecibels;
-		result.maxDecibels = source.maxDecibels;
+		if (source.quality !== undefined) result.quality = source.quality;
+		if (source.smoothing !== undefined) result.smoothing = source.smoothing;
+		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
+		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
 		return result;
 	}
 	/** @type {Number} */ static #minQuality = 5;
@@ -281,11 +281,11 @@ class SpectrogramVisualizationSettings extends VisualizationSettings {
 	 */
 	static export(source) {
 		const result = (/** @type {SpectrogramVisualizationSettingsNotation} */ ({}));
-		result.quality = source.quality;
-		result.smoothing = source.smoothing;
-		result.minDecibels = source.minDecibels;
-		result.maxDecibels = source.maxDecibels;
-		result.anchor = source.anchor;
+		if (source.quality !== undefined) result.quality = source.quality;
+		if (source.smoothing !== undefined) result.smoothing = source.smoothing;
+		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
+		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
+		if (source.anchor !== undefined) result.anchor = source.anchor;
 		return result;
 	}
 	constructor() {
@@ -333,10 +333,10 @@ class WaveformVisualizationSettings extends VisualizationSettings {
 	 */
 	static export(source) {
 		const result = (/** @type {WaveformVisualizationSettingsNotation} */ ({}));
-		result.quality = source.quality;
-		result.smoothing = source.smoothing;
-		result.minDecibels = source.minDecibels;
-		result.maxDecibels = source.maxDecibels;
+		if (source.quality !== undefined) result.quality = source.quality;
+		if (source.smoothing !== undefined) result.smoothing = source.smoothing;
+		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
+		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
 		return result;
 	}
 	constructor() {
@@ -354,6 +354,7 @@ class WaveformVisualizationSettings extends VisualizationSettings {
  * @typedef SettingsNotation
  * @property {Boolean} [loop]
  * @property {Boolean} [autoplay]
+ * @property {Number} [information]
  * @property {Visualizations} [type]
  * @property {Array<VisualizationSettingsNotation>} [visualizations]
  */
@@ -380,6 +381,10 @@ class Settings {
 		if (autoplay !== undefined && typeof (autoplay) !== `boolean`) {
 			throw new TypeError(`Property autoplay has invalid ${typeof (autoplay)} type`);
 		}
+		const information = Reflect.get(source, `information`);
+		if (information !== undefined && typeof (information) !== `number`) {
+			throw new TypeError(`Property information has invalid ${typeof (information)} type`);
+		}
 		const type = Reflect.get(source, `type`);
 		if (type !== undefined && typeof (type) !== `string`) {
 			throw new TypeError(`Property type has invalid ${typeof (type)} type`);
@@ -398,9 +403,10 @@ class Settings {
 			}
 		})));
 		const result = new Settings();
-		result.loop = loop;
-		result.autoplay = autoplay;
-		result.type = type;
+		if (loop !== undefined) result.loop = loop;
+		if (autoplay !== undefined) result.autoplay = autoplay;
+		if (information !== undefined) result.information = information;
+		if (type !== undefined) result.type = type;
 		result.#visualizations = visualizations;
 		return result;
 	}
@@ -409,9 +415,10 @@ class Settings {
 	 */
 	static export(source) {
 		const result = (/** @type {SettingsNotation} */ ({}));
-		result.loop = source.loop;
-		result.autoplay = source.autoplay;
-		result.type = source.type;
+		if (source.loop !== undefined) result.loop = source.loop;
+		if (source.autoplay !== undefined) result.autoplay = source.autoplay;
+		if (source.information !== undefined) result.information = source.information;
+		if (source.type !== undefined) result.type = source.type;
 		result.visualizations = Array.from(source.#visualizations).map(([type, visualization]) => {
 			if (visualization instanceof SpectrogramVisualizationSettings) {
 				return SpectrogramVisualizationSettings.export(visualization);
@@ -439,6 +446,16 @@ class Settings {
 	set autoplay(value) {
 		this.#autoplay = value;
 	}
+	/** @type {Number} */ #information = 6;
+	get information() {
+		return this.#information;
+	}
+	set information(value) {
+		if (value < 0) {
+			throw new RangeError(`Value out of range [0 - +∞)`);
+		}
+		this.#information = value;
+	}
 	/** @type {Visualizations} */ #type = Visualizations.spectrogram;
 	get type() {
 		return this.#type;
@@ -463,6 +480,7 @@ class Settings {
 		const settings = new Settings();
 		this.loop = settings.loop;
 		this.autoplay = settings.autoplay;
+		this.information = settings.information;
 		this.type = settings.type;
 		for (const [, visualization] of this.#visualizations) {
 			visualization.reset();

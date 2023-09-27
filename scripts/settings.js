@@ -15,6 +15,12 @@ try {
 		throw new TypeError(`Invalid element: ${inputToggleAutoplay}`);
 	}
 
+	const inputInformationDuration = document.querySelector(`input#information-duration`);
+	if (!(inputInformationDuration instanceof HTMLInputElement)) {
+		throw new TypeError(`Invalid element: ${inputInformationDuration}`);
+	}
+	
+
 	const selectVisualization = document.querySelector(`select#visualization`);
 	if (!(selectVisualization instanceof HTMLSelectElement)) {
 		throw new TypeError(`Invalid element: ${selectVisualization}`);
@@ -73,6 +79,11 @@ try {
 	inputToggleAutoplay.checked = settings.autoplay;
 	inputToggleAutoplay.addEventListener(`change`, (event) => {
 		settings.autoplay = inputToggleAutoplay.checked;
+	});
+
+	inputInformationDuration.value = `${settings.information}`;
+	inputInformationDuration.addEventListener(`change`, (event) => {
+		settings.information = Number(inputInformationDuration.value);
 	});
 
 	for (const type of Object.values(Visualizations)) {
