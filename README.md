@@ -6,6 +6,9 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 1.6.4 (06.10.2023)
+- Now the uploaded song will be saved until it is removed manually.
+
 ### Update 1.6.3 (27.09.2023)
 - Added a feature to display the author and title of the composition.
 - Added corresponding configuration in the settings.

@@ -1,6 +1,8 @@
 // @ts-ignore
 /** @typedef {import("./components/archive.js")} */
 // @ts-ignore
+/** @typedef {import("./components/database.js")} */
+// @ts-ignore
 /** @typedef {import("./components/manager.js")} */
 // @ts-ignore
 /** @typedef {import("./components/animator.js")} */
@@ -518,18 +520,9 @@ if (reset !== undefined) {
 }
 
 /** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${developer}.${title}.Settings`, Settings.export(new Settings()));
-// /** @type {Database<Blob>} */ const databasePlaylist = new Database(`${developer}.${title}.Playlist`);
+/** @type {Locker<File[]>} */ const lockerPlaylist = new Locker(developer, title, `Playlist`);
 
-const settings = Settings.import((() => {
-	// const protocol = search.get(`protocol`);
-	// if (protocol === undefined) {
-	return archiveSettings.data;
-	// } else {
-	// 	const keys = Object.keys(Settings.export(new Settings()));
-	// 	const values = protocol.split(`-`, keys.length);
-	// 	return JSON.parse(`{ ${keys.map((key, index) => `"${key}": ${values[index]}`).join(`, `)} }`);
-	// }
-})());
+const settings = Settings.import(archiveSettings.data);
 const theme = search.get(`theme`);
 if (theme !== undefined && Settings.themes.includes(theme)) {
 	document.documentElement.dataset[`theme`] = theme;

@@ -185,6 +185,13 @@ input[type="checkbox"]:checked + label[role="checkbox"].toggle > span.knob {
 	margin-right: 0;
 }
 
+input[type="color"] {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 2em;
+	height: 2em;
+}
+
 input[type="range"] {
 	-webkit-appearance: none;
 	appearance: none;

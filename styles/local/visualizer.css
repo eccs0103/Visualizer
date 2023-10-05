@@ -54,19 +54,24 @@ div#interface *.-normalized {
 	margin: auto;
 }
 
-label[for="loader"] {
+div.-controller {
 	inset: var(--size-large-gap) auto auto var(--size-large-gap);
+	align-items: start;
 }
 
-audio#player:not([data-ready]) ~ div#interface label[for="loader"] {
+audio#player:not([data-ready]) ~ div#interface div.-controller {
 	inset: 0;
 }
 
-audio#player:not([data-ready]) ~ div#interface label[for="loader"] > img[alt="Upload"] {
+audio#player:not([data-ready]) ~ div#interface div.-controller > label[for="loader"] > img[alt="Upload"] {
 	height: calc(var(--size-standart) * 3);
 }
 
-audio#player:not([data-ready]) ~ div#interface label[for="loader"] > *:not(img[alt="Upload"]) {
+audio#player:not([data-ready]) ~ div#interface div.-controller > label[for="loader"] > *:not(img[alt="Upload"]) {
+	display: none !important;
+}
+
+audio#player:not([data-ready]) ~ div#interface div.-controller > :not(label[for="loader"]) {
 	display: none !important;
 }
 

@@ -16,6 +16,7 @@
 	<link rel="stylesheet" href="../styles/themes/material.css">
 	<link rel="stylesheet" href="../styles/local/visualizer.css">
 	<script src="../scripts/components/archive.js" defer></script>
+	<script src="../scripts/components/database.js" defer></script>
 	<script src="../scripts/components/templates.js" defer></script>
 	<script src="../scripts/components/informant.js" defer></script>
 	<script src="../scripts/components/manager.js" defer></script>
@@ -32,12 +33,16 @@
 	<audio id="player" hidden></audio>
 	<canvas id="visualizer"></canvas>
 	<div id="interface" class="translucent">
-		<div class="contents">
+		<div class="flex column -normalized -controller">
 			<input id="loader" type="file" accept="audio/*, video/*" hidden>
-			<label for="loader" role="button" class="flex centered with-gap with-padding -normalized">
+			<label for="loader" role="button" class="flex centered with-gap with-padding">
 				<img src="../resources/upload.png" alt="Upload" class="icon">
 				<span>Upload</span>
 			</label>
+			<button id="ejector" class="flex centered with-gap with-padding">
+				<img src="../resources/eject.png" alt="Eject" class="icon">
+				<span>Eject</span>
+			</button>
 		</div>
 		<a role="button" href="./settings.html" class="flex centered with-padding -normalized">
 			<img src="../resources/settings.png" alt="Settings" class="icon">
