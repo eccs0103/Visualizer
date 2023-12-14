@@ -140,25 +140,30 @@ body {
 	cursor: text;
 }
 
-*[contenteditable="true"]:empty::before {
+*:read-write,
+*[contenteditable] {
+	text-overflow: revert;
+}
+
+*[contenteditable]:empty::before {
 	content: attr(aria-placeholder);
 }
 
 *::placeholder,
-*[contenteditable="true"]:empty::before {
+*[contenteditable]:empty::before {
 	font-weight: normal;
 }
 
-*[contenteditable="true"].single-line {
+*[contenteditable=].single-line {
 	white-space: nowrap;
 	overflow: hidden;
 }
 
-*[contenteditable="true"].single-line br {
+*[contenteditable].single-line br {
 	display: none;
 }
 
-*[contenteditable="true"].single-line * {
+*[contenteditable].single-line * {
 	display: inline;
 	white-space: nowrap;
 }
@@ -219,7 +224,7 @@ dialog:not([open]) {
 	display: none !important;
 }
 
-dialog.console {
+/* dialog.console {
 	position: fixed;
 	inset: 0 0 auto auto;
 	min-width: revert;
@@ -227,9 +232,14 @@ dialog.console {
 	grid-template-columns: repeat(2, auto);
 }
 
-dialog.console *:nth-child(2n) {
-	text-align: right;
+dialog.console *.-key {
+	text-align: left;
+	white-space: pre;
 }
+
+dialog.console *.-value {
+	text-align: right;
+} */
 
 dialog.pop-up > *:empty {
 	display: none;

@@ -1,12 +1,14 @@
 "use strict";
 
+//#region Color formats
 /** @enum {String} */ const ColorFormats = {
 	/** @readonly */ RGB: `RGB`,
 	/** @readonly */ HSL: `HSL`,
 	/** @readonly */ HEX: `HEX`,
 };
 Object.freeze(ColorFormats);
-
+//#endregion
+//#region Color
 class Color {
 	//#region Converters
 	/**
@@ -49,10 +51,10 @@ class Color {
 	}
 	/**
 	 * @param {Color} source 
-	 * @param {ColorFormats} format 
 	 * @param {Boolean} deep 
+	 * @param {ColorFormats} format 
 	 */
-	static stringify(source, format = ColorFormats.RGB, deep = false) {
+	static stringify(source, deep = false, format = ColorFormats.RGB) {
 		switch (format) {
 			case ColorFormats.RGB: return `rgb${deep ? `a` : ``}(${source.#red}, ${source.#green}, ${source.#blue}${deep ? `, ${source.#alpha}` : ``})`;
 			case ColorFormats.HSL: return `hsl${deep ? `a` : ``}(${source.#hue}deg, ${source.#saturation}%, ${source.#lightness}%${deep ? `, ${source.#alpha}` : ``})`;
@@ -62,10 +64,10 @@ class Color {
 	}
 	/**
 	 * @param {String} source 
-	 * @param {ColorFormats} format 
 	 * @param {Boolean} deep 
+	 * @param {ColorFormats} format 
 	 */
-	static parse(source, format = ColorFormats.RGB, deep = false) {
+	static parse(source, deep = false, format = ColorFormats.RGB) {
 		switch (format) {
 			case ColorFormats.RGB: {
 				const regex = new RegExp(`rgb${deep ? `a` : ``}\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*${deep ? `,\\s*(0(\\.\\d+)?|1(\\.0+)?)\\s*` : ``}\\)`, `i`);
@@ -102,9 +104,9 @@ class Color {
 	 */
 	static tryParse(source) {
 		let result = null;
-		for (const [format, deep] of Object.values(ColorFormats).flatMap((format) => (/** @type {Array<[String, Boolean]>} */ ([[format, false], [format, true]])))) {
+		for (const [format, deep] of Object.values(ColorFormats).flatMap((format) => (/** @type {[String, Boolean][]} */ ([[format, false], [format, true]])))) {
 			try {
-				result = Color.parse(source, format, deep);
+				result = Color.parse(source, deep, format);
 				break;
 			} catch {
 				continue;
@@ -351,11 +353,11 @@ class Color {
 	//#endregion
 	//#region Methods
 	/**
-	 * @param {ColorFormats} format 
 	 * @param {Boolean} deep
+	 * @param {ColorFormats} format 
 	 */
-	toString(format = ColorFormats.RGB, deep = false) {
-		return Color.stringify(this, format, deep);
+	toString(deep = false, format = ColorFormats.RGB) {
+		return Color.stringify(this, deep, format);
 	}
 	/**
 	 * 
@@ -414,3 +416,9 @@ class Color {
 	}
 	//#endregion
 }
+//#endregion
+
+export {
+	ColorFormats,
+	Color
+};

@@ -1,11 +1,14 @@
 # Visualizer
 Music Visualizer.  
-© Adaptive Core 2023  
 - - -
 ## Guide
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 1.6.5 (14.12.2023)
+- Updated the core (to version 2.3.4).
+- Optimized the "Waveform" mode.
+
 ### Update 1.6.4 (06.10.2023)
 - Now the uploaded song will be saved until it is removed manually.
 

@@ -12,21 +12,18 @@
 	<title>Visualizer - Homepage</title>
 	<link rel="shortcut icon" href="../resources/eye.png" media="(prefers-color-scheme: light)">
 	<link rel="shortcut icon" href="../resources/eye (inverted).png" media="(prefers-color-scheme: dark)">
-	<link rel="stylesheet" href="../styles/style.css">
+	<link rel="stylesheet" href="../styles/global/style.css">
 	<link rel="stylesheet" href="../styles/themes/material.css">
-	<link rel="stylesheet" href="../styles/local/visualizer.css">
-	<script src="../scripts/components/archive.js" defer></script>
-	<script src="../scripts/components/database.js" defer></script>
-	<script src="../scripts/components/templates.js" defer></script>
-	<script src="../scripts/components/informant.js" defer></script>
-	<script src="../scripts/components/manager.js" defer></script>
-	<script src="../scripts/components/engine.js" defer></script>
-	<script src="../scripts/components/animator.js" defer></script>
-	<script src="../scripts/structure.js" defer></script>
-	<script src="../scripts/components/colors.js" defer></script>
-	<script src="../scripts/components/measures.js" defer></script>
-	<script src="../scripts/components/timespan.js" defer></script>
-	<script src="../scripts/visualizer.js" defer></script>
+	<link rel="stylesheet" href="../styles/visualizer.css">
+	<script type="module" src="../scripts/modules/storage.js"></script>
+	<script type="module" src="../scripts/modules/database.js"></script>
+	<script type="module" src="../scripts/modules/extensions.js"></script>
+	<script type="module" src="../scripts/modules/executors.js"></script>
+	<script type="module" src="../scripts/structure.js"></script>
+	<script type="module" src="../scripts/modules/colors.js"></script>
+	<script type="module" src="../scripts/modules/measures.js"></script>
+	<script type="module" src="../scripts/modules/time.js"></script>
+	<script type="module" src="../scripts/visualizer.js"></script>
 </head>
 
 <body>
@@ -60,4 +57,8 @@
 		<h1 id="media-title"></h1>
 		<h3 id="media-author"></h3>
 	</div>
+	<script src="../scripts/templates/loader.js"></script>
+	<script src="../scripts/templates/popup.js"></script>
 </body>
+
+</html>

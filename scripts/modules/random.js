@@ -1,5 +1,6 @@
 "use strict";
 
+//#region Random
 class Random {
 	/**
 	 * @param {Number} min 
@@ -19,7 +20,7 @@ class Random {
 	}
 	/**
 	 * @template T 
-	 * @param {Array<T>} array 
+	 * @param {T[]} array 
 	 */
 	static item(array) {
 		return array[Random.integer(0, array.length)];
@@ -39,6 +40,11 @@ class Random {
 			}
 			begin = end;
 		}
-		throw new ReferenceError(`Can't select value. Maybe stack is empty.`);
+		throw new ReferenceError(`Can't select value. Maybe list is empty.`);
 	}
 }
+//#endregion
+
+export {
+	Random
+};

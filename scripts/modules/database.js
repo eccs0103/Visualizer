@@ -1,5 +1,6 @@
 "use strict";
 
+//#region Database
 class Database {
 	/**
 	 * @param {String} database 
@@ -56,7 +57,8 @@ class Database {
 		return promiseSet;
 	};
 }
-
+//#endregion
+//#region Locker
 /**
  * @template T
  */
@@ -85,3 +87,9 @@ class Locker extends Database {
 		await super.set(this.#key, value);
 	}
 }
+//#endregion
+
+export {
+	Database,
+	Locker
+};

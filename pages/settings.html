@@ -10,20 +10,17 @@
 	<meta name="description" content="A music visualizer">
 	<meta name="keywords" content="audio, visualization, css, music, html, canvas, jsdoc, js, dom, effects, visualizer">
 	<title>Visualizer - Settings</title>
-	<link rel="shortcut icon" href="../resources/settings.png" media="(prefers-color-scheme: light)">
-	<link rel="shortcut icon" href="../resources/settings (inverted).png" media="(prefers-color-scheme: dark)">
-	<link rel="stylesheet" href="../styles/style.css">
+	<link rel="shortcut icon" href="../resources/eye.png" media="(prefers-color-scheme: light)">
+	<link rel="shortcut icon" href="../resources/eye (inverted).png" media="(prefers-color-scheme: dark)">
+	<link rel="stylesheet" href="../styles/global/style.css">
 	<link rel="stylesheet" href="../styles/themes/material.css">
-	<link rel="stylesheet" href="../styles/local/settings.css">
-	<script src="../scripts/components/archive.js" defer></script>
-	<script src="../scripts/components/database.js" defer></script>
-	<script src="../scripts/components/templates.js" defer></script>
-	<script src="../scripts/components/informant.js" defer></script>
-	<script src="../scripts/components/manager.js" defer></script>
-	<script src="../scripts/components/engine.js" defer></script>
-	<script src="../scripts/components/animator.js" defer></script>
-	<script src="../scripts/structure.js" defer></script>
-	<script src="../scripts/settings.js" defer></script>
+	<link rel="stylesheet" href="../styles/settings.css">
+	<script type="module" src="../scripts/modules/storage.js"></script>
+	<script type="module" src="../scripts/modules/database.js"></script>
+	<script type="module" src="../scripts/modules/extensions.js"></script>
+	<script type="module" src="../scripts/modules/executors.js"></script>
+	<script type="module" src="../scripts/structure.js"></script>
+	<script type="module" src="../scripts/settings.js"></script>
 </head>
 
 <body class="with-gap with-padding large-padding">
@@ -98,4 +95,6 @@
 			<button id="share-settings" class="layer rounded with-padding value highlight-background">Share settings</button>
 		</section>
 	</div>
+	<script src="../scripts/templates/loader.js"></script>
+	<script src="../scripts/templates/popup.js"></script>
 </body>

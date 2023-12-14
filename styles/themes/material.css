@@ -173,7 +173,7 @@ input[type="radio"]:checked + label,
 }
 
 *::placeholder,
-*[contenteditable=true]:empty::before {
+*[contenteditable]:empty::before {
 	color: var(--color-text-description);
 }
 

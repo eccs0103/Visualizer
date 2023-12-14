@@ -1,13 +1,16 @@
-// @ts-ignore
-/** @typedef {import("./components/archive.js")} */
-// @ts-ignore
-/** @typedef {import("./components/database.js")} */
-// @ts-ignore
-/** @typedef {import("./components/manager.js")} */
-// @ts-ignore
-/** @typedef {import("./components/animator.js")} */
-
 "use strict";
+
+import {
+	NotationProgenitor,
+	NotationContainer
+} from "./modules/storage.js";
+import { } from "./modules/extensions.js";
+import {
+	Display
+} from "./modules/executors.js";
+import {
+	Locker
+} from "./modules/database.js";
 
 //#region Visualizer
 /** @enum {String} */ const Datalist = {
@@ -16,7 +19,7 @@
 };
 Object.freeze(Datalist);
 
-class Visualizer extends Animator {
+class Visualizer extends Display {
 	/**
 	 * @param {CanvasRenderingContext2D} context 
 	 * @param {HTMLMediaElement} media 
@@ -25,13 +28,11 @@ class Visualizer extends Animator {
 		super(context);
 
 		const audioContext = new AudioContext();
+		//
 		this.#analyser = audioContext.createAnalyser();
 		const source = audioContext.createMediaElementSource(media);
 		source.connect(this.#analyser);
 		this.#analyser.connect(audioContext.destination);
-		media.addEventListener(`play`, async (event) => {
-			await audioContext.resume();
-		});
 		//
 		this.#analyser.fftSize = Math.pow(2, 10);
 		this.#analyser.smoothingTimeConstant = 0;
@@ -42,7 +43,7 @@ class Visualizer extends Animator {
 		this.#volumeFrequency = 0;
 		this.#volumeTimeDomain = 0;
 		//
-		this.addEventListener(`render`, (event) => {
+		this.addEventListener(`update`, (event) => {
 			this.#analyser.getByteFrequencyData(this.#arrayFrequencyData);
 			this.#analyser.getByteTimeDomainData(this.#arrayTimeDomainData);
 			let summaryFrequency = 0, summaryTimeDomain = 0, summarySquareFrequency = 0, summarySquareTimeDomain = 0;
@@ -91,22 +92,6 @@ class Visualizer extends Animator {
 	}
 	/** @type {Uint8Array} */ #arrayFrequencyData;
 	/** @type {Uint8Array} */ #arrayTimeDomainData;
-	/**
-	 * @param {Number} value 
-	 * @param {Number} length default 256
-	 * @returns [0 - 1]
-	 */
-	toFactor(value, length = 256) {
-		return (value + 1) / length;
-	}
-	/**
-	 * @param {Number} value 
-	 * @param {Number} length default 256
-	 * @returns [0 - 1]
-	 */
-	toSignedFactor(value, length = 256) {
-		return (value + 1) / (length / 2) - 1;
-	}
 	/**
 	 * @param {Datalist} type 
 	 */
@@ -158,46 +143,56 @@ class Visualizer extends Animator {
  * @property {Number} [maxDecibels]
  */
 
-class VisualizationSettings {
+class VisualizationSettings extends NotationProgenitor {
 	/**
 	 * @param {any} source 
+	 * @returns {VisualizationSettings}
 	 */
 	static import(source) {
-		if (typeof (source) !== `object`) {
+		const result = new VisualizationSettings();
+		if (!(typeof (source) === `object`)) {
 			throw new TypeError(`Source has invalid ${typeof (source)} type`);
 		}
 		const quality = Reflect.get(source, `quality`);
-		if (quality !== undefined && typeof (quality) !== `number`) {
-			throw new TypeError(`Property quality has invalid ${typeof (quality)} type`);
+		if (quality !== undefined) {
+			if (!(typeof (quality) === `number`)) {
+				throw new TypeError(`Property quality has invalid ${typeof (quality)} type`);
+			}
+			result.quality = quality;
 		}
 		const smoothing = Reflect.get(source, `smoothing`);
-		if (smoothing !== undefined && typeof (smoothing) !== `number`) {
-			throw new TypeError(`Property smoothing has invalid ${typeof (smoothing)} type`);
+		if (smoothing !== undefined) {
+			if (!(typeof (smoothing) === `number`)) {
+				throw new TypeError(`Property smoothing has invalid ${typeof (smoothing)} type`);
+			}
+			result.smoothing = smoothing;
 		}
 		const minDecibels = Reflect.get(source, `minDecibels`);
-		if (minDecibels !== undefined && typeof (minDecibels) !== `number`) {
-			throw new TypeError(`Property minDecibels has invalid ${typeof (minDecibels)} type`);
+		if (minDecibels !== undefined) {
+			if (!(typeof (minDecibels) === `number`)) {
+				throw new TypeError(`Property minDecibels has invalid ${typeof (minDecibels)} type`);
+			}
+			result.minDecibels = minDecibels;
 		}
 		const maxDecibels = Reflect.get(source, `maxDecibels`);
-		if (maxDecibels !== undefined && typeof (maxDecibels) !== `number`) {
-			throw new TypeError(`Property maxDecibels has invalid ${typeof (maxDecibels)} type`);
+		if (maxDecibels !== undefined) {
+			if (!(typeof (maxDecibels) === `number`)) {
+				throw new TypeError(`Property maxDecibels has invalid ${typeof (maxDecibels)} type`);
+			}
+			result.maxDecibels = maxDecibels;
 		}
-		const result = new VisualizationSettings();
-		if (quality !== undefined) result.quality = quality;
-		if (smoothing !== undefined) result.smoothing = smoothing;
-		if (minDecibels !== undefined) result.minDecibels = minDecibels;
-		if (maxDecibels !== undefined) result.maxDecibels = maxDecibels;
 		return result;
 	}
 	/**
 	 * @param {VisualizationSettings} source 
+	 * @returns {VisualizationSettingsNotation}
 	 */
 	static export(source) {
 		const result = (/** @type {VisualizationSettingsNotation} */ ({}));
-		if (source.quality !== undefined) result.quality = source.quality;
-		if (source.smoothing !== undefined) result.smoothing = source.smoothing;
-		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
-		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
+		result.quality = source.quality;
+		result.smoothing = source.smoothing;
+		result.minDecibels = source.minDecibels;
+		result.maxDecibels = source.maxDecibels;
 		return result;
 	}
 	/** @type {Number} */ static #minQuality = 5;
@@ -244,13 +239,6 @@ class VisualizationSettings {
 			this.#maxDecibels = value;
 		} else throw new RangeError(`Value ${value} is less or equal than min decibels`);
 	}
-	reset() {
-		const settings = new VisualizationSettings();
-		this.quality = settings.quality;
-		this.smoothing = settings.smoothing;
-		this.minDecibels = settings.minDecibels;
-		this.maxDecibels = settings.maxDecibels;
-	}
 }
 
 /**
@@ -263,31 +251,34 @@ class VisualizationSettings {
 class SpectrogramVisualizationSettings extends VisualizationSettings {
 	/**
 	 * @param {any} source 
+	 * @returns {SpectrogramVisualizationSettings}
 	 */
 	static import(source) {
-		const base = super.import(source);
-		const anchor = Reflect.get(source, `anchor`);
-		if (anchor !== undefined && typeof (anchor) !== `number`) {
-			throw new TypeError(`Property anchor has invalid ${typeof (anchor)} type`);
-		}
 		const result = new SpectrogramVisualizationSettings();
+		const base = super.import(source);
+		if (!(typeof (source) === `object`)) {
+			throw new TypeError(`Source has invalid ${typeof (source)} type`);
+		}
 		result.quality = base.quality;
 		result.smoothing = base.smoothing;
 		result.minDecibels = base.minDecibels;
 		result.maxDecibels = base.maxDecibels;
-		if (anchor !== undefined) result.anchor = anchor;
+		const anchor = Reflect.get(source, `anchor`);
+		if (anchor !== undefined) {
+			if (!(typeof (anchor) === `number`)) {
+				throw new TypeError(`Property anchor has invalid ${typeof (anchor)} type`);
+			}
+			result.anchor = anchor;
+		}
 		return result;
 	}
 	/**
 	 * @param {SpectrogramVisualizationSettings} source 
+	 * @returns {SpectrogramVisualizationSettingsNotation}
 	 */
 	static export(source) {
-		const result = (/** @type {SpectrogramVisualizationSettingsNotation} */ ({}));
-		if (source.quality !== undefined) result.quality = source.quality;
-		if (source.smoothing !== undefined) result.smoothing = source.smoothing;
-		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
-		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
-		if (source.anchor !== undefined) result.anchor = source.anchor;
+		const result = (/** @type {SpectrogramVisualizationSettingsNotation} */ (super.export(source)));
+		result.anchor = source.anchor;
 		return result;
 	}
 	constructor() {
@@ -303,12 +294,6 @@ class SpectrogramVisualizationSettings extends VisualizationSettings {
 			this.#anchor = value;
 		} else throw new RangeError(`Value ${value} out of range [0 - 1]`);
 	}
-	reset() {
-		super.reset();
-		const settings = new SpectrogramVisualizationSettings();
-		this.smoothing = settings.smoothing;
-		this.anchor = settings.anchor;
-	}
 }
 
 /**
@@ -320,10 +305,14 @@ class SpectrogramVisualizationSettings extends VisualizationSettings {
 class WaveformVisualizationSettings extends VisualizationSettings {
 	/**
 	 * @param {any} source 
+	 * @returns {WaveformVisualizationSettings}
 	 */
 	static import(source) {
-		const base = super.import(source);
 		const result = new WaveformVisualizationSettings();
+		const base = super.import(source);
+		if (!(typeof (source) === `object`)) {
+			throw new TypeError(`Source has invalid ${typeof (source)} type`);
+		}
 		result.quality = base.quality;
 		result.smoothing = base.smoothing;
 		result.minDecibels = base.minDecibels;
@@ -332,23 +321,15 @@ class WaveformVisualizationSettings extends VisualizationSettings {
 	}
 	/**
 	 * @param {WaveformVisualizationSettings} source 
+	 * @returns {WaveformVisualizationSettingsNotation}
 	 */
 	static export(source) {
-		const result = (/** @type {WaveformVisualizationSettingsNotation} */ ({}));
-		if (source.quality !== undefined) result.quality = source.quality;
-		if (source.smoothing !== undefined) result.smoothing = source.smoothing;
-		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
-		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
+		const result = (/** @type {WaveformVisualizationSettingsNotation} */ (super.export(source)));
 		return result;
 	}
 	constructor() {
 		super();
 		this.smoothing = 0.2;
-	}
-	reset() {
-		super.reset();
-		const settings = new WaveformVisualizationSettings();
-		this.smoothing = settings.smoothing;
 	}
 }
 
@@ -367,60 +348,70 @@ class WaveformVisualizationSettings extends VisualizationSettings {
 };
 Object.freeze(Visualizations);
 
-class Settings {
+class Settings extends NotationProgenitor {
 	/**
 	 * @param {any} source 
+	 * @returns {Settings}
 	 */
 	static import(source) {
-		if (typeof (source) !== `object`) {
-			throw new TypeError(`Property source has invalid ${typeof (source)} type`);
+		const result = new Settings();
+		if (!(typeof (source) === `object`)) {
+			throw new TypeError(`Source has invalid ${typeof (source)} type`);
 		}
 		const loop = Reflect.get(source, `loop`);
-		if (loop !== undefined && typeof (loop) !== `boolean`) {
-			throw new TypeError(`Property loop has invalid ${typeof (loop)} type`);
+		if (loop !== undefined) {
+			if (!(typeof (loop) === `boolean`)) {
+				throw new TypeError(`Property loop has invalid ${typeof (loop)} type`);
+			}
+			result.loop = loop;
 		}
 		const autoplay = Reflect.get(source, `autoplay`);
-		if (autoplay !== undefined && typeof (autoplay) !== `boolean`) {
-			throw new TypeError(`Property autoplay has invalid ${typeof (autoplay)} type`);
+		if (autoplay !== undefined) {
+			if (!(typeof (autoplay) === `boolean`)) {
+				throw new TypeError(`Property autoplay has invalid ${typeof (autoplay)} type`);
+			}
+			result.autoplay = autoplay;
 		}
 		const information = Reflect.get(source, `information`);
-		if (information !== undefined && typeof (information) !== `number`) {
-			throw new TypeError(`Property information has invalid ${typeof (information)} type`);
+		if (information !== undefined) {
+			if (!(typeof (information) === `number`)) {
+				throw new TypeError(`Property information has invalid ${typeof (information)} type`);
+			}
+			result.information = information;
 		}
 		const type = Reflect.get(source, `type`);
-		if (type !== undefined && typeof (type) !== `string`) {
-			throw new TypeError(`Property type has invalid ${typeof (type)} type`);
-		}
-
-		const $visualizations = Reflect.get(source, `visualizations`);
-		if ($visualizations !== undefined && !($visualizations instanceof Array)) {
-			throw new TypeError(`Property visualizations has invalid ${($visualizations)} type`);
-		}
-		const visualizations = new Map(/** @type {Array<[Visualizations, VisualizationSettings]>} */(Object.values(Visualizations).map((type, index) => {
-			const visualization = $visualizations?.at(index);
-			switch (type) {
-				case Visualizations.spectrogram: return [type, (/** @type {VisualizationSettings} */ (visualization === undefined ? new SpectrogramVisualizationSettings() : SpectrogramVisualizationSettings.import(visualization)))];
-				case Visualizations.waveform: return [type, (/** @type {VisualizationSettings} */ (visualization === undefined ? new WaveformVisualizationSettings() : WaveformVisualizationSettings.import(visualization)))];
-				default: throw new TypeError(`Invalid type ${type}`);
+		if (type !== undefined) {
+			if (!(typeof (type) === `string`)) {
+				throw new TypeError(`Property type has invalid ${typeof (type)} type`);
 			}
-		})));
-		const result = new Settings();
-		if (loop !== undefined) result.loop = loop;
-		if (autoplay !== undefined) result.autoplay = autoplay;
-		if (information !== undefined) result.information = information;
-		if (type !== undefined) result.type = type;
-		result.#visualizations = visualizations;
+			result.type = type;
+		}
+		const visualizations = Reflect.get(source, `visualizations`);
+		if (visualizations !== undefined) {
+			if (!(visualizations instanceof Array)) {
+				throw new TypeError(`Property visualizations has invalid ${(visualizations)} type`);
+			}
+			result.#visualizations = new Map(/** @type {Array<[Visualizations, VisualizationSettings]>} */(Object.values(Visualizations).map((type, index) => {
+				const visualization = visualizations.at(index);
+				switch (type) {
+					case Visualizations.spectrogram: return [type, (/** @type {VisualizationSettings} */ (visualization === undefined ? new SpectrogramVisualizationSettings() : SpectrogramVisualizationSettings.import(visualization)))];
+					case Visualizations.waveform: return [type, (/** @type {VisualizationSettings} */ (visualization === undefined ? new WaveformVisualizationSettings() : WaveformVisualizationSettings.import(visualization)))];
+					default: throw new TypeError(`Invalid type ${type}`);
+				}
+			})));
+		}
 		return result;
 	}
 	/**
 	 * @param {Settings} source 
+	 * @returns {SettingsNotation}
 	 */
 	static export(source) {
 		const result = (/** @type {SettingsNotation} */ ({}));
-		if (source.loop !== undefined) result.loop = source.loop;
-		if (source.autoplay !== undefined) result.autoplay = source.autoplay;
-		if (source.information !== undefined) result.information = source.information;
-		if (source.type !== undefined) result.type = source.type;
+		result.loop = source.loop;
+		result.autoplay = source.autoplay;
+		result.information = source.information;
+		result.type = source.type;
 		result.visualizations = Array.from(source.#visualizations).map(([type, visualization]) => {
 			if (visualization instanceof SpectrogramVisualizationSettings) {
 				return SpectrogramVisualizationSettings.export(visualization);
@@ -474,57 +465,42 @@ class Settings {
 	/** @readonly */ get visualization() {
 		const result = this.#visualizations.get(this.type);
 		if (result === undefined) {
-			throw new ReferenceError(`Settings are not defined for visualization ${this.visualization}`);
+			throw new ReferenceError(`Settings are not defined for visualization ${this.type}`);
 		}
 		return result;
-	}
-	reset() {
-		const settings = new Settings();
-		this.loop = settings.loop;
-		this.autoplay = settings.autoplay;
-		this.information = settings.information;
-		this.type = settings.type;
-		for (const [, visualization] of this.#visualizations) {
-			visualization.reset();
-		}
 	}
 }
 //#endregion
 //#region Metadata
-const metaAuthor = document.querySelector(`meta[name="author"]`);
-if (!(metaAuthor instanceof HTMLMetaElement)) {
-	throw new TypeError(`Invalid element: ${metaAuthor}`);
-}
-const developer = metaAuthor.content;
-
-const metaApplicationName = document.querySelector(`meta[name="application-name"]`);
-if (!(metaApplicationName instanceof HTMLMetaElement)) {
-	throw new TypeError(`Invalid element: ${metaApplicationName}`);
-}
-const title = metaApplicationName.content;
-
-const search = Manager.getSearch();
-const reset = search.get(`reset`);
-if (reset !== undefined) {
-	if (reset === `all`) {
-		for (let index = 0; index < localStorage.length; index++) {
-			const value = localStorage.key(index);
-			if (value === null) {
-				throw new RangeError(`Index out of range`);
-			}
-			localStorage.removeItem(value);
-		}
-	} else {
-		localStorage.removeItem(reset);
-	}
-}
-
-/** @type {Archive<SettingsNotation>} */ const archiveSettings = new Archive(`${developer}.${title}.Settings`, Settings.export(new Settings()));
+const developer = document.getElement(HTMLMetaElement, `meta[name="author"]`).content;
+const title = document.getElement(HTMLMetaElement, `meta[name="application-name"]`).content;
+const containerSettings = new NotationContainer(Settings, `${developer}.${title}.Settings`);
 /** @type {Locker<File[]>} */ const lockerPlaylist = new Locker(developer, title, `Playlist`);
-
-const settings = Settings.import(archiveSettings.data);
+const search = location.getSearchMap();
 const theme = search.get(`theme`);
 if (theme !== undefined && Settings.themes.includes(theme)) {
 	document.documentElement.dataset[`theme`] = theme;
 }
+const reset = search.get(`reset`);
+switch (reset) {
+	case `settings`: {
+		containerSettings.reset();
+	}
+	default: break;
+}
+const settings = containerSettings.content;
 //#endregion
+
+export {
+	Datalist,
+	Visualizer,
+	Visualizations,
+	VisualizationSettings,
+	SpectrogramVisualizationSettings,
+	WaveformVisualizationSettings,
+	Settings,
+	containerSettings,
+	lockerPlaylist,
+	search,
+	settings,
+};
