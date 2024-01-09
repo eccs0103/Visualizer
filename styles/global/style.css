@@ -224,7 +224,7 @@ dialog:not([open]) {
 	display: none !important;
 }
 
-/* dialog.console {
+dialog.console {
 	position: fixed;
 	inset: 0 0 auto auto;
 	min-width: revert;
@@ -239,7 +239,7 @@ dialog.console *.-key {
 
 dialog.console *.-value {
 	text-align: right;
-} */
+}
 
 dialog.pop-up > *:empty {
 	display: none;

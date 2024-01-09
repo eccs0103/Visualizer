@@ -1,11 +1,7 @@
 "use strict";
 
-import {
-	Point2D
-} from "./measures.js";
-import {
-	Color
-} from "./colors.js";
+import { Point2D } from "./Measures.js";
+import { Color } from "./Colors.js";
 
 //#region Texture
 class Texture {
@@ -62,21 +58,20 @@ class Texture {
 	 */
 	constructor(size) {
 		this.#size = size;
-		/** @type {Color[][]} */ const data = [];
+		/** @type {Color[][]} */ const data = (this.#data = new Array(this.#size.y));
 		for (let y = 0; y < data.length; y++) {
-			/** @type {Color[]} */ const row = (data[y] = []);
+			/** @type {Color[]} */ const row = (data[y] = new Array(this.#size.x));
 			for (let x = 0; x < row.length; x++) {
-				/** @type {Color} */ const cell = (row[x] = Color.TRANSPARENT);
+				/** @type {Color} */ (row[x] = Color.TRANSPARENT);
 			}
 		}
-		this.#data = data;
 	}
 	//#endregion
 	//#region Modifiers
 	/**
 	 * @param {Texture} first 
 	 * @param {Texture} second 
-	 * @param {Number} ratio [0 - 1]
+	 * @param {number} ratio [0 - 1]
 	 */
 	static mix(first, second, ratio = 0.5) {
 		if (ratio < 0 || ratio > 1) throw new RangeError(`Ratio ${ratio} out of range [0 - 1]`);
@@ -89,7 +84,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	static grayscale(source, scale = 1) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Scale ${scale} out of range [0 - 1]`);
@@ -102,7 +97,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	static invert(source, scale = 1) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Scale ${scale} out of range [0 - 1]`);
@@ -115,7 +110,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	static sepia(source, scale = 1) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Scale ${scale} out of range [0 - 1]`);
@@ -128,7 +123,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} angle 
+	 * @param {number} angle (-∞ - ∞)
 	 */
 	static rotate(source, angle) {
 		const result = source.clone();
@@ -140,7 +135,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	static saturate(source, scale) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Scale ${scale} out of range [0 - 1]`);
@@ -153,7 +148,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	static illuminate(source, scale) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Scale ${scale} out of range [0 - 1]`);
@@ -166,7 +161,7 @@ class Texture {
 	}
 	/**
 	 * @param {Texture} source 
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	static pass(source, scale) {
 		if (scale < 0 || scale > 1) throw new RangeError(`Scale ${scale} out of range [0 - 1]`);
@@ -190,79 +185,67 @@ class Texture {
 	 * @param {Point2D} position 
 	 */
 	getCell(position) {
-		const row = this.#data[position.y];
-		if (row === undefined) {
-			throw new RangeError(`Position ${position.toString()} out of range [${new Point2D(0, 0).toString()} - ${this.size.toString()})`);
-		}
-		const cell = row[position.x];
-		if (cell === undefined) {
-			throw new RangeError(`Position ${position.toString()} out of range [${new Point2D(0, 0).toString()} - ${this.size.toString()})`);
-		}
-		return cell;
+		if (0 <= position.x && position.x < this.size.x && 0 <= position.y && position.y < this.size.y) {
+			return this.#data[position.y][position.x];
+		} else throw new RangeError(`Position ${position} out of range [${Point2D.CONSTANT_ZERO} - ${this.size})`);
 	}
 	/**
 	 * @param {Point2D} position 
 	 * @param {Color} value 
 	 */
 	setCell(position, value) {
-		const row = this.#data[position.y];
-		if (row === undefined) {
-			throw new RangeError(`Position ${position.toString()} out of range [${new Point2D(0, 0).toString()} - ${this.size.toString()})`);
-		}
-		const cell = row[position.x];
-		if (cell === undefined) {
-			throw new RangeError(`Position ${position.toString()} out of range [${new Point2D(0, 0).toString()} - ${this.size.toString()})`);
-		}
-		this.#data[position.y][position.x] = value;
+		if (0 <= position.x && position.x < this.size.x && 0 <= position.y && position.y < this.size.y) {
+			this.#data[position.y][position.x] = value;
+		} else throw new RangeError(`Position ${position} out of range [${Point2D.CONSTANT_ZERO} - ${this.size})`);
 	}
 	clone() {
 		return Texture.clone(this);
 	}
 	/**
 	 * @param {Texture} other 
-	 * @param {Number} ratio [0 - 1]
+	 * @param {number} ratio [0 - 1]
 	 */
 	mix(other, ratio = 0.5) {
 		return Texture.mix(this, other, ratio);
 	}
 	/**
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	grayscale(scale = 1) {
 		return Texture.grayscale(this, scale);
 	}
 	/**
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	invert(scale = 1) {
 		return Texture.invert(this, scale);
 	}
 	/**
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	sepia(scale = 1) {
 		return Texture.sepia(this, scale);
 	}
 	/**
-	 * @param {Number} angle 
+	 * @param {number} angle (-∞ - ∞)
 	 */
 	rotate(angle) {
 		return Texture.rotate(this, angle);
 	}
 	/**
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	saturate(scale) {
 		return Texture.saturate(this, scale);
 	}
 	/**
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	illuminate(scale) {
 		return Texture.illuminate(this, scale);
 	}
 	/**
-	 * @param {Number} scale [0 - 1]
+	 * @param {number} scale [0 - 1]
 	 */
 	pass(scale) {
 		return Texture.pass(this, scale);
@@ -271,6 +254,4 @@ class Texture {
 };
 //#endregion
 
-export {
-	Texture
-};
+export { Texture };

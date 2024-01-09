@@ -2,19 +2,41 @@
 
 //#region Engine
 /**
- * @typedef Engine
- * @property {Boolean} launched
- * @property {Number} FPS
- * @property {Number} delta
+ * @abstract
  */
+class Engine extends EventTarget {
+	/**
+	 * @returns {boolean}
+	 */
+	get launched() {
+		throw new ReferenceError(`Not implemented function`);
+	}
+	/**
+	 * @param {boolean} value
+	 */
+	set launched(value) {
+		throw new ReferenceError(`Not implemented function`);
+	}
+	/**
+	 * @readonly
+	 * @returns {number}
+	 */ 
+	get FPS() {
+		throw new ReferenceError(`Not implemented function`);
+	}
+	/**
+	 * @readonly
+	 * @returns {number}
+	 */ 
+	get delta() {
+		throw new ReferenceError(`Not implemented function`);
+	}
+}
 //#endregion
 //#region Fast engine
-/**
- * @implements {Engine}
- */
-class FastEngine extends EventTarget {
+class FastEngine extends Engine {
 	/**
-	 * @param {Boolean} launch
+	 * @param {boolean} launch
 	 */
 	constructor(launch = false) {
 		super();
@@ -52,7 +74,7 @@ class FastEngine extends EventTarget {
 	/** @readonly */ get time() {
 		return this.#time;
 	}
-	/** @type {Boolean} */ #launched = false;
+	/** @type {boolean} */ #launched = false;
 	get launched() {
 		return this.#launched;
 	}
@@ -65,7 +87,7 @@ class FastEngine extends EventTarget {
 			this.dispatchEvent(new Event(`launch`));
 		}
 	}
-	/** @type {Number} */ #FPSLimit = Infinity;
+	/** @type {number} */ #FPSLimit = Infinity;
 	get FPSLimit() {
 		return this.#FPSLimit;
 	}
@@ -75,7 +97,7 @@ class FastEngine extends EventTarget {
 		}
 		this.#FPSLimit = value;
 	}
-	/** @type {Number} */ #FPS = 0;
+	/** @type {number} */ #FPS = 0;
 	/** @readonly */ get FPS() {
 		return this.#FPS;
 	}
@@ -85,12 +107,9 @@ class FastEngine extends EventTarget {
 }
 //#endregion
 //#region Precise engine
-/**
- * @implements {Engine}
- */
-class PreciseEngine extends EventTarget {
+class PreciseEngine extends Engine {
 	/**
-	 * @param {Boolean} launch
+	 * @param {boolean} launch
 	 */
 	constructor(launch = false) {
 		super();
@@ -108,7 +127,7 @@ class PreciseEngine extends EventTarget {
 		setTimeout(callback, this.#delta);
 		this.launched = launch;
 	}
-	/** @type {Boolean} */ #launched = false;
+	/** @type {boolean} */ #launched = false;
 	get launched() {
 		return this.#launched;
 	}
@@ -122,7 +141,7 @@ class PreciseEngine extends EventTarget {
 		}
 	}
 
-	/** @type {Number} */ #delta = (1000 / 60);
+	/** @type {number} */ #delta = (1000 / 60);
 	get FPS() {
 		return (1000 / this.#delta);
 	}
@@ -144,7 +163,7 @@ class PreciseEngine extends EventTarget {
 class Display extends FastEngine {
 	/**
 	 * @param {T} context 
-	 * @param {Boolean} launched 
+	 * @param {boolean} launched 
 	 */
 	constructor(context, launched = false) {
 		super(launched);
@@ -168,8 +187,4 @@ class Display extends FastEngine {
 }
 //#endregion
 
-export {
-	FastEngine,
-	PreciseEngine,
-	Display,
-};
+export { FastEngine, PreciseEngine, Display };

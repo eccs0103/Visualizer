@@ -3,18 +3,18 @@
 //#region Database
 class Database {
 	/**
-	 * @param {String} database 
-	 * @param {String} store 
+	 * @param {string} database 
+	 * @param {string} store 
 	 */
 	constructor(database, store) {
 		this.#database = database;
 		this.#store = store;
 	}
-	/** @type {String} */ #database;
-	/** @type {String} */ #store;
+	/** @type {string} */ #database;
+	/** @type {string} */ #store;
 	/**
-	 * @param {String} database 
-	 * @param {String} store 
+	 * @param {string} database 
+	 * @param {string} store 
 	 */
 	async #getStore(database, store) {
 		const requestOpen = indexedDB.open(database);
@@ -32,7 +32,7 @@ class Database {
 		return transaction.objectStore(store);
 	}
 	/**
-	 * @param {String} key 
+	 * @param {string} key 
 	 */
 	async get(key) {
 		const $store = await this.#getStore(this.#database, this.#store);
@@ -44,7 +44,7 @@ class Database {
 		return promiseGet;
 	};
 	/**
-	 * @param {String} key 
+	 * @param {string} key 
 	 * @param {any} value 
 	 */
 	async set(key, value) {
@@ -64,15 +64,15 @@ class Database {
  */
 class Locker extends Database {
 	/**
-	 * @param {String} database 
-	 * @param {String} store 
-	 * @param {String} key 
+	 * @param {string} database 
+	 * @param {string} store 
+	 * @param {string} key 
 	 */
 	constructor(database, store, key) {
 		super(database, store);
 		this.#key = key;
 	}
-	/** @type {String} */ #key;
+	/** @type {string} */ #key;
 	/**
 	 * @returns {Promise<T>}
 	 */
@@ -89,7 +89,4 @@ class Locker extends Database {
 }
 //#endregion
 
-export {
-	Database,
-	Locker
-};
+export { Database, Locker };

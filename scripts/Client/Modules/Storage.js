@@ -6,7 +6,7 @@
  */
 class Archive {
 	/**
-	 * @param {String} key 
+	 * @param {string} key 
 	 * @param {T} initial
 	 */
 	constructor(key, initial) {
@@ -15,12 +15,11 @@ class Archive {
 			this.data = initial;
 		}
 	}
-	/** @type {String} */ #key;
+	/** @type {string} */ #key;
 	get data() {
-		const item = localStorage.getItem(this.#key);
-		if (item === null) {
+		const item = localStorage.getItem(this.#key) ?? (() => {
 			throw new ReferenceError(`Key '${this.#key}' isn't defined`);
-		}
+		})();
 		return (/** @type {T} */ (JSON.parse(item)));
 	}
 	set data(value) {
@@ -35,6 +34,9 @@ class Archive {
 }
 //#endregion
 //#region Notation progenitor
+/**
+ * @abstract
+ */
 class NotationProgenitor {
 	/**
 	 * @param {any} source 
@@ -59,7 +61,7 @@ class NotationProgenitor {
 class NotationContainer {
 	/**
 	 * @param {T} prototype 
-	 * @param {String} path 
+	 * @param {string} path 
 	 */
 	constructor(prototype, path) {
 		this.#prototype = prototype;
@@ -85,8 +87,4 @@ class NotationContainer {
 }
 //#endregion
 
-export {
-	Archive,
-	NotationProgenitor,
-	NotationContainer
-};
+export { Archive, NotationProgenitor, NotationContainer };

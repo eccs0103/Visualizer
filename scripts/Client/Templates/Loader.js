@@ -10,7 +10,7 @@ void async function () {
 			divContainer.classList.add(`flex`, `column`, `primary-centered`, `with-gap`, `with-padding`);
 			{
 				const imgLogo = divContainer.appendChild(document.createElement(`img`));
-				imgLogo.src = `../resources/Circuit (Transparent).gif`;
+				imgLogo.src = `../Resources/Circuit (Transparent).gif`;
 				imgLogo.alt = `Logo`;
 				{ }
 			}

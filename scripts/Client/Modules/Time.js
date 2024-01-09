@@ -1,38 +1,40 @@
 "use strict";
 
+const { abs, trunc } = Math;
+
 //#region Timespan
 class Timespan {
 	//#region Converters
 	/**
-	 * @param {Number} duration (-∞ - ∞)
-	 * @returns {[Boolean, Number, Number, Number, Number]} negativity, hours [0 - ∞), minutes [0 - 59], seconds [0 - 59], milliseconds [0 - 999]
+	 * @param {number} duration (-∞ - ∞)
+	 * @returns {[boolean, number, number, number, number]} negativity, hours [0 - ∞), minutes [0 - 59], seconds [0 - 59], milliseconds [0 - 999]
 	 */
 	static #toTime(duration) {
 		const negativity = duration < 0;
-		duration = Math.abs(duration);
+		duration = abs(duration);
 		const milliseconds = duration % 1000;
-		duration = Math.trunc(duration / 1000);
+		duration = trunc(duration / 1000);
 		const seconds = duration % 60;
-		duration = Math.trunc(duration / 60);
+		duration = trunc(duration / 60);
 		const minutes = duration % 60;
-		duration = Math.trunc(duration / 60);
+		duration = trunc(duration / 60);
 		const hours = duration;
 		return [negativity, hours, minutes, seconds, milliseconds];
 	}
 	/**
-	 * @param {Boolean} negativity 
-	 * @param {Number} hours [0 - ∞)
-	 * @param {Number} minutes [0 - 59]
-	 * @param {Number} seconds [0 - 59]
-	 * @param {Number} milliseconds [0 - 999]
-	 * @returns {Number} (-∞ - ∞)
+	 * @param {boolean} negativity 
+	 * @param {number} hours [0 - ∞)
+	 * @param {number} minutes [0 - 59]
+	 * @param {number} seconds [0 - 59]
+	 * @param {number} milliseconds [0 - 999]
+	 * @returns {number} (-∞ - ∞)
 	 */
 	static #toDuration(negativity, hours, minutes, seconds, milliseconds) {
 		return (negativity ? -1 : 1) * ((((hours) * 60 + minutes) * 60 + seconds) * 1000 + milliseconds);
 	}
 	/**
 	 * @param {Timespan} timespan 
-	 * @param {Boolean} full 
+	 * @param {boolean} full 
 	 */
 	static stringify(timespan, full = true) {
 		const { negativity, hours, minutes, seconds, milliseconds } = timespan;
@@ -52,7 +54,7 @@ class Timespan {
 		return result;
 	}
 	/**
-	 * @param {String} string 
+	 * @param {string} string 
 	 */
 	static parse(string) {
 		const match = /(-)?(?:(?:(\d+):)?(\d+):)?(\d+)(?:\.(\d+))?/.exec(string);
@@ -70,20 +72,20 @@ class Timespan {
 	//#endregion
 	//#region Constructors
 	/**
-	 * @param {Number} duration (-∞ - ∞)
+	 * @param {number} duration (-∞ - ∞)
 	 */
 	static viaDuration(duration = 0) {
 		const result = new Timespan();
-		result.#duration = Math.trunc(duration);
+		result.#duration = trunc(duration);
 		[result.#negativity, result.#hours, result.#minutes, result.#seconds, result.#milliseconds] = Timespan.#toTime(result.#duration);
 		return result;
 	}
 	/**
-	 * @param {Boolean} negativity
-	 * @param {Number} hours [0 - ∞)
-	 * @param {Number} minutes [0 - 59]
-	 * @param {Number} seconds [0 - 59]
-	 * @param {Number} milliseconds [0 - 999]
+	 * @param {boolean} negativity
+	 * @param {number} hours [0 - ∞)
+	 * @param {number} minutes [0 - 59]
+	 * @param {number} seconds [0 - 59]
+	 * @param {number} milliseconds [0 - 999]
 	 */
 	static viaTime(negativity = false, hours = 0, minutes = 0, seconds = 0, milliseconds = 0) {
 		if (0 > hours) throw new RangeError(`Property 'hours' out of range: ${hours}`);
@@ -92,10 +94,10 @@ class Timespan {
 		if (0 > milliseconds || milliseconds > 999) throw new RangeError(`Property 'milliseconds' out of range: ${milliseconds}`);
 		const result = new Timespan();
 		result.#negativity = negativity;
-		result.#hours = Math.trunc(hours);
-		result.#minutes = Math.trunc(minutes);
-		result.#seconds = Math.trunc(seconds);
-		result.#milliseconds = Math.trunc(milliseconds);
+		result.#hours = trunc(hours);
+		result.#minutes = trunc(minutes);
+		result.#seconds = trunc(seconds);
+		result.#milliseconds = trunc(milliseconds);
 		result.#duration = Timespan.#toDuration(result.#negativity, result.#hours, result.#minutes, result.#seconds, result.#milliseconds);
 		return result;
 	}
@@ -126,28 +128,28 @@ class Timespan {
 	 * @param {Timespan} first 
 	 * @param {Timespan} second 
 	 */
-	static add(first, second) {
+	static [`+`](first, second) {
 		return Timespan.viaDuration(first.#duration + second.#duration);
 	}
 	/**
 	 * @param {Timespan} first 
 	 * @param {Timespan} second 
 	 */
-	static subtract(first, second) {
+	static [`-`](first, second) {
 		return Timespan.viaDuration(first.#duration - second.#duration);
 	}
 	/**
 	 * @param {Timespan} timespan 
-	 * @param {Number} factor 
+	 * @param {number} factor 
 	 */
-	static multiply(timespan, factor) {
+	static [`*`](timespan, factor) {
 		return Timespan.viaDuration(timespan.#duration * factor);
 	}
 	/**
 	 * @param {Timespan} timespan 
-	 * @param {Number} factor 
+	 * @param {number} factor 
 	 */
-	static divide(timespan, factor) {
+	static [`/`](timespan, factor) {
 		return Timespan.viaDuration(timespan.#duration / factor);
 	}
 	/**
@@ -158,16 +160,16 @@ class Timespan {
 	}
 	//#endregion
 	//#region Properties
-	/** @type {Number} */ #duration = 0;
+	/** @type {number} */ #duration = 0;
 	get duration() {
 		return this.#duration;
 	}
 	set duration(value) {
 		if (value < 0) throw new RangeError(`Property 'duration' out of range: ${value}`);
-		this.#duration = Math.trunc(value);
+		this.#duration = trunc(value);
 		[this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds] = Timespan.#toTime(this.#duration);
 	}
-	/** @type {Boolean} */ #negativity = false;
+	/** @type {boolean} */ #negativity = false;
 	get negativity() {
 		return this.#negativity;
 	}
@@ -175,46 +177,46 @@ class Timespan {
 		this.#negativity = value;
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
-	/** @type {Number} */ #hours = 0;
+	/** @type {number} */ #hours = 0;
 	get hours() {
 		return this.#hours;
 	}
 	set hours(value) {
 		if (value < 0) throw new RangeError(`Property 'hours' out of range: ${value}`);
-		this.#hours = Math.trunc(value);
+		this.#hours = trunc(value);
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
-	/** @type {Number} */ #minutes = 0;
+	/** @type {number} */ #minutes = 0;
 	get minutes() {
 		return this.#minutes;
 	}
 	set minutes(value) {
 		if (value < 0 || value > 59) throw new RangeError(`Property 'minutes' out of range: ${value}`);
-		this.#minutes = Math.trunc(value);
+		this.#minutes = trunc(value);
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
-	/** @type {Number} */ #seconds = 0;
+	/** @type {number} */ #seconds = 0;
 	get seconds() {
 		return this.#seconds;
 	}
 	set seconds(value) {
 		if (value < 0 || value > 59) throw new RangeError(`Property 'seconds' out of range: ${value}`);
-		this.#seconds = Math.trunc(value);
+		this.#seconds = trunc(value);
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
-	/** @type {Number} */ #milliseconds = 0;
+	/** @type {number} */ #milliseconds = 0;
 	get milliseconds() {
 		return this.#milliseconds;
 	}
 	set milliseconds(value) {
 		if (value < 0 || value > 999) throw new RangeError(`Property 'milliseconds' out of range: ${value}`);
-		this.#milliseconds = Math.trunc(value);
+		this.#milliseconds = trunc(value);
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
 	//#endregion
 	//#region Methods
 	/**
-	 * @param {Boolean} full 
+	 * @param {boolean} full 
 	 */
 	toString(full = true) {
 		return Timespan.stringify(this, full);
@@ -228,26 +230,26 @@ class Timespan {
 	/**
 	 * @param {Timespan} other 
 	 */
-	add(other) {
-		return Timespan.add(this, other);
+	[`+`](other) {
+		return Timespan[`+`](this, other);
 	}
 	/**
 	 * @param {Timespan} other 
 	 */
-	subtract(other) {
-		return Timespan.subtract(this, other);
+	[`-`](other) {
+		return Timespan[`-`](this, other);
 	}
 	/**
-	 * @param {Number} factor 
+	 * @param {number} factor 
 	 */
-	multiply(factor) {
-		return Timespan.multiply(this, factor);
+	[`*`](factor) {
+		return Timespan[`*`](this, factor);
 	}
 	/**
-	 * @param {Number} factor 
+	 * @param {number} factor 
 	 */
-	divide(factor) {
-		return Timespan.divide(this, factor);
+	[`/`](factor) {
+		return Timespan[`/`](this, factor);
 	}
 	invert() {
 		return Timespan.invert(this);
@@ -256,6 +258,4 @@ class Timespan {
 }
 //#endregion
 
-export {
-	Timespan
-};
+export { Timespan };
