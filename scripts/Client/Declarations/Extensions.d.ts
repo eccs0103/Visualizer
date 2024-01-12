@@ -17,7 +17,13 @@ interface Window {
 interface Math {
 	toDegrees(radians: number): number;
 	toRadians(degrees: number): number;
+	/**
+	 * @returns [0 - 1]
+	 */
 	toFactor(value: number, period: number): number;
+	/**
+	 * @returns [-1 - 1]
+	 */
 	toSignedFactor(value: number, period: number): number;
 }
 

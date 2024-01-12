@@ -154,7 +154,7 @@ body *::placeholder {
 :disabled + label,
 [aria-disabled="true"] {
 	pointer-events: none;
-	filter: opacity(0.5);
+	opacity: 0.5;
 	transition: var(--time-duration);
 }
 
