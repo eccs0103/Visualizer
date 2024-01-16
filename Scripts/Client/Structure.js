@@ -77,13 +77,20 @@ Object.freeze(DataTypes);
 
 class Visualizer extends EventTarget {
 	/**
-	 * @param {HTMLMediaElement} mediaElement 
+	 * @param {HTMLMediaElement} media 
 	 */
-	constructor(mediaElement) {
+	constructor(media) {
 		super();
 
 		this.#audioContext = new AudioContext();
-		this.#source = this.#audioContext.createMediaElementSource(mediaElement);
+		media.addEventListener(`play`, async (event) => {
+			try {
+				await this.#audioContext.resume();
+			} catch (error) {
+				await window.prevent(document.analysis(error));
+			}
+		});
+		this.#source = this.#audioContext.createMediaElementSource(media);
 		this.#analyser = this.#audioContext.createAnalyser();
 		this.#data = new Map(Object.values(DataTypes).map(type => [type, new Uint8Array(this.length)]));
 		this.#volume = new Map(Object.values(DataTypes).map(type => [type, 0]));
@@ -94,7 +101,7 @@ class Visualizer extends EventTarget {
 
 		this.addEventListener(`update`, (event) => {
 			for (const [type, data] of this.#data) {
-				if (mediaElement.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
+				if (media.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
 					switch (type) {
 						case DataTypes.frequency: {
 							this.#analyser.getByteFrequencyData(data);
