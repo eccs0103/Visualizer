@@ -5,6 +5,17 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 2.0.0 (17.01.2024) - UI Release : AWT 2.4.1
+- Updated the interface layout. It's now more flexible and stable.
+- Improved the playback progress bar for easier use.
+- The time counter no longer overlaps or blocks the playback progress bar.
+- The playback progress bar now displays the time during scrolling.
+- Fixed media insertion animations. They now appear sequentially, interacting with the environment.
+- Media extraction no longer requires page reloading.
+- Accelerated and optimized the interface.
+- New experimental visualization "Pulsar". Old ones will be removed.
+- Significant work on optimizing the core and the program itself. The program now consumes 23% fewer resources.
+
 ### Update 1.6.5 (14.12.2023)
 - Updated the core (to version 2.3.4).
 - Optimized the "Waveform" mode.

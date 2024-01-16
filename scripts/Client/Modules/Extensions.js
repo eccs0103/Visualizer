@@ -91,6 +91,16 @@ Document.prototype.analysis = function (error) {
 };
 //#endregion
 //#region Math
+/**
+ * @param {number} value 
+ * @param {number} min 
+ * @param {number} max 
+ * @returns {number}
+ */
+Math.between = function (value, min, max) {
+	return Math.min(Math.max(min, value), max);
+};
+
 const toDegreeFactor = 180 / Math.PI;
 /**
  * @param {number} radians 

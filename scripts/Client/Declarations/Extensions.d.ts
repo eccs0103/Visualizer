@@ -15,6 +15,7 @@ interface Window {
 }
 
 interface Math {
+	between(value: number, min: number, max: number): number;
 	toDegrees(radians: number): number;
 	toRadians(degrees: number): number;
 	/**
