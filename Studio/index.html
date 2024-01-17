@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="system">
+<html lang="en" data-theme="dark">
 
 <head>
 	<meta charset="UTF-8">
@@ -9,16 +9,16 @@
 	<meta name="author" content="Adaptive Core">
 	<meta name="description" content="A music visualizer">
 	<meta name="keywords" content="audio, visualization, css, music, html, canvas, jsdoc, js, dom, effects, visualizer">
-	<title>Visualizer - Homepage</title>
+	<title>Visualizer - Studio</title>
 	<link rel="shortcut icon" href="../Resources/Eye.png" media="(prefers-color-scheme: light)">
 	<link rel="shortcut icon" href="../Resources/Eye (inverted).png" media="(prefers-color-scheme: dark)">
-	<link rel="stylesheet" href="../Styles/Global/Style.css">
+	<link rel="stylesheet" href="../Styles/Style.css">
 	<link rel="stylesheet" href="../Styles/Themes/Material.css">
-	<link rel="stylesheet" href="../Styles/Visualization.css">
-	<script type="module" src="../Scripts/Client/Modules/Storage.js"></script>
-	<script type="module" src="../Scripts/Client/Modules/Extensions.js"></script>
-	<script type="module" src="../Scripts/Client/Structure.js"></script>
-	<script type="module" src="../Scripts/Client/Visualization.js"></script>
+	<link rel="stylesheet" href="./Studio.css">
+	<script type="module" src="../Scripts/Modules/Storage.js"></script>
+	<script type="module" src="../Scripts/Modules/Extensions.js"></script>
+	<script type="module" src="../Scripts/Structure.js"></script>
+	<script type="module" src="./Studio.js"></script>
 </head>
 
 <body>
@@ -40,9 +40,9 @@
 		</button>
 		<input id="time-track" type="range" min="0" max="100" step="0.1" value="0">
 	</div>
-	<script src="../Scripts/Client/Templates/Console.js"></script>
-	<script src="../Scripts/Client/Templates/Loader.js"></script>
-	<script src="../Scripts/Client/Templates/Popup.js"></script>
+	<script src="../Scripts/Templates/Console.js"></script>
+	<script src="../Scripts/Templates/Loader.js"></script>
+	<script src="../Scripts/Templates/Popup.js"></script>
 </body>
 
 </html>

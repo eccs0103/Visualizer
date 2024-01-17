@@ -1,10 +1,10 @@
 "use strict";
 
-import { Color } from "./Modules/Colors.js";
-import { Display } from "./Modules/Executors.js";
-import { Point2D } from "./Modules/Measures.js";
-import { Timespan } from "./Modules/Time.js";
-import { DataTypes, Visualization, Visualizer, playlist, settings } from "./Structure.js";
+import { Color } from "../Scripts/Modules/Colors.js";
+import { Display } from "../Scripts/Modules/Executors.js";
+import { Point2D } from "../Scripts/Modules/Measures.js";
+import { Timespan } from "../Scripts/Modules/Time.js";
+import { DataTypes, Visualization, Visualizer, playlist, settings } from "../Scripts/Structure.js";
 
 try {
 	const { min, max, between, toFactor, toSignedFactor, trunc, ceil, round, abs, sin, cos, PI, pow, sqrt, random } = Math;
