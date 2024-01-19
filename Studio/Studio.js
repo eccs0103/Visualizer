@@ -104,8 +104,8 @@ try {
 	});
 
 	visualizer.quality = 10;
-	visualizer.minDecibels = -80;
-	visualizer.maxDecibels = -20;
+	visualizer.minDecibels = settings.minDecibels;
+	visualizer.maxDecibels = settings.maxDecibels;
 
 	switch (settings.visualization) {
 		case Visualization.pulsar: {
@@ -208,30 +208,63 @@ try {
 
 	display.dispatchEvent(new Event(`resize`));
 
+	let idInterval = NaN;
+	function glance(...data) {
+		document.log(...data);
+		clearInterval(idInterval);
+		idInterval = setInterval(document.log, 1000);
+	}
+
 	window.addEventListener(`keydown`, async (event) => {
 		try {
 			if (event.ctrlKey && event.code == `Numpad1`) {
 				event.preventDefault();
+
 				visualizer.minDecibels -= 10;
-			} else if (event.ctrlKey && event.code == `Numpad7`) {
+				settings.minDecibels = visualizer.minDecibels;
+
+				glance({ decibels: `[${visualizer.minDecibels}, ${visualizer.maxDecibels}]` });
+			} else if (event.ctrlKey && event.code == `Numpad3`) {
 				event.preventDefault();
-				visualizer.minDecibels += 10;
+
+				if (visualizer.minDecibels + 10 < visualizer.maxDecibels) {
+					visualizer.minDecibels += 10;
+				}
+				settings.minDecibels = visualizer.minDecibels;
+
+				glance({ decibels: `[${visualizer.minDecibels}, ${visualizer.maxDecibels}]` });
 			}
 
-			if (event.ctrlKey && event.code == `Numpad3`) {
+			if (event.ctrlKey && event.code == `Numpad7`) {
 				event.preventDefault();
-				visualizer.maxDecibels -= 10;
+
+				if (visualizer.maxDecibels - 10 > visualizer.minDecibels) {
+					visualizer.maxDecibels -= 10;
+				}
+				settings.maxDecibels = visualizer.maxDecibels;
+
+				glance({ decibels: `[${visualizer.minDecibels}, ${visualizer.maxDecibels}]` });
 			} else if (event.ctrlKey && event.code == `Numpad9`) {
 				event.preventDefault();
+
 				visualizer.maxDecibels += 10;
+				settings.maxDecibels = visualizer.maxDecibels;
+
+				glance({ decibels: `[${visualizer.minDecibels}, ${visualizer.maxDecibels}]` });
 			}
 
 			if (event.ctrlKey && event.code == `Numpad4`) {
 				event.preventDefault();
+
 				visualizer.smoothing = (visualizer.smoothing * 10 - 1) / 10;
+
+				glance({ smoothing: `${visualizer.smoothing}` });
 			} else if (event.ctrlKey && event.code == `Numpad6`) {
 				event.preventDefault();
+
 				visualizer.smoothing = (visualizer.smoothing * 10 + 1) / 10;
+
+				glance({ smoothing: `${visualizer.smoothing}` });
 			}
 		} catch (error) {
 			await window.prevent(document.analysis(error));

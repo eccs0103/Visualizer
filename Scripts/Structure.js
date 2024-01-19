@@ -21,6 +21,8 @@ Object.freeze(Visualization);
 /**
  * @typedef SettingsNotation
  * @property {Visualization} [visualization]
+ * @property {number} [minDecibels]
+ * @property {number} [maxDecibels]
  */
 
 class Settings extends NotationProgenitor {
@@ -30,7 +32,9 @@ class Settings extends NotationProgenitor {
 	 */
 	static import(source) {
 		const result = new Settings();
-		if (source.visualization !== undefined) result.#visualization = source.visualization;
+		if (source.visualization !== undefined) result.visualization = source.visualization;
+		if (source.minDecibels !== undefined) result.minDecibels = source.minDecibels;
+		if (source.maxDecibels !== undefined) result.maxDecibels = source.maxDecibels;
 		return result;
 	}
 	/**
@@ -40,6 +44,8 @@ class Settings extends NotationProgenitor {
 	static export(source) {
 		const result = (/** @type {SettingsNotation} */ ({}));
 		result.visualization = source.visualization;
+		result.minDecibels = source.minDecibels;
+		result.maxDecibels = source.maxDecibels;
 		return result;
 	}
 	/** @type {Visualization} */ #visualization = Visualization.pulsar;
@@ -48,6 +54,20 @@ class Settings extends NotationProgenitor {
 	}
 	set visualization(value) {
 		this.#visualization = value;
+	}
+	/** @type {number} */ #minDecibels = -80;
+	get minDecibels() {
+		return this.#minDecibels;
+	}
+	set minDecibels(value) {
+		this.#minDecibels = value;
+	}
+	/** @type {number} */ #maxDecibels = -20;
+	get maxDecibels() {
+		return this.#maxDecibels;
+	}
+	set maxDecibels(value) {
+		this.#maxDecibels = value;
 	}
 }
 //#endregion
