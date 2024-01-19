@@ -140,7 +140,7 @@ try {
 				context.lineWidth = line;
 
 				//#region Pulsar
-				const graientPulsar = context.createConicGradient(PI / 2, 0, 0);
+				const gradientPulsar = context.createConicGradient(PI / 2, 0, 0);
 				context.beginPath();
 				for (let angle = -period + 1; angle < period; angle++) {
 					const factor = toFactor(angle + period, 2 * period - 1);
@@ -149,7 +149,7 @@ try {
 					const distance = (0.6 + 0.4 * sqrt(datul * datul + toVolumeFactor * toVolumeFactor)) * radius;
 					const position = new Point2D(distance * sin(factor * 2 * PI), distance * cos(factor * 2 * PI));
 					const color = Color.viaHSL(hue * 360, 100, 50);
-					graientPulsar.addColorStop(factor, color
+					gradientPulsar.addColorStop(factor, color
 						.rotate(180 * index)
 						.illuminate(0.1 + 0.9 * sqrt(toVolumeFactor))
 						.toString(true)
@@ -161,7 +161,7 @@ try {
 				context.globalCompositeOperation = `source-over`;
 				context.fillStyle = Color.BLACK.toString(true);
 				context.fill();
-				context.strokeStyle = graientPulsar;
+				context.strokeStyle = gradientPulsar;
 				context.stroke();
 				//#endregion
 				//#region Wave
@@ -176,8 +176,8 @@ try {
 				}
 				context.lineTo(canvas.width / 2, 0);
 
-				context.fillStyle = graientPulsar;
-				context.strokeStyle = graientPulsar;
+				context.fillStyle = gradientPulsar;
+				context.strokeStyle = gradientPulsar;
 				context.globalCompositeOperation = `source-atop`;
 				context.fill();
 				context.stroke();
