@@ -3,6 +3,10 @@ body {
 	inset: 0;
 }
 
+dialog.loader img[alt="Logo"] {
+	content: url(../resources/loading.gif);
+}
+
 canvas#display {
 	position: absolute;
 	inset: 0;
@@ -51,12 +55,12 @@ audio#player ~ div#interface {
 	animation: show-interface 50ms ease-in both;
 }
 
-audio#player[data-play] ~ div#interface {
+audio#player[data-playing] ~ div#interface {
 	animation: hide-interface 200ms ease-out both;
-}
 
-audio#player[data-play] ~ div#interface * {
-	pointer-events: none;
+	& > * {
+		pointer-events: none;
+	}
 }
 
 label[for="toggle-playlist"] {
@@ -67,13 +71,13 @@ label[for="toggle-playlist"] {
 
 input#toggle-playlist:checked + label[for="toggle-playlist"] {
 	background-color: revert;
+
+	& > img.icon {
+		content: url(../resources/icons/eject.png);
+	}
 }
 
-input#toggle-playlist:checked + label[for="toggle-playlist"] > img.icon {
-	content: url(../Resources/Eject.png);
-}
-
-a[href="../Pages/Settings.html"] {
+a[href="../pages/settings"] {
 	grid-area: settings-area;
 	place-self: start end;
 	z-index: 4;
@@ -83,7 +87,7 @@ img[alt="Status"].icon {
 	grid-area: status-area;
 	place-self: center center;
 	height: calc(var(--size-standart) * 3);
-	content: url(../Resources/Pause.png);
+	content: url(../resources/icons/pause.png);
 	pointer-events: none;
 	z-index: 4;
 }
@@ -94,8 +98,8 @@ audio#player:not([data-ready]) ~ div#interface img[alt="Status"].icon {
 	transition: var(--time-duration);
 }
 
-audio#player:not([data-play]) ~ div#interface img[alt="Status"].icon {
-	content: url(../Resources/Play.png);
+audio#player:not([data-playing]) ~ div#interface img[alt="Status"].icon {
+	content: url(../resources/icons/play.png);
 }
 
 span#time {
@@ -112,7 +116,7 @@ button#toggle-fullscreen {
 }
 
 :root:fullscreen button#toggle-fullscreen img.icon {
-	content: url(../Resources/ExitFullscreen.png);
+	content: url(../resources/icons/exit-fullscreen.png);
 }
 
 input#time-track {
@@ -120,20 +124,20 @@ input#time-track {
 	inset: auto 0 0 0;
 	height: var(--size-standart);
 	z-index: 3;
+
+	&::-webkit-slider-thumb {
+		visibility: hidden;
+	}
+
+	&::after {
+		content: "";
+		background-image: linear-gradient(0deg, var(--color-highlight) 25%, transparent 50%);
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: var(--track-value);
+	}
 }
 
 audio#player:not([data-ready]) ~ div#interface input#time-track {
 	pointer-events: none;
-}
-
-input#time-track::-webkit-slider-thumb {
-	visibility: hidden;
-}
-
-input#time-track::after {
-	content: "";
-	background-image: linear-gradient(0deg, var(--color-highlight) 25%, transparent 50%);
-	position: absolute;
-	inset: 0 auto 0 0;
-	width: var(--track-value);
 }

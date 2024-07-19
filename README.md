@@ -5,6 +5,9 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
+### Update 2.1.0 (20.07.2024) : Adaptive Core 3.0.1
+*Intermediate stable version*
+
 ### Update 2.0.0 (17.01.2024) - UI Release : AWT 2.4.1
 - Updated the interface layout. It's now more flexible and stable.
 - Improved the playback progress bar for easier use.

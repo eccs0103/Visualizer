@@ -1,24 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Type: text/html; charset=UTF-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="application-name" content="Visualizer">
-	<meta name="author" content="Adaptive Core">
+	<meta name="generator" content="2.1.0">
+	<meta name="title" content="Visualizer">
+	<meta name="author" content="eccs0103">
+	<meta name="color-scheme" content="system">
 	<meta name="description" content="A music visualizer">
-	<meta name="keywords" content="audio, visualization, css, music, html, canvas, jsdoc, js, dom, effects, visualizer">
-	<title>Visualizer - Studio</title>
-	<link rel="shortcut icon" href="../Resources/Eye.png" media="(prefers-color-scheme: light)">
-	<link rel="shortcut icon" href="../Resources/Eye (inverted).png" media="(prefers-color-scheme: dark)">
-	<link rel="stylesheet" href="../Styles/Style.css">
-	<link rel="stylesheet" href="../Styles/Themes/Material.css">
-	<link rel="stylesheet" href="./Studio.css">
-	<script type="module" src="../Scripts/Modules/Storage.js"></script>
-	<script type="module" src="../Scripts/Modules/Extensions.js"></script>
-	<script type="module" src="../Scripts/Structure.js"></script>
-	<script type="module" src="./Studio.js"></script>
+	<meta name="keywords" content="audio,visualization,css,music,html,canvas,jsdoc,js,dom,effects,visualizer">
+	<meta name="robots" content="index, follow">
+	<meta name="language" content="English">
+	<meta name="revisit-after" content="0 days">
+	<title>Studio - Visualizer</title>
+	<link rel="shortcut icon" href="../resources/icons/eye.png" media="(prefers-color-scheme: light)">
+	<link rel="shortcut icon" href="../resources/icons/eye-inverted.png" media="(prefers-color-scheme: dark)">
+	<link rel="preload" as="image" href="../resources/loading.gif">
+	<link rel="stylesheet" href="../styles/global.css">
+	<link rel="stylesheet" href="../styles/themes/material.css">
+	<link rel="stylesheet" href="./style.css">
+	<script type="module" src="./script.js"></script>
 </head>
 
 <body>
@@ -28,21 +31,20 @@
 	<div id="interface" class="translucent with-padding large-padding with-gap">
 		<input id="toggle-playlist" type="checkbox" hidden>
 		<label for="toggle-playlist" role="checkbox" class="flex secondary-centered with-gap">
-			<img src="../Resources/Add.png" alt="Loader" class="icon">
+			<img src="../resources/icons/add.png" alt="Loader" class="icon">
 		</label>
-		<a href="../Pages/Settings.html" role="button" aria-disabled="true" class="flex secondary-centered with-gap">
-			<img src="../Resources/Settings.png" alt="Settings" class="icon">
+		<a href="../pages/settings" role="button" aria-disabled="true" class="flex secondary-centered with-gap">
+			<img src="../resources/icons/settings.png" alt="Settings" class="icon">
 		</a>
-		<img src="../Resources/Play.png" alt="Status" class="icon">
+		<img src="../resources/icons/play.png" alt="Status" class="icon">
 		<span id="time">00:00</span>
 		<button id="toggle-fullscreen" role="checkbox" class="flex secondary-centered with-gap">
-			<img src="../Resources/EnterFullscreen.png" alt="Loader" class="icon">
+			<img src="../resources/icons/enter-fullscreen.png" alt="Loader" class="icon">
 		</button>
 		<input id="time-track" type="range" min="0" max="100" step="0.1" value="0">
 	</div>
-	<script src="../Scripts/Templates/Console.js"></script>
-	<script src="../Scripts/Templates/Loader.js"></script>
-	<script src="../Scripts/Templates/Popup.js"></script>
+	<script src="../scripts/templates/loader.js"></script>
+	<script src="../scripts/templates/popup.js"></script>
 </body>
 
 </html>
