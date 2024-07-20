@@ -49,8 +49,8 @@ class AudioPackage {
 			const analyser = this.#analyser = audioContext.createAnalyser();
 			source.connect(analyser);
 			analyser.connect(audioContext.destination);
-
-			this.smoothing = 0.7;
+			
+			analyser.smoothingTimeConstant = 0.7;
 
 			const audioPackage = this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
 		}
