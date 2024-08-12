@@ -43,6 +43,27 @@
 		</button>
 		<input id="time-track" type="range" min="0" max="100" step="0.1" value="0">
 	</div>
+	<div id="configurator" hidden class="layer rounded in-left with-padding large-padding">
+		<section class="option">
+			<h3 class="title">Smoothing</h3>
+			<div class="value flex centered with-gap large-gap">
+				<span>0</span>
+				<input id="smoothing-factor" type="range" min="0" max="1" step="0.1" class="depth rounded">
+				<span>1</span>
+			</div>
+		</section>
+		<section class="option">
+			<h3 class="title">Decibels</h3>
+			<div class="value flex centered with-gap large-gap">
+				<span>-200</span>
+				<div class="range depth rounded">
+					<input id="min-decibels" type="range" min="-200" max="50" step="10">
+					<input id="max-decibels" type="range" min="-200" max="50" step="10">
+				</div>
+				<span>50</span>
+			</div>
+		</section>
+	</div>
 	<script src="../scripts/templates/loader.js"></script>
 	<script src="../scripts/templates/popup.js"></script>
 </body>

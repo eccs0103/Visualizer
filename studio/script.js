@@ -92,11 +92,17 @@ class Controller {
 		const audioPlayer = this.#audioPlayer = document.getElement(HTMLAudioElement, `audio#player`);
 		const canvas = document.getElement(HTMLCanvasElement, `canvas#display`);
 		const inputLoader = document.getElement(HTMLInputElement, `input#loader`);
+
 		const divInterface = document.getElement(HTMLDivElement, `div#interface`);
 		const inputTogglePlaylist = this.#inputTogglePlaylist = document.getElement(HTMLInputElement, `input#toggle-playlist`);
 		const spanTime = document.getElement(HTMLSpanElement, `span#time`);
 		const buttonToggleFullscreen = document.getElement(HTMLButtonElement, `button#toggle-fullscreen`);
 		const inputTimeTrack = this.#inputTimeTrack = document.getElement(HTMLInputElement, `input#time-track`);
+
+		const divConfigurator = document.getElement(HTMLDivElement, `div#configurator`);
+		const inputSmoothingFactor = document.getElement(HTMLInputElement, `input#smoothing-factor`);
+		const inputMinDecibels = document.getElement(HTMLInputElement, `input#min-decibels`);
+		const inputMaxDecibels = document.getElement(HTMLInputElement, `input#max-decibels`);
 		//#endregion
 		//#region Player
 		const autoplay = false;
@@ -241,6 +247,37 @@ class Controller {
 			spanTime.innerText = this.#toPlaytimeInformation(time);
 			audioPlayer.currentTime = time;
 		});
+		//#endregion
+		//#region Configurator
+		window.addEventListener(`keydown`, (event) => {
+			if (event.code === `Tab`) {
+				event.preventDefault();
+				divConfigurator.hidden = !divConfigurator.hidden;
+			}
+		});
+
+		inputSmoothingFactor.value = String(visualizer.smoothing);
+		inputSmoothingFactor.addEventListener(`input`, (event) => window.insure(() => {
+			visualizer.smoothing = Number(inputSmoothingFactor.value);
+		}));
+
+		inputMinDecibels.value = String(visualizer.minDecibels);
+		inputMinDecibels.addEventListener(`input`, (event) => window.insure(() => {
+			event.preventDefault();
+			let minValue = Number(inputMinDecibels.value);
+			if (minValue > visualizer.maxDecibels) minValue = visualizer.maxDecibels;
+			visualizer.minDecibels = minValue;
+			inputMinDecibels.value = String(minValue);
+		}));
+
+		inputMaxDecibels.value = String(visualizer.maxDecibels);
+		inputMaxDecibels.addEventListener(`input`, (event) => window.insure(() => {
+			event.preventDefault();
+			let maxValue = Number(inputMaxDecibels.value);
+			if (visualizer.minDecibels > maxValue) maxValue = visualizer.minDecibels;
+			visualizer.maxDecibels = maxValue;
+			inputMaxDecibels.value = String(maxValue);
+		}));
 		//#endregion
 	}
 };

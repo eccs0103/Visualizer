@@ -145,3 +145,55 @@ input#time-track {
 audio#player:not([data-ready]) ~ div#interface input#time-track {
 	pointer-events: none;
 }
+
+@keyframes show-configurator {
+	0% {
+		width: 0;
+		display: none;
+	}
+
+	100% {
+		width: fit-content;
+	}
+}
+
+@keyframes hide-configurator {
+	0% {
+		width: fit-content;
+	}
+
+	100% {
+		width: 0;
+		display: none;
+	}
+}
+
+div#configurator {
+	position: absolute;
+	inset: 0 auto 0 0;
+	min-width: 60vmin;
+	max-width: 100vmin;
+	width: fit-content;
+	z-index: 5;
+}
+
+*.range {
+	display: grid;
+	grid-template:
+		'slider-area' 1fr
+		/ 1fr
+	;
+	align-items: center;
+
+	& > input[type="range"] {
+		grid-area: slider-area;
+
+		&:first-of-type::-webkit-slider-thumb {
+			clip-path: inset(0 52% 0 0);
+		}
+
+		&:last-of-type::-webkit-slider-thumb {
+			clip-path: inset(0 0 0 52%);
+		}
+	}
+}
