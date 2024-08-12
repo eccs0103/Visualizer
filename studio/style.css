@@ -31,6 +31,10 @@ div#interface {
 	z-index: 2;
 }
 
+div#interface img.icon {
+	filter: invert(1);
+}
+
 @keyframes hide-interface {
 	0% {
 		opacity: 1;

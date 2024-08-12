@@ -49,7 +49,7 @@ class AudioPackage {
 			const analyser = this.#analyser = audioContext.createAnalyser();
 			source.connect(analyser);
 			analyser.connect(audioContext.destination);
-			
+
 			analyser.smoothingTimeConstant = 0.7;
 
 			const audioPackage = this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
@@ -312,6 +312,7 @@ class Visualizer extends EventTarget {
 	/**
 	 * @param {string} name 
 	 * @param {VisualizationMethod} method 
+	 * @returns {void}
 	 */
 	static attach(name, method) {
 		if (Visualizer.#visualizations.has(name)) throw new Error(`Visualization with name '${name}' already attached`);

@@ -24,7 +24,9 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 	/** @type {number} */
 	#offsetPulsarOuterColor = 0;
 	/** @type {Color} */
-	#colorPulsarOuter = Color.viaHSL(0, 100, 50);
+	#colorPulsarOuter = Color.viaRGB(25, 25, 25);
+	/** @type {Color} */
+	#colorPulsarHighlighting = Color.viaHSL(0, 100, 50);
 	/** @type {Color} */
 	#colorPulsarInner = Color.BLACK;
 	/** @type {Color} */
@@ -52,7 +54,7 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 		//#region Pulsar
 		const period = audio.tapeLength / 2;
 		const gradientPulsar = context.createConicGradient(PI / 2, 0, 0);
-		const colorPulsarOuter = this.#colorPulsarOuter;
+		const colorPulsarHighlighting = this.#colorPulsarHighlighting;
 
 		context.beginPath();
 		for (let angle = -period + 1; angle < period; angle++) {
@@ -62,7 +64,7 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 			const distance = (0.6 + 0.4 * hypot(datul, factorAudio)) * radius;
 			position.x = distance * sin(factorProgress * 2 * PI);
 			position.y = distance * cos(factorProgress * 2 * PI);
-			gradientPulsar.addColorStop(factorProgress, Color.clone(colorPulsarOuter)
+			gradientPulsar.addColorStop(factorProgress, Color.clone(colorPulsarHighlighting)
 				.rotate(180 * index)
 				.illuminate(0.1 + 0.9 * sqrt(factorVolume))
 				.toString(true)
@@ -79,7 +81,7 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 
 		if (Number.isFinite(delta)) {
 			const [integer, fractional] = split(this.#offsetPulsarOuterColor + (360 / this.#duration) * delta * factorVolume);
-			colorPulsarOuter.rotate(integer);
+			colorPulsarHighlighting.rotate(integer);
 			this.#offsetPulsarOuterColor = fractional;
 		}
 		//#endregion
@@ -110,6 +112,11 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 		context.globalCompositeOperation = `source-over`;
 		context.fillStyle = gradientForegroundShadow;
 		context.fill();
+		//#endregion
+		//#region Background
+		context.globalCompositeOperation = `destination-atop`;
+		context.fillStyle = this.#colorPulsarOuter.toString();
+		context.fillRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
 		//#endregion
 	}
 });
