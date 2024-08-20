@@ -3,6 +3,7 @@
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
+	-moz-user-select: none;
 	-webkit-user-select: none;
 	user-select: none;
 	-webkit-user-drag: none;
@@ -140,6 +141,12 @@ body {
 *:read-write {
 	cursor: text;
 	text-overflow: revert;
+}
+
+input[type="radio"]:checked,
+input[type="radio"]:checked + label,
+[role="combobox"][aria-checked="true"] {
+	cursor: revert;
 }
 
 *::placeholder {
@@ -333,12 +340,14 @@ code {
 	white-space: pre;
 	tab-size: 4;
 	counter-reset: line;
+	-moz-user-select: text;
 	-webkit-user-select: text;
 	user-select: text;
 	overflow-x: auto;
 	text-overflow: revert;
 
 	& * {
+		-moz-user-select: inherit;
 		-webkit-user-select: inherit;
 		user-select: inherit;
 	}
