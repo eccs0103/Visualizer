@@ -1,5 +1,7 @@
 "use strict";
 
+import { ImplementationError } from "./extensions.js";
+
 const { random, round, trunc } = Math;
 
 //#region Engine
@@ -18,13 +20,37 @@ const { random, round, trunc } = Math;
  * @abstract
  */
 class Engine extends EventTarget {
+	constructor() {
+		super();
+		if (new.target === Engine) throw new TypeError(`Unable to create an instance of an abstract class`);
+	}
+	/**
+	 * @template {keyof EngineEventMap} K
+	 * @param {K} type
+	 * @param {(this: Engine, ev: EngineEventMap[K]) => any} listener
+	 * @param {boolean | AddEventListenerOptions} options
+	 * @returns {void}
+	 */
+	addEventListener(type, listener, options = false) {
+		return super.addEventListener(type, listener, options);
+	}
+	/**
+	 * @template {keyof EngineEventMap} K
+	 * @param {K} type
+	 * @param {(this: Engine, ev: EngineEventMap[K]) => any} listener
+	 * @param {boolean | EventListenerOptions} options
+	 * @returns {void}
+	 */
+	removeEventListener(type, listener, options = false) {
+		return super.removeEventListener(type, listener, options);
+	}
 	/**
 	 * Gets the launch status of the engine.
 	 * @abstract
 	 * @returns {boolean}
 	 */
 	get launched() {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
 	}
 	/**
 	 * Sets the launch status of the engine.
@@ -33,7 +59,7 @@ class Engine extends EventTarget {
 	 * @returns {void}
 	 */
 	set launched(value) {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
 	}
 	/**
 	 * Gets the FPS limit of the engine.
@@ -41,7 +67,7 @@ class Engine extends EventTarget {
 	 * @returns {number}
 	 */
 	get limit() {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
 	}
 	/**
 	 * Sets the FPS limit of the engine.
@@ -50,7 +76,7 @@ class Engine extends EventTarget {
 	 * @returns {void}
 	 */
 	set limit(value) {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
 	}
 	/**
 	 * Gets the Frames Per Second (FPS) of the engine.
@@ -58,7 +84,7 @@ class Engine extends EventTarget {
 	 * @returns {number}
 	 */
 	get FPS() {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
 	}
 	/**
 	 * Gets the time delta between frames.
@@ -67,7 +93,7 @@ class Engine extends EventTarget {
 	 * @returns {number}
 	 */
 	get delta() {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
 	}
 }
 //#endregion
@@ -92,7 +118,7 @@ class FastEngine extends Engine {
 
 		let previous = 0;
 		/**
-		 * @param {number} current 
+		 * @param {DOMHighResTimeStamp} current 
 		 * @returns {void}
 		 */
 		const callback = (current) => {
@@ -120,7 +146,7 @@ class FastEngine extends Engine {
 	 * @returns {void}
 	 */
 	addEventListener(type, listener, options = false) {
-		return super.addEventListener(type, listener, options);
+		return super.addEventListener(type, /** @type {(this: Engine, ev: EngineEventMap[K]) => any} */(listener), options);
 	}
 	/**
 	 * @template {keyof FastEngineEventMap} K
@@ -130,7 +156,7 @@ class FastEngine extends Engine {
 	 * @returns {void}
 	 */
 	removeEventListener(type, listener, options = false) {
-		return super.addEventListener(type, listener, options);
+		return super.removeEventListener(type, /** @type {(this: Engine, ev: EngineEventMap[K]) => any} */(listener), options);
 	}
 	/** @type {boolean} */
 	#launched;
@@ -212,7 +238,7 @@ class PreciseEngine extends Engine {
 
 		let previous = performance.now();
 		/**
-		 * @param {number} current 
+		 * @param {DOMHighResTimeStamp} current 
 		 * @returns {void}
 		 */
 		const callback = (current) => {
@@ -238,7 +264,7 @@ class PreciseEngine extends Engine {
 	 * @returns {void}
 	 */
 	addEventListener(type, listener, options = false) {
-		return super.addEventListener(type, listener, options);
+		return super.addEventListener(type, /** @type {(this: Engine, ev: EngineEventMap[K]) => any} */(listener), options);
 	}
 	/**
 	 * @template {keyof PreciseEngineEventMap} K
@@ -248,7 +274,7 @@ class PreciseEngine extends Engine {
 	 * @returns {void}
 	 */
 	removeEventListener(type, listener, options = false) {
-		return super.addEventListener(type, listener, options);
+		return super.removeEventListener(type, /** @type {(this: Engine, ev: EngineEventMap[K]) => any} */(listener), options);
 	}
 	/** @type {boolean} */
 	#launched;
@@ -309,6 +335,131 @@ class PreciseEngine extends Engine {
 	}
 }
 //#endregion
+//#region Static engine
+/**
+ * @typedef {{}} UncomposedStaticEngineEventMap
+ * 
+ * @typedef {EngineEventMap & UncomposedStaticEngineEventMap} StaticEngineEventMap
+ */
+
+/**
+ * Constructs a static type engine.
+ */
+class StaticEngine extends Engine {
+	/**
+	 * @param {boolean} launch Whether the engine should be launched initially. Default is false.
+	 */
+	constructor(launch = false) {
+		super();
+
+		this.addEventListener(`update`, (event) => this.dispatchEvent(new Event(`start`)), { once: true });
+
+		let previous = 0;
+		/**
+		 * @param {DOMHighResTimeStamp} current 
+		 * @returns {void}
+		 */
+		const callback = (current) => {
+			const difference = current - previous;
+			const factor = trunc(difference / this.#gap);
+			this.#delta = difference / factor;
+			for (let index = 0; index < factor; index++) {
+				if (this.#focus && this.launched) this.dispatchEvent(new Event(`update`));
+				previous = current;
+			}
+			requestAnimationFrame(callback);
+		};
+		requestAnimationFrame(callback);
+
+		this.launched = launch;
+
+		window.addEventListener(`focus`, (event) => this.#focus = true);
+		window.addEventListener(`blur`, (event) => this.#focus = false);
+	}
+	/**
+	 * @template {keyof StaticEngineEventMap} K
+	 * @param {K} type
+	 * @param {(this: StaticEngine, ev: StaticEngineEventMap[K]) => any} listener
+	 * @param {boolean | AddEventListenerOptions} options
+	 * @returns {void}
+	 */
+	addEventListener(type, listener, options = false) {
+		return super.addEventListener(type, /** @type {(this: Engine, ev: EngineEventMap[K]) => any} */(listener), options);
+	}
+	/**
+	 * @template {keyof StaticEngineEventMap} K
+	 * @param {K} type
+	 * @param {(this: StaticEngine, ev: StaticEngineEventMap[K]) => any} listener
+	 * @param {boolean | EventListenerOptions} options
+	 * @returns {void}
+	 */
+	removeEventListener(type, listener, options = false) {
+		return super.removeEventListener(type, /** @type {(this: Engine, ev: EngineEventMap[K]) => any} */(listener), options);
+	}
+	/** @type {boolean} */
+	#launched;
+	/**
+	 * Gets the launch status of the engine.
+	 * @returns {boolean}
+	 */
+	get launched() {
+		return this.#launched;
+	}
+	/**
+	 * Sets the launch status of the engine.
+	 * @param {boolean} value 
+	 * @returns {void}
+	 */
+	set launched(value) {
+		const previous = this.#launched;
+		this.#launched = value;
+		if (previous !== value) this.dispatchEvent(new Event(`change`));
+		if (value) this.dispatchEvent(new Event(`launch`));
+	}
+	/** @type {number} */
+	#gap = 1000 / 120;
+	/**
+	 * Gets the FPS limit of the engine.
+	 * @returns {number}
+	 */
+	get limit() {
+		return 1000 / this.#gap;
+	}
+	/**
+	 * Sets the FPS limit of the engine.
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set limit(value) {
+		if (Number.isNaN(value)) return;
+		if (value <= 0) return;
+		this.#gap = 1000 / value;
+		this.#delta = this.#gap;
+	}
+	/**
+	 * Gets the current FPS of the engine.
+	 * @readonly
+	 * @returns {number}
+	 */
+	get FPS() {
+		return 1000 / this.#delta;
+		// return 1000 / this.#gap;
+	}
+	/** @type {number} */
+	#delta = this.#gap;
+	/**
+	 * Gets the time delta between frames.
+	 * @readonly
+	 * @returns {number}
+	 */
+	get delta() {
+		return this.#delta / 1000;
+		// return this.#gap / 1000;
+	}
+	/** @type {boolean} */
+	#focus = document.hasFocus();
+}
+//#endregion
 
 //#region Random
 /**
@@ -362,6 +513,17 @@ class Random {
 		return array[this.integer(0, array.length)];
 	}
 	/**
+	 * Generates a sequence of random numbers from min to max (exclusive).
+	 * @param {number} min The minimum value.
+	 * @param {number} max The maximum value.
+	 * @returns {number[]} An array of random numbers.
+	 */
+	sequence(min, max) {
+		const result = Array.sequence(min, max);
+		this.shuffle(result);
+		return result;
+	};
+	/**
 	 * Returns a random subarray of elements from an array.
 	 * @template T
 	 * @param {Readonly<T[]>} array The array of elements.
@@ -390,7 +552,7 @@ class Random {
 		for (let index = 0; index < array.length - 1; index++) {
 			const pair = this.integer(index, array.length);
 			if (pair === index) continue;
-			[array[index], array[pair]] = [array[pair], array[index]];
+			array.swap(index, pair);
 		}
 	}
 	/**
@@ -402,11 +564,11 @@ class Random {
 	 */
 	case(cases) {
 		if (1 > cases.size) throw new RangeError(`The cases must have at least 1 item`);
-		const summary = Array.from(cases).reduce((previous, [, percentage]) => previous + percentage, 0);
+		const summary = Array.from(cases).reduce((previous, [, weight]) => previous + weight, 0);
 		const random = this.number(0, summary);
 		let begin = 0;
-		for (const [item, percentage] of cases) {
-			const end = begin + percentage;
+		for (const [item, weight] of cases) {
+			const end = begin + weight;
 			if (begin <= random && random < end) {
 				return item;
 			}
@@ -419,9 +581,9 @@ class Random {
 	 * @returns {string} A random GUID identifier.
 	 */
 	GUID() {
-		return `${crypto.randomUUID()}`;
+		return crypto.randomUUID();
 	}
 }
 //#endregion
 
-export { Engine, FastEngine, PreciseEngine, Random };
+export { Engine, FastEngine, PreciseEngine, StaticEngine, Random };

@@ -5,67 +5,92 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="generator" content="2.1.0">
+	<meta name="generator" content="2.2.0">
 	<meta name="title" content="Visualizer">
 	<meta name="author" content="eccs0103">
-	<meta name="color-scheme" content="system">
+	<meta name="color-scheme" content="dark">
 	<meta name="description" content="A music visualizer">
-	<meta name="keywords" content="audio,visualization,css,music,html,canvas,jsdoc,js,dom,effects,visualizer">
+	<meta name="keywords" content="audio, visualization, css, music, html, canvas, jsdoc, js, dom, effects, visualizer">
 	<meta name="robots" content="index, follow">
 	<meta name="language" content="English">
 	<meta name="revisit-after" content="0 days">
 	<title>Studio - Visualizer</title>
-	<link rel="shortcut icon" href="../resources/icons/eye.png" media="(prefers-color-scheme: light)">
-	<link rel="shortcut icon" href="../resources/icons/eye-inverted.png" media="(prefers-color-scheme: dark)">
+	<link rel="shortcut icon" href="../resources/shortcuts/equalizer.png" media="(prefers-color-scheme: light)">
+	<link rel="shortcut icon" href="../resources/shortcuts/equalizer-inverted.png" media="(prefers-color-scheme: dark)">
 	<link rel="preload" as="image" href="../resources/loading.gif">
 	<link rel="stylesheet" href="../styles/global.css">
 	<link rel="stylesheet" href="../styles/themes/material.css">
+	<link rel="preload" as="image" href="../resources/icons/pause.svg">
+	<link rel="preload" as="image" href="../resources/icons/eject.svg">
 	<link rel="stylesheet" href="./style.css">
 	<script type="module" src="./script.js"></script>
 </head>
 
 <body>
-	<input id="loader" type="file" hidden>
 	<audio id="player" hidden></audio>
 	<canvas id="display"></canvas>
-	<div id="interface" class="translucent with-padding large-padding with-gap">
-		<input id="toggle-playlist" type="checkbox" hidden>
-		<label for="toggle-playlist" role="checkbox" class="flex secondary-centered with-gap">
-			<img src="../resources/icons/add.png" alt="Loader" class="icon">
-		</label>
-		<a href="../pages/settings" role="button" aria-disabled="true" class="flex secondary-centered with-gap">
-			<img src="../resources/icons/settings.png" alt="Settings" class="icon">
-		</a>
-		<img src="../resources/icons/play.png" alt="Status" class="icon">
-		<span id="time">00:00</span>
-		<button id="toggle-fullscreen" role="checkbox" class="flex secondary-centered with-gap">
-			<img src="../resources/icons/enter-fullscreen.png" alt="Loader" class="icon">
-		</button>
-		<input id="time-track" type="range" min="0" max="100" step="0.1" value="0">
+	<!-- Interface -->
+	<div id="interface">
+		<div id="audio-control" class="with-padding large-padding flex">
+			<input id="audio-loader" type="file" hidden>
+			<button id="audio-drive" class="flex secondary-centered with-gap">
+				<img src="../resources/icons/upload.svg" alt="Audio drive" class="icon">
+			</button>
+		</div>
+		<div id="audio-auxiliary" class="with-padding large-padding flex reversed">
+			<button id="open-configurator" class="flex secondary-centered with-gap">
+				<img src="../resources/icons/tune.svg" alt="Open configurator" class="icon">
+			</button>
+		</div>
+		<div id="playback-control" class="with-inline-padding large-padding flex">
+			<img src="../resources/icons/play.svg" alt="Status" class="icon">
+		</div>
+		<div id="playback-auxiliary" class="with-inline-padding large-padding flex reversed">
+			<b id="playback-time">00:00</b>
+		</div>
+		<input id="playback-time-track" type="range" min="0" max="100" step="0.1" value="0">
 	</div>
-	<div id="configurator" hidden class="layer rounded in-left with-padding large-padding">
+	<!-- Configurator -->
+	<dialog id="configurator" class="layer rounded with-padding large-padding flex column with-gap">
+		<div class="flex reversed">
+			<button id="close-configurator" class="flex secondary-centered with-gap">
+				<img src="../resources/icons/close.svg" alt="Close configurator" class="icon">
+			</button>
+		</div>
+		<h2>Visualizer</h2>
 		<section class="option">
-			<h3 class="title">Smoothing</h3>
-			<div class="value flex centered with-gap large-gap">
-				<span>0</span>
-				<input id="smoothing-factor" type="range" min="0" max="1" step="0.1" class="depth rounded">
-				<span>1</span>
-			</div>
+			<h4 class="title">Rate</h4>
+			<span class="definition">The maximum frame rate limit in the visualizer, determining how often the graphical display updates per second. A higher value increases smoothness but also raises the system load.</span>
+			<input id="visualizer-rate" type="number" min="30" max="300" step="30" class="value rounded depth with-padding">
 		</section>
 		<section class="option">
-			<h3 class="title">Decibels</h3>
-			<div class="value flex centered with-gap large-gap">
-				<span>-200</span>
-				<div class="range depth rounded">
-					<input id="min-decibels" type="range" min="-200" max="50" step="10">
-					<input id="max-decibels" type="range" min="-200" max="50" step="10">
-				</div>
-				<span>50</span>
-			</div>
+			<h4 class="title">Visualization</h4>
+			<span class="definition">The method of displaying audio analysis in the visualizer. The chosen method affects how sound data is transformed into visual elements.</span>
+			<select id="visualizer-visualization" class="value rounded depth with-padding"></select>
 		</section>
-	</div>
-	<script src="../scripts/templates/loader.js"></script>
-	<script src="../scripts/templates/popup.js"></script>
+		<hr class="depth">
+		<h2>Visualization</h2>
+		<section class="option">
+			<h4 class="title">Quality</h4>
+			<span class="definition">The level of detail in audio analysis, where higher values enhance accuracy, producing a more detailed visual representation. Acceptable values range from 5 to 15.</span>
+			<input id="visualization-quality" type="number" min="5" max="15" step="1" class="value rounded depth with-padding">
+		</section>
+		<section class="option">
+			<h4 class="title">Smoothing</h4>
+			<span class="definition">The level of smoothing applied to the analysis, ensuring a smoother transition between values. A value of 0 means no smoothing, while 1 indicates maximum smoothing.</span>
+			<input id="visualization-smoothing" type="range" min="0" max="1" step="0.1" class="value depth rounded">
+		</section>
+		<section class="option">
+			<h4 class="title">Focus</h4>
+			<span class="definition">The focus level of the audio analysis, adjusting the central volume value for analysis purposes, allowing emphasis on specific frequency ranges or volume levels.</span>
+			<input id="visualization-focus" type="range" min="-100" max="0" step="1" class="value depth rounded">
+		</section>
+		<section class="option">
+			<h4 class="title">Spread</h4>
+			<span class="definition">The volume range for analysis, expanding or contracting the area around the central focus value.</span>
+			<input id="visualization-spread" type="range" min="1" max="100" step="1" class="value depth rounded">
+		</section>
+	</dialog>
 </body>
 
 </html>

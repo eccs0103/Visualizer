@@ -1,11 +1,13 @@
-import { Point2D } from "./modules/measures.js";
+"use strict";
+
+import { Vector2D } from "./modules/measures.js";
 import { Color } from "./modules/palette.js";
 import { DataTypes, Visualizer } from "./structure.js";
 
 const { min, split, sin, cos, PI, hypot, abs, trunc, sqpw, sqrt, SQRT1_2 } = Math;
 
 //#region Pulsar
-Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
+Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualiztion {
 	/** @type {number} */
 	#radius;
 	/**
@@ -19,8 +21,8 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 	}
 	/** @type {number} */
 	#duration = 6;
-	/** @type {Point2D} */
-	#position = Point2D.NAN;
+	/** @type {Vector2D} */
+	#position = Vector2D.newNaN;
 	/** @type {number} */
 	#offsetPulsarOuterColor = 0;
 	/** @type {Color} */
@@ -28,9 +30,9 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 	/** @type {Color} */
 	#colorPulsarHighlighting = Color.viaHSL(0, 100, 50);
 	/** @type {Color} */
-	#colorPulsarInner = Color.BLACK;
+	#colorPulsarInner = Color.newBlack;
 	/** @type {Color} */
-	#colorShadow = Color.TRANSPARENT;
+	#colorShadow = Color.newTransparent;
 	/**
 	 * @returns {Promise<void>}
 	 */
@@ -64,7 +66,7 @@ Visualizer.attach(`Pulsar`, class extends Visualizer.Visualization {
 			const distance = (0.6 + 0.4 * hypot(datul, factorAudio)) * radius;
 			position.x = distance * sin(factorProgress * 2 * PI);
 			position.y = distance * cos(factorProgress * 2 * PI);
-			gradientPulsar.addColorStop(factorProgress, Color.clone(colorPulsarHighlighting)
+			gradientPulsar.addColorStop(factorProgress, new Color(colorPulsarHighlighting)
 				.rotate(180 * index)
 				.illuminate(0.1 + 0.9 * sqrt(factorVolume))
 				.toString(true)

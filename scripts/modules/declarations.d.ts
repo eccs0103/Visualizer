@@ -1,5 +1,15 @@
 /// <reference path="./extensions.js" />
 
+/**
+ * A mapping interface that associates primitive types with string keys.
+ * This is used to handle conversions to different primitive types.
+ */
+interface PrimitivesHintMap {
+	"number": number;
+	"boolean": boolean;
+	"string": string;
+}
+
 interface NumberConstructor {
 	/**
 	 * Imports a number from a source.
@@ -9,7 +19,7 @@ interface NumberConstructor {
 	 * @throws {ReferenceError} If the source is undefined.
 	 * @throws {TypeError} If the source is not a number.
 	 */
-	import(source: unknown, name?: string): number;
+	import(source: any, name?: string): number;
 }
 
 interface Number {
@@ -35,6 +45,12 @@ interface Number {
 	 * @throws {Error} If the minimum and maximum values of either range are equal.
 	 */
 	interpolate(min1: number, max1: number, min2?: number, max2?: number): number;
+	/**
+	 * Returns the current number or a default value if the current number is NaN.
+	 * @param value The default value to return if the current number is NaN.
+	 * @returns The current number if it is not NaN, otherwise the default value.
+	 */
+	orDefault(value: number): number;
 }
 
 interface BooleanConstructor {
@@ -46,7 +62,7 @@ interface BooleanConstructor {
 	 * @throws {ReferenceError} If the source is undefined.
 	 * @throws {TypeError} If the source is not a boolean.
 	 */
-	import(source: unknown, name?: string): boolean;
+	import(source: any, name?: string): boolean;
 }
 
 interface Boolean {
@@ -66,13 +82,23 @@ interface StringConstructor {
 	 * @throws {ReferenceError} If the source is undefined.
 	 * @throws {TypeError} If the source is not a string.
 	 */
-	import(source: unknown, name?: string): string;
+	import(source: any, name?: string): string;
+	/**
+	 * A constant empty string.
+	 */
+	readonly empty: string;
 	/**
 	 * Checks if a string is empty.
 	 * @param text The string to check.
 	 * @returns True if the string is empty, otherwise false.
 	 */
 	isEmpty(text: string): boolean;
+	/**
+	 * Checks if a string contains only whitespace characters.
+	 * @param text The string to check.
+	 * @returns True if the string is empty or contains only whitespace, otherwise false.
+	 */
+	isWhitespace(text: string): boolean;
 }
 
 interface String {
@@ -82,11 +108,27 @@ interface String {
 	 */
 	export(): string;
 	/**
-	 * Replaces the string with another if it's empty.
-	 * @param text The replacement text.
-	 * @returns The original string if not empty, otherwise the replacement text.
+	 * Returns the current string value or a default value if the string is empty.
+	 * @param value The default value to return if the string is empty.
+	 * @returns The current string value or the provided default value.
 	 */
-	insteadOfVoid(text: string): string;
+	orDefault(value: string): string;
+	/**
+	 * Converts the string to title case, where the first letter of each word is capitalized.
+	 * @returns The string converted to title case.
+	 */
+	toTitleCase(): string;
+	/**
+	 * Converts the string to title case based on the specified locale, where the first letter of each word is capitalized.
+	 * @param locale The locale to use for the conversion, defaults to the user's language.
+	 * @returns The string converted to title case based on the specified locale.
+	 */
+	toLocalTitleCase(locales?: Intl.LocalesArgument): string;
+	/**
+	 * Reverses the string.
+	 * @returns The reversed string.
+	 */
+	reverse(): string;
 }
 
 interface FunctionConstructor {
@@ -103,36 +145,42 @@ interface FunctionConstructor {
 	 * @returns A promise that resolves if the function is implemented, otherwise it rejects with an error.
 	 * @throws {Error} Throws an error if the function is not implemented.
 	 */
-	checkImplementation(action: (...args: any) => unknown, name: string): Promise<void>;
+	ensureImplementation(action: (...args: any) => unknown, name: string): Promise<void>;
 }
 
-interface Function {
+/**
+ * Interface representing an instance that can be archived.
+ * @template N The type of the archived data.
+ */
+interface ArchivableInstance<N> {
 	/**
-	 * Imports from a source.
-	 * @abstract
-	 * @param source The source to import.
-	 * @param name The name of the source.
-	 * @returns The imported value.
+	 * Exports the instance.
+	 * @returns The exported data.
 	 */
-	import(source: unknown, name?: string): any;
+	export(): N;
+}
+
+/**
+ * Interface representing a prototype that can create archivable instances.
+ * @template N The type of the archived data.
+ * @template I The type of the archivable instance.
+ * @template A The types of the constructor arguments for the instance.
+ */
+interface ArchivablePrototype<N, I extends ArchivableInstance<N>, A extends readonly any[]> {
 	/**
-	 * Exports the result.
-	 * @abstract
-	 * @returns The exported value.
+	 * Imports data and creates an instance.
+	 * @param source The source data to import.
+	 * @param name An optional name for the source.
+	 * @returns The created instance.
 	 */
-	export(): any;
+	import(source: any, name?: string): I;
+	/**
+	 * @param args The constructor arguments.
+	 */
+	new(...args: A): I;
 }
 
 interface ObjectConstructor {
-	/**
-	 * Maps a non-null value using a callback function.
-	 * @template T
-	 * @template R
-	 * @param value The value to map.
-	 * @param callback The callback function.
-	 * @returns The result of the callback or null if the value is null.
-	 */
-	map<T, R>(value: NonNullable<T> | null, callback: (object: NonNullable<T>) => R): R | null;
 	/**
 	 * Imports an object from a source.
 	 * @param source The source to import from.
@@ -141,7 +189,26 @@ interface ObjectConstructor {
 	 * @throws {ReferenceError} Throws a ReferenceError if the source is undefined.
 	 * @throws {TypeError} Throws a TypeError if the source is not an object or null.
 	 */
-	import(source: unknown, name?: string): Object;
+	import(source: any, name?: string): Object;
+	/**
+	 * Applies a callback function to a non-nullable value, or returns the original nullable value.
+	 * @template T The type of the input value.
+	 * @template N The type representing nullable.
+	 * @template R The return type of the callback function.
+	 * @param value The value to map.
+	 * @param callback The function to apply if the value is non-nullable.
+	 * @returns The mapped result.
+	 */
+	map<T, N extends Exclude<T, NonNullable<T>>, R>(value: NonNullable<T> | N, callback: (object: NonNullable<T>) => R): R | N;
+	/**
+	 * Ensures that a value is neither null nor undefined, throwing an error if it is.
+	 * @template T
+	 * @param value The value to check.
+	 * @param name The name of the value, used in error messages.
+	 * @returns The value if it is not null or undefined.
+	 * @throws {Error} If the value is null or undefined.
+	 */
+	suppress<T>(value: T, name?: string): NonNullable<T>;
 }
 
 interface Object {
@@ -161,15 +228,29 @@ interface ArrayConstructor {
 	 * @throws {ReferenceError} Throws a ReferenceError if the source is undefined.
 	 * @throws {TypeError} Throws a TypeError if the source is not an array.
 	 */
-	import(source: unknown, name?: string): any[];
+	import(source: any, name?: string): any[];
+	/**
+	 * Generates a sequence of numbers from min to max (exclusive).
+	 * @param min The starting number of the sequence (inclusive).
+	 * @param max The ending number of the sequence (exclusive).
+	 * @returns An array containing the sequence of numbers.
+	 */
+	sequence(min: number, max: number): number[];
 }
 
-interface Array<T extends Function> {
+interface Array<T> {
 	/**
 	 * Exports the array.
 	 * @returns The exported array.
 	 */
 	export(): T[];
+	/**
+	 * Swaps the elements at the given indices in the array.
+	 * @param index1 The index of the first element.
+	 * @param index2 The index of the second element.
+	 * @returns {void}
+	 */
+	swap(index1: number, index2: number): void;
 }
 
 interface Math {
@@ -201,13 +282,6 @@ interface Math {
 
 interface PromiseConstructor {
 	/**
-	 * Creates a promise that fulfills with the result of calling the provided action.
-	 * @template T
-	 * @param action The action to execute.
-	 * @returns A promise that fulfills with the result of the action.
-	 */
-	fulfill<T>(action: () => T | PromiseLike<T>): Promise<T>;
-	/**
 	 * Creates a promise that resolves after the specified timeout.
 	 * @param timeout The timeout in milliseconds.
 	 * @returns A promise that resolves after the timeout.
@@ -228,7 +302,7 @@ interface ErrorConstructor {
 	 * @param exception The exception input.
 	 * @returns An Error object representing the input.
 	 */
-	generate(exception: any): Error;
+	from(exception: any): Error;
 }
 
 interface Error {
@@ -237,6 +311,21 @@ interface Error {
 	 * @returns A string representation of the Error object.
 	 */
 	toString(): string;
+}
+
+namespace globalThis {
+	/**
+	 * Returns the prototype of the given non-nullable value.
+	 * @template T
+	 * @param value The value whose prototype is to be retrieved. It cannot be null or undefined.
+	 */
+	function prototype<T>(value: NonNullable<T>): Function;
+	/**
+	 * Gets the type name of a value.
+	 * @param value The value to get the type name of.
+	 * @returns The type name of the value.
+	 */
+	function typename(value: any): string;
 }
 
 interface ParentNode {
@@ -250,15 +339,14 @@ interface ParentNode {
 	 */
 	getElement<T extends typeof Element>(type: T, selectors: string): InstanceType<T>;
 	/**
-	 * Tries to retrieve an element of the specified type and selectors.
+	 * Asynchronously retrieves an element of the specified type and selectors.
 	 * @template T
 	 * @param type The type of element to retrieve.
 	 * @param selectors The selectors to search for the element.
-	 * @param strict Whether to reject if the element is missing or has an invalid type.
-	 * @returns A promise that resolves to the element instance.
-	 * @throws {TypeError} If the element is missing or has an invalid type and strict mode is enabled.
+	 * @returns The element instance.
+	 * @throws {TypeError} If the element is missing or has an invalid type.
 	 */
-	tryGetElement<T extends typeof Element>(type: T, selectors: string, strict?: boolean): Promise<InstanceType<T>>;
+	getElementAsync<T extends typeof Element>(type: T, selectors: string): Promise<InstanceType<T>>;
 	/**
 	 * Retrieves elements of the specified type and selectors.
 	 * @template T
@@ -269,15 +357,14 @@ interface ParentNode {
 	 */
 	getElements<T extends typeof Element>(type: T, selectors: string): NodeListOf<InstanceType<T>>;
 	/**
-	 * Tries to retrieve elements of the specified type and selectors.
+	 * Asynchronously retrieves elements of the specified type and selectors.
 	 * @template T
 	 * @param type The type of elements to retrieve.
 	 * @param selectors The selectors to search for the elements.
-	 * @param strict Whether to reject if any element is missing or has an invalid type.
-	 * @returns A promise that resolves to the NodeList of element instances.
-	 * @throws {TypeError} If any element is missing or has an invalid type and strict mode is enabled.
+	 * @returns The NodeList of element instances.
+	 * @throws {TypeError} If any element is missing or has an invalid type.
 	 */
-	tryGetElements<T extends typeof Element>(type: T, selectors: string, strict?: boolean): Promise<NodeListOf<InstanceType<T>>>;
+	getElementsAsync<T extends typeof Element>(type: T, selectors: string): Promise<NodeListOf<InstanceType<T>>>;
 }
 
 interface Element {
@@ -291,85 +378,59 @@ interface Element {
 	 */
 	getClosest<T extends typeof Element>(type: T, selectors: string): InstanceType<T>;
 	/**
-	 * Tries to retrieve the closest ancestor element of the specified type and selectors.
+	 * Asynchronously retrieves the closest ancestor element of the specified type and selectors.
 	 * @template T
 	 * @param type The type of element to retrieve.
 	 * @param selectors The selectors to search for the element.
-	 * @param strict Whether to reject if the element is missing or has an invalid type.
-	 * @returns A promise that resolves to the element instance.
-	 * @throws {TypeError} If the element is missing or has an invalid type and strict mode is enabled.
+	 * @returns The element instance.
+	 * @throws {TypeError} If the element is missing or has an invalid type.
 	 */
-	tryGetClosest<T extends typeof Element>(type: T, selectors: string, strict?: boolean): Promise<InstanceType<T>>;
+	getClosestAsync<T extends typeof Element>(type: T, selectors: string): Promise<InstanceType<T>>;
 }
 
 interface Document {
-	loadResource(url: string): Promise<HTMLImageElement>;
-};
+	/**
+	 * Asynchronously loads an image from the specified URL.
+	 * @param url The URL of the image to be loaded.
+	 * @returns A promise that resolves with the loaded image element.
+	 * @throws {Error} If the image fails to load.
+	 */
+	loadImage(url: string): Promise<HTMLImageElement>;
+	/**
+	 * Asynchronously loads multiple images from the provided URLs.
+	 * @param urls An array of image URLs to be loaded.
+	 * @returns A promise that resolves with an array of loaded image elements.
+	 * @throws {Error} If any image fails to load.
+	 */
+	loadImages(urls: string[]): Promise<HTMLImageElement[]>;
+}
 
 interface Window {
 	/**
-	 * Gets the type name of a value.
-	 * @param value The value to get the type name of.
-	 * @returns The type name of the value.
-	 */
-	typename(value: unknown): string;
-	/**
 	 * Asynchronously displays an alert message.
 	 * @param message The message to display.
-	 * @param title The title of the alert.
 	 * @returns A promise that resolves when the alert is closed.
 	 */
-	alertAsync(message?: any, title?: string): Promise<void>;
+	alertAsync(message?: any): Promise<void>;
 	/**
 	 * Asynchronously displays a confirmation dialog.
 	 * @param message The message to display.
-	 * @param title The title of the confirmation dialog.
 	 * @returns A promise that resolves to true if the user confirms, and false otherwise.
 	 */
-	confirmAsync(message?: string, title?: string): Promise<boolean>;
+	confirmAsync(message?: string): Promise<boolean>;
 	/**
 	 * Asynchronously displays a prompt dialog.
 	 * @param message The message to display.
-	 * @param title The title of the prompt dialog.
 	 * @returns A promise that resolves to the user's input value if accepted, or null if canceled.
 	 */
-	promptAsync(message?: string, _default?: string, title?: string): Promise<string?>;
+	promptAsync(message?: string, _default?: string): Promise<string?>;
 	/**
-	 * Issues a warning message.
-	 * @param message The warning message to be issued.
-	 * @returns A Promise that resolves when the warning is displayed.
+	 * Executes an action and handles any errors that occur.
+	 * @param action The action to be executed.
+	 * @param silent In silent mode errors are silently ignored; otherwise, they are thrown and the page is reloaded.
+	 * @returns A promise that resolves the action.
 	 */
-	warn(message?: any): Promise<void>;
-	/**
-	 * Throws an error message.
-	 * @param message The error message to be thrown.
-	 * @returns A Promise that resolves when the error is displayed.
-	 */
-	throw(message?: any): Promise<void>;
-	/**
-	 * Asynchronously handles an error, displaying it in an alert.
-	 * @param error The error to handle.
-	 * @param reload Indicates whether the application should be reloaded after displaying the error.
-	 * @returns A promise that resolves once the error handling is complete.
-	 */
-	catch(error: Error, reload?: boolean): Promise<void>;
-	/**
-	 * Asserts the execution of an action or stops the program if errors occur.
-	 * @template T
-	 * @param action The action to execute.
-	 * @param reload Indicates whether the application should be reloaded after an error.
-	 * @returns A Promise that resolves with the result of the action or rejects with the error.
-	 * @throws {Error} If the action throws an error.
-	 */
-	assert<T>(action: () => T, reload?: boolean): Promise<T>;
-	/**
-	 * Insures that no errors occur when executing an action.
-	 * @template T
-	 * @param action The action to execute.
-	 * @param eventually The callback to execute after the action is complete.
-	 * @returns A Promise that resolves with the result of the action, or void if it fails.
-	 */
-	insure<T>(action: () => T, eventually?: () => unknown): Promise<T | void>;
+	assert(action: VoidFunction, silent?: boolean): Promise<void>;
 	/**
 	 * Asynchronously loads a promise with a loading animation.
 	 * @template T
@@ -382,55 +443,33 @@ interface Window {
 }
 
 /**
- * Gets the type name of a value.
- * @param value The value to get the type name of.
- * @returns The type name of the value.
- */
-declare function typename(value: unknown): string;
-/**
  * Asynchronously displays an alert message.
  * @param message The message to display.
  * @param title The title of the alert.
  * @returns A promise that resolves when the alert is closed.
  */
-declare function alertAsync(message?: any, title?: string): Promise<void>;
+declare function alertAsync(message?: any): Promise<void>;
 /**
  * Asynchronously displays a confirmation dialog.
  * @param message The message to display.
  * @param title The title of the confirmation dialog.
  * @returns A promise that resolves to true if the user confirms, and false otherwise.
  */
-declare function confirmAsync(message?: string, title?: string): Promise<boolean>;
+declare function confirmAsync(message?: string): Promise<boolean>;
 /**
  * Asynchronously displays a prompt dialog.
  * @param message The message to display.
  * @param title The title of the prompt dialog.
  * @returns A promise that resolves to the user's input value if accepted, or null if canceled.
  */
-declare function promptAsync(message?: string, _default?: string, title?: string): Promise<string?>;
+declare function promptAsync(message?: string, _default?: string): Promise<string?>;
 /**
- * Issues a warning message.
- * @param message The warning message to be issued.
- * @returns A Promise that resolves when the warning is displayed.
+ * Executes an action and handles any errors that occur.
+ * @param action The action to be executed.
+ * @param silent In silent mode errors are silently ignored; otherwise, they are thrown and the page is reloaded.
+ * @returns A promise that resolves the action.
  */
-declare function warn(message?: any): Promise<void>;
-/**
- * Asserts the execution of an action or stops the program if errors occur.
- * @template T
- * @param action The action to execute.
- * @param reload Indicates whether the application should be reloaded after an error.
- * @returns A Promise that resolves with the result of the action or rejects with the error.
- * @throws {Error} If the action throws an error.
- */
-declare function assert<T>(action: () => T, reload?: boolean): Promise<T>;
-/**
- * Insures that no errors occur when executing an action.
- * @template T
- * @param action The action to execute.
- * @param eventually The callback to execute after the action is complete.
- * @returns A Promise that resolves with the result of the action, or void if it fails.
- */
-declare function insure<T>(action: () => T, eventually?: () => unknown): Promise<T | void>;
+declare function assert(action: VoidFunction, silent?: boolean): Promise<void>;
 /**
  * Asynchronously loads a promise with a loading animation.
  * @template T
@@ -461,36 +500,4 @@ interface Navigator {
 	 * @param file The file to download.
 	 */
 	download(file: File): void;
-}
-
-/**
- * Interface representing an instance that can be archived.
- * @template N The type of the archived data.
- */
-interface ArchivableInstance<N> {
-	/**
-	 * Exports the instance.
-	 * @returns The exported data.
-	 */
-	export(): N;
-}
-
-/**
- * Interface representing a prototype that can create archivable instances.
- * @template N The type of the archived data.
- * @template I The type of the archivable instance.
- * @template A The types of the constructor arguments for the instance.
- */
-interface ArchivablePrototype<N, I extends ArchivableInstance<N>, A extends readonly any[]> {
-	/**
-	 * Imports data and creates an instance.
-	 * @param source The source data to import.
-	 * @param name An optional name for the source.
-	 * @returns The created instance.
-	 */
-	import(source: N, name?: string): I;
-	/**
-	 * @param args The constructor arguments.
-	 */
-	new(...args: A): I;
 }

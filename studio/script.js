@@ -1,40 +1,97 @@
+/** @typedef {import("../scripts/structure.js").SettingsNotation} SettingsNotation */
 /** @typedef {import("../scripts/modules/storage.js").DatabaseStore} DatabaseStore */
 
 "use strict";
 
 import { DataPair } from "../scripts/modules/extensions.js";
 import { Timespan } from "../scripts/modules/measures.js";
-import { Database } from "../scripts/modules/storage.js";
-import { Visualizer } from "../scripts/structure.js";
+import { ArchiveManager, Database } from "../scripts/modules/storage.js";
+import { Settings, Visualizer } from "../scripts/structure.js";
+
 
 //#region Controller
 /**
  * Represents the controller for the application.
  */
 class Controller {
+	//#region Launch
+	/** @type {boolean} */
+	static #locked = true;
+	/**
+	 * Starts the main application flow.
+	 * @param {ConstructorParameters<typeof Controller>} args 
+	 * @returns {Promise<Controller>}
+	 */
+	static async construct(...args) {
+		Controller.#locked = false;
+		const self = new Controller(...args);
+		Controller.#locked = true;
+
+		await self.#main();
+
+		return self;
+	}
+	constructor() {
+		if (Controller.#locked) throw new TypeError(`Illegal constructor`);
+	}
+	//#endregion
+	//#region Logic
 	/** @type {DatabaseStore} */
 	#storeAudiolist;
+	/**
+	 * @returns {Promise<File?>}
+	 */
+	async #loadRecentAudio() {
+		const storeAudiolist = this.#storeAudiolist;
+		try {
+			const [audioRecent] = Array.import(await storeAudiolist.select(0), `audiolist`);
+			if (audioRecent === undefined) return null;
+			if (!(audioRecent instanceof File)) throw new TypeError(`Unable to import audiolist due its ${typename(audioRecent)} type`);
+			return audioRecent;
+		} catch (error) {
+			console.error(error);
+			return null;
+		}
+	}
+	/**
+	 * @param {File?} file 
+	 * @returns {Promise<boolean>}
+	 */
+	async #saveRecentAudio(file) {
+		const storeAudiolist = this.#storeAudiolist;
+		try {
+			if (file === null) await storeAudiolist.remove(0);
+			else await storeAudiolist.update(new DataPair(0, file));
+			return true;
+		} catch (error) {
+			console.error(error);
+			return false;
+		}
+	}
 	/** @type {HTMLAudioElement} */
 	#audioPlayer;
 	/**
 	 * @returns {boolean}
 	 */
 	get markAudioReady() {
-		return (this.#audioPlayer.dataset[`ready`] !== undefined);
+		const { dataset } = this.#audioPlayer;
+		return (dataset[`ready`] !== undefined);
 	}
 	/**
 	 * @param {boolean} value 
 	 * @returns {void}
 	 */
 	set markAudioReady(value) {
-		if (value) this.#audioPlayer.dataset[`ready`] = ``;
-		else delete this.#audioPlayer.dataset[`ready`];
+		const { dataset } = this.#audioPlayer;
+		if (value) dataset[`ready`] = ``;
+		else delete dataset[`ready`];
 	}
 	/**
 	 * @returns {boolean}
 	 */
 	get markAudioPlaying() {
-		return (this.#audioPlayer.dataset[`playing`] !== undefined);
+		const { dataset } = this.#audioPlayer;
+		return (dataset[`playing`] !== undefined);
 	}
 	/**
 	 * @param {boolean} value 
@@ -42,15 +99,25 @@ class Controller {
 	 */
 	set markAudioPlaying(value) {
 		if (!this.markAudioReady) return;
-		if (value) this.#audioPlayer.dataset[`playing`] = ``;
-		else delete this.#audioPlayer.dataset[`playing`];
+		const { dataset } = this.#audioPlayer;
+		if (value) dataset[`playing`] = ``;
+		else delete dataset[`playing`];
+	}
+	/**
+	 * @param {boolean} value 
+	 * @returns {Promise<void>}
+	 */
+	async #toggleAudioState(value) {
+		const audioPlayer = this.#audioPlayer;
+		if (value) await audioPlayer.play();
+		else audioPlayer.pause();
 	}
 	/**
 	 * @param {number} seconds 
 	 * @returns {string}
 	 */
-	#toPlaytimeString(seconds) {
-		const time = Timespan.viaDuration(seconds * 1000);
+	static #toPlaytimeString(seconds) {
+		const time = Timespan.viaTime(false, 0, 0, seconds);
 		return `${(time.hours * 60 + time.minutes).toString().padStart(2, `0`)}:${(time.seconds).toString().padStart(2, `0`)}`;
 	}
 	/**
@@ -59,64 +126,93 @@ class Controller {
 	 */
 	#toPlaytimeInformation(seconds) {
 		const audioPlayer = this.#audioPlayer;
-		let result = this.#toPlaytimeString(seconds);
-		if (Number.isNaN(audioPlayer.duration)) return result;
-		return result + ` • ${this.#toPlaytimeString(audioPlayer.duration)}`;
+		const current = Controller.#toPlaytimeString(seconds);
+		if (Number.isNaN(audioPlayer.duration)) return current;
+		return `${current} • ${Controller.#toPlaytimeString(audioPlayer.duration)}`;
 	}
 	/** @type {HTMLInputElement} */
-	#inputTogglePlaylist;
-	/**
-	 * @returns {void}
-	 */
-	#fixTogglePlaylist() {
-		this.#inputTogglePlaylist.checked = this.markAudioReady;
-	}
-	/** @type {HTMLInputElement} */
-	#inputTimeTrack;
+	#inputPlaybackTime;
 	/**
 	 * @readonly
 	 * @returns {number}
 	 */
 	get #factorAudioTrack() {
-		const inputTimeTrack = this.#inputTimeTrack;
-		return Number(inputTimeTrack.value).interpolate(0, Number(inputTimeTrack.max) - Number(inputTimeTrack.min));
+		const inputPlaybackTime = this.#inputPlaybackTime;
+		return Number(inputPlaybackTime.value).interpolate(0, Number(inputPlaybackTime.max) - Number(inputPlaybackTime.min));
 	}
+	/** @type {HTMLDialogElement} */
+	#dialogConfigurator;
+	/** @type {Keyframe} */
+	#keyframeAppear = { opacity: `1` };
+	/** @type {Keyframe} */
+	#keyframeDisappear = { opacity: `0` };
 	/**
-	 * Contains the main logic for the application.
+	 * @param {boolean} value 
 	 * @returns {Promise<void>}
 	 */
-	async main() {
-		//#region Initialize
-		const storeAudiolist = this.#storeAudiolist = await Database.Store.open(`${navigator.dataPath}`, `Audiolist`);
+	async #setConfiguratorActivity(value) {
+		const dialogConfigurator = this.#dialogConfigurator;
+		const keyframeAppear = this.#keyframeAppear, keyframeDisappear = this.#keyframeDisappear;
+		const duration = 50, fill = `both`;
+
+		if (value) {
+			dialogConfigurator.show();
+			await dialogConfigurator.animate([keyframeDisappear, keyframeAppear], { duration, fill }).finished;
+		} else {
+			await dialogConfigurator.animate([keyframeAppear, keyframeDisappear], { duration, fill }).finished;
+			dialogConfigurator.close();
+		}
+	}
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #main() {
+		//#region Awake
+		await Promise.withSignal((signal, resolve, reject) => {
+			const scriptVisualizations = document.head.appendChild(document.createElement(`script`));
+			scriptVisualizations.type = `module`;
+			scriptVisualizations.addEventListener(`load`, (event) => resolve(null), { signal });
+			scriptVisualizations.addEventListener(`error`, (event) => reject(event.error), { signal });
+			scriptVisualizations.src = `../scripts/visualizations.js`;
+		});
+
+		/* const storeAudiolist =  */this.#storeAudiolist = await Database.Store.open(`${navigator.dataPath}`, `Audiolist`);
+		const settings = (await ArchiveManager.construct(`${navigator.dataPath}.Settings`, Settings)).content;
 
 		const audioPlayer = this.#audioPlayer = document.getElement(HTMLAudioElement, `audio#player`);
 		const canvas = document.getElement(HTMLCanvasElement, `canvas#display`);
-		const inputLoader = document.getElement(HTMLInputElement, `input#loader`);
+		const inputAudioLoader = document.getElement(HTMLInputElement, `input#audio-loader`);
 
 		const divInterface = document.getElement(HTMLDivElement, `div#interface`);
-		const inputTogglePlaylist = this.#inputTogglePlaylist = document.getElement(HTMLInputElement, `input#toggle-playlist`);
-		const spanTime = document.getElement(HTMLSpanElement, `span#time`);
-		const buttonToggleFullscreen = document.getElement(HTMLButtonElement, `button#toggle-fullscreen`);
-		const inputTimeTrack = this.#inputTimeTrack = document.getElement(HTMLInputElement, `input#time-track`);
+		const buttonAudioDrive = document.getElement(HTMLButtonElement, `button#audio-drive`);
+		const buttonOpenConfigurator = document.getElement(HTMLButtonElement, `button#open-configurator`);
+		const bPlaybackTime = document.getElement(HTMLElement, `b#playback-time`);
+		const inputPlaybackTimeTrack = this.#inputPlaybackTime = document.getElement(HTMLInputElement, `input#playback-time-track`);
 
-		const divConfigurator = document.getElement(HTMLDivElement, `div#configurator`);
-		const inputSmoothingFactor = document.getElement(HTMLInputElement, `input#smoothing-factor`);
-		const inputMinDecibels = document.getElement(HTMLInputElement, `input#min-decibels`);
-		const inputMaxDecibels = document.getElement(HTMLInputElement, `input#max-decibels`);
+		const dialogConfigurator = this.#dialogConfigurator = document.getElement(HTMLDialogElement, `dialog#configurator`);
+		const buttonCloseConfigurator = document.getElement(HTMLButtonElement, `button#close-configurator`);
+		const inputVisualizerRate = document.getElement(HTMLInputElement, `input#visualizer-rate`);
+		const selectVisualizerVisualization = document.getElement(HTMLSelectElement, `select#visualizer-visualization`);
+		const inputVisualizationQuality = document.getElement(HTMLInputElement, `input#visualization-quality`);
+		const inputVisualizationSmoothing = document.getElement(HTMLInputElement, `input#visualization-smoothing`);
+		const inputVisualizationSpread = document.getElement(HTMLInputElement, `input#visualization-spread`);
+		const inputVisualizationFocus = document.getElement(HTMLInputElement, `input#visualization-focus`);
 		//#endregion
-		//#region Player
-		const autoplay = false;
-		audioPlayer.addEventListener(`loadstart`, (event) => window.insure(async () => {
-			await window.load(Promise.withSignal((signal, resolve, reject) => {
-				audioPlayer.addEventListener(`canplay`, (event) => resolve(null), { signal });
-				audioPlayer.addEventListener(`error`, (event) => reject(event.error), { signal });
-			}));
-			this.markAudioReady = true;
-			if (autoplay) await audioPlayer.play();
-		}, () => this.#fixTogglePlaylist()));
+		//#region Subsystem build
+		audioPlayer.addEventListener(`loadstart`, async (event) => {
+			try {
+				await window.load(Promise.withSignal((signal, resolve, reject) => {
+					audioPlayer.addEventListener(`canplay`, (event) => resolve(null), { signal });
+					audioPlayer.addEventListener(`error`, (event) => reject(event.error), { signal });
+				}));
+				this.markAudioReady = true;
+				bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
+			} catch (error) {
+				console.error(error);
+			}
+		});
 		audioPlayer.addEventListener(`emptied`, (event) => {
 			this.markAudioReady = false;
-			this.#fixTogglePlaylist();
 		});
 		audioPlayer.addEventListener(`play`, (event) => {
 			this.markAudioPlaying = true;
@@ -125,162 +221,181 @@ class Controller {
 			this.markAudioPlaying = false;
 		});
 
-		/** @type {(File | undefined)[]} */
-		let [audioRecent] = await storeAudiolist.select(0);
-		if (audioRecent !== undefined && !(audioRecent instanceof File)) throw new TypeError(`Invalid recent audiofile type`);
-		window.addEventListener(`beforeunload`, async (event) => {
-			try {
-				await storeAudiolist.update(new DataPair(0, audioRecent));
-			} catch (error) {
-				event.preventDefault();
-			}
-		});
-
-		if (audioRecent !== undefined) {
+		let audioRecent = await this.#loadRecentAudio();
+		if (audioRecent !== null) {
 			audioPlayer.src = URL.createObjectURL(audioRecent);
 		}
-		//#endregion
-		//#region Visualizer
-		await Promise.withSignal((signal, resolve, reject) => {
-			const scriptVisualizations = document.head.appendChild(document.createElement(`script`));
-			scriptVisualizations.type = `module`;
-			scriptVisualizations.addEventListener(`load`, (event) => resolve(null), { signal });
-			scriptVisualizations.addEventListener(`error`, (event) => reject(event.error), { signal });
-			scriptVisualizations.src = `../scripts/visualizations.js`;
+		window.addEventListener(`beforeunload`, async (event) => {
+			if (!await this.#saveRecentAudio(audioRecent)) event.preventDefault();
 		});
-		const visualizer = await Visualizer.build(canvas, audioPlayer, `Pulsar`);
 
-		window.addEventListener(`keydown`, (event) => {
-			if (event.ctrlKey && event.code === `Numpad1`) {
-				event.preventDefault();
-				visualizer.minDecibels -= 10;
-				console.log(`min decibels: ${visualizer.minDecibels}`);
-			} else if (event.ctrlKey && event.code === `Numpad3`) {
-				event.preventDefault();
-				visualizer.minDecibels += 10;
-				console.log(`min decibels: ${visualizer.minDecibels}`);
-			}
+		const visualizer = await Visualizer.build(canvas, audioPlayer);
+		visualizer.rate = settings.visualizer.rate;
+		visualizer.visualization = settings.visualizer.visualization;
+		visualizer.quality = settings.visualizer.configuration.quality;
+		visualizer.smoothing = settings.visualizer.configuration.smoothing;
+		visualizer.focus = settings.visualizer.configuration.focus;
+		visualizer.spread = settings.visualizer.configuration.spread;
 
-			if (event.ctrlKey && event.code === `Numpad7`) {
-				event.preventDefault();
-				visualizer.maxDecibels -= 10;
-				console.log(`min decibels: ${visualizer.maxDecibels}`);
-			} else if (event.ctrlKey && event.code === `Numpad9`) {
-				event.preventDefault();
-				visualizer.maxDecibels += 10;
-				console.log(`min decibels: ${visualizer.maxDecibels}`);
-			}
-
-			if (event.ctrlKey && event.code === `Numpad4`) {
-				event.preventDefault();
-				visualizer.smoothing = (visualizer.smoothing * 10 - 1) / 10;
-				console.log(`min decibels: ${visualizer.smoothing}`);
-			} else if (event.ctrlKey && event.code === `Numpad6`) {
-				event.preventDefault();
-				visualizer.smoothing = (visualizer.smoothing * 10 + 1) / 10;
-				console.log(`min decibels: ${visualizer.smoothing}`);
-			}
-		});
-		//#endregion
-		//#region Loader
-		inputLoader.addEventListener(`input`, (event) => {
-			const files = inputLoader.files;
-			if (files !== null) {
+		inputAudioLoader.addEventListener(`input`, (event) => {
+			try {
+				const files = inputAudioLoader.files;
+				if (files === null) return;
 				const file = files.item(0);
-				if (file !== null) {
-					audioRecent = file;
-					audioPlayer.src = URL.createObjectURL(file);
-				}
+				if (file === null) return;
+				audioRecent = file;
+				audioPlayer.src = URL.createObjectURL(file);
+			} finally {
+				inputAudioLoader.value = ``;
 			}
-			inputLoader.value = ``;
 		});
 		//#endregion
-		//#region Interface
+		//#region Interface build
 		divInterface.addEventListener(`click`, async (event) => {
-			if (event.eventPhase !== Event.AT_TARGET || audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
-			if (audioPlayer.paused) await audioPlayer.play();
-			else audioPlayer.pause();
+			try {
+				if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
+				event.stopImmediatePropagation();
+				await this.#toggleAudioState(audioPlayer.paused);
+			} catch (error) {
+				console.error(error);
+			}
 		});
 
-		inputTogglePlaylist.addEventListener(`change`, (event) => {
-			inputTogglePlaylist.checked = !inputTogglePlaylist.checked;
-			if (inputTogglePlaylist.checked) {
+		buttonAudioDrive.addEventListener(`click`, (event) => {
+			event.stopPropagation();
+			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_NOTHING) {
 				audioPlayer.removeAttribute(`src`);
 				audioPlayer.srcObject = null;
-				audioRecent = undefined;
-			} else inputLoader.click();
+				audioRecent = null;
+			} else inputAudioLoader.click();
 		});
 
-		visualizer.addEventListener(`update`, (event) => {
-			spanTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
+		buttonOpenConfigurator.addEventListener(`click`, async (event) => {
+			event.stopPropagation();
+			await this.#setConfiguratorActivity(true);
+			settings.isOpenedConfigurator = dialogConfigurator.open;
 		});
 
-		buttonToggleFullscreen.addEventListener(`click`, (event) => window.insure(async () => {
-			if (document.fullscreenElement) await document.exitFullscreen();
-			else await document.documentElement.requestFullscreen();
-		}));
-
-		visualizer.addEventListener(`update`, (event) => {
+		audioPlayer.addEventListener(`timeupdate`, (event) => {
+			if (document.activeElement === inputPlaybackTimeTrack) return;
 			const factor = (Number.isNaN(audioPlayer.duration)
 				? 0
 				: audioPlayer.currentTime / audioPlayer.duration
 			);
-			inputTimeTrack.value = `${factor * 100}`;
-			inputTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			inputPlaybackTimeTrack.value = `${factor * 100}`;
+			inputPlaybackTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
 		});
-		inputTimeTrack.addEventListener(`input`, (event) => {
+		inputPlaybackTimeTrack.addEventListener(`pointerup`, (event) => {
+			inputPlaybackTimeTrack.blur();
+		});
+		inputPlaybackTimeTrack.addEventListener(`input`, (event) => {
+			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 			const factor = this.#factorAudioTrack;
-			inputTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			inputPlaybackTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
 			const time = (Number.isNaN(audioPlayer.duration)
 				? 0
 				: audioPlayer.duration * factor
 			);
-			spanTime.innerText = this.#toPlaytimeInformation(time);
+			bPlaybackTime.innerText = this.#toPlaytimeInformation(time);
 		});
-		inputTimeTrack.addEventListener(`change`, (event) => {
+		inputPlaybackTimeTrack.addEventListener(`change`, (event) => {
+			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 			const factor = this.#factorAudioTrack;
-			inputTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			inputPlaybackTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
 			const time = (Number.isNaN(audioPlayer.duration)
 				? 0
 				: audioPlayer.duration * factor
 			);
-			spanTime.innerText = this.#toPlaytimeInformation(time);
+			bPlaybackTime.innerText = this.#toPlaytimeInformation(time);
 			audioPlayer.currentTime = time;
 		});
 		//#endregion
-		//#region Configurator
-		window.addEventListener(`keydown`, (event) => {
-			if (event.code === `Tab`) {
-				event.preventDefault();
-				divConfigurator.hidden = !divConfigurator.hidden;
-			}
+		//#region Configurator build
+		await this.#setConfiguratorActivity(settings.isOpenedConfigurator);
+		buttonCloseConfigurator.addEventListener(`click`, async (event) => {
+			await this.#setConfiguratorActivity(false);
 		});
 
-		inputSmoothingFactor.value = String(visualizer.smoothing);
-		inputSmoothingFactor.addEventListener(`input`, (event) => window.insure(() => {
-			visualizer.smoothing = Number(inputSmoothingFactor.value);
-		}));
+		inputVisualizerRate.value = String(visualizer.rate);
+		inputVisualizerRate.addEventListener(`change`, (event) => {
+			visualizer.rate = Number(inputVisualizerRate.value);
+			inputVisualizerRate.value = String(visualizer.rate);
+			settings.visualizer.rate = visualizer.rate;
+		});
 
-		inputMinDecibels.value = String(visualizer.minDecibels);
-		inputMinDecibels.addEventListener(`input`, (event) => window.insure(() => {
-			event.preventDefault();
-			let minValue = Number(inputMinDecibels.value);
-			if (minValue > visualizer.maxDecibels) minValue = visualizer.maxDecibels;
-			visualizer.minDecibels = minValue;
-			inputMinDecibels.value = String(minValue);
-		}));
+		for (const visualization of Visualizer.visualizations) {
+			const option = selectVisualizerVisualization.appendChild(document.createElement(`option`));
+			option.value = visualization;
+			option.innerText = visualization;
+		}
+		selectVisualizerVisualization.value = visualizer.visualization;
+		selectVisualizerVisualization.addEventListener(`change`, (event) => {
+			visualizer.visualization = selectVisualizerVisualization.value;
+			settings.visualizer.visualization = visualizer.visualization;
 
-		inputMaxDecibels.value = String(visualizer.maxDecibels);
-		inputMaxDecibels.addEventListener(`input`, (event) => window.insure(() => {
-			event.preventDefault();
-			let maxValue = Number(inputMaxDecibels.value);
-			if (visualizer.minDecibels > maxValue) maxValue = visualizer.minDecibels;
-			visualizer.maxDecibels = maxValue;
-			inputMaxDecibels.value = String(maxValue);
-		}));
+			visualizer.quality = settings.visualizer.configuration.quality;
+			inputVisualizationQuality.value = String(visualizer.quality);
+
+			visualizer.smoothing = settings.visualizer.configuration.smoothing;
+			inputVisualizationSmoothing.value = String(visualizer.smoothing);
+
+			visualizer.focus = settings.visualizer.configuration.focus;
+			inputVisualizationFocus.value = String(visualizer.focus);
+
+			visualizer.spread = settings.visualizer.configuration.spread;
+			inputVisualizationSpread.value = String(visualizer.spread);
+		});
+
+		inputVisualizationQuality.value = String(visualizer.quality);
+		inputVisualizationQuality.addEventListener(`change`, (event) => {
+			visualizer.quality = Number(inputVisualizationQuality.value);
+			inputVisualizationQuality.value = String(visualizer.quality);
+		});
+		inputVisualizationQuality.addEventListener(`change`, (event) => {
+			settings.visualizer.configuration.quality = visualizer.quality;
+		});
+
+		inputVisualizationSmoothing.value = String(visualizer.smoothing);
+		inputVisualizationSmoothing.addEventListener(`input`, (event) => {
+			visualizer.smoothing = Number(inputVisualizationSmoothing.value);
+		});
+		inputVisualizationSmoothing.addEventListener(`change`, (event) => {
+			settings.visualizer.configuration.smoothing = visualizer.smoothing;
+		});
+
+		inputVisualizationFocus.value = String(visualizer.focus);
+		inputVisualizationFocus.addEventListener(`input`, (event) => {
+			visualizer.focus = Number(inputVisualizationFocus.value);
+		});
+		inputVisualizationFocus.addEventListener(`change`, (event) => {
+			settings.visualizer.configuration.focus = visualizer.focus;
+		});
+
+		inputVisualizationSpread.value = String(visualizer.spread);
+		inputVisualizationSpread.addEventListener(`input`, (event) => {
+			visualizer.spread = Number(inputVisualizationSpread.value);
+		});
+		inputVisualizationSpread.addEventListener(`change`, (event) => {
+			settings.visualizer.configuration.spread = visualizer.spread;
+		});
 		//#endregion
+
+		window.addEventListener(`keydown`, async (event) => {
+			if (event.code === `Space`) {
+				event.preventDefault();
+				await this.#toggleAudioState(audioPlayer.paused);
+			}
+
+			if (event.code === `Tab`) {
+				event.preventDefault();
+				await this.#setConfiguratorActivity(!dialogConfigurator.open);
+				settings.isOpenedConfigurator = dialogConfigurator.open;
+			}
+		});
 	}
-};
-const controller = new Controller();
-await window.assert(() => controller.main());
+	//#endregion
+}
+
+await window.assert(Controller.construct);
 //#endregion

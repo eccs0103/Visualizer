@@ -1,54 +1,57 @@
 "use strict";
 
+import { ImplementationError } from "./extensions.js";
+import { FastEngine } from "./generators.js";
+
 const { hypot, abs, trunc } = Math;
 
-//#region Point
+//#region Vector
 /**
- * Abstract base class representing a point.
+ * Abstract base class representing a vector.
  * @abstract
  */
-class Point {
-	//#region Methods
+class Vector {
+	//#region Operations
 	/**
-	 * Checks if every component of the point is NaN.
-	 * @param {Point} point The point to check.
-	 * @returns {boolean} True if every component of the point is NaN, otherwise false.
+	 * Checks if every component of the vector is NaN.
+	 * @param {Vector} vector The vector to check.
+	 * @returns {boolean} True if every component of the vector is NaN, otherwise false.
 	 */
-	static isNaN(point) {
-		for (const metric of point) {
+	static isNaN(vector) {
+		for (const metric of vector) {
 			if (!Number.isNaN(metric)) return false;
 		}
 		return true;
 	}
 	/**
-	 * Checks if all components of the point are finite numbers.
-	 * @param {Point} point The point to check.
-	 * @returns {boolean} True if all components of the point are finite, otherwise false.
+	 * Checks if all components of the vector are finite numbers.
+	 * @param {Vector} vector The vector to check.
+	 * @returns {boolean} True if all components of the vector are finite, otherwise false.
 	 */
-	static isFinite(point) {
-		for (const metric of point) {
+	static isFinite(vector) {
+		for (const metric of vector) {
 			if (!Number.isFinite(metric)) return false;
 		}
 		return true;
 	}
 	/**
-	 * Checks if all components of the point are integers.
-	 * @param {Point} point The point to check.
-	 * @returns {boolean} True if all components of the point are integers, otherwise false.
+	 * Checks if all components of the vector are integers.
+	 * @param {Vector} vector The vector to check.
+	 * @returns {boolean} True if all components of the vector are integers, otherwise false.
 	 */
-	static isInteger(point) {
-		for (const metric of point) {
+	static isInteger(vector) {
+		for (const metric of vector) {
 			if (!Number.isInteger(metric)) return false;
 		}
 		return true;
 	}
 	/**
-	 * Checks if all components of the point are safe integers.
-	 * @param {Point} point The point to check.
-	 * @returns {boolean} True if all components of the point are safe integers, otherwise false.
+	 * Checks if all components of the vector are safe integers.
+	 * @param {Vector} vector The vector to check.
+	 * @returns {boolean} True if all components of the vector are safe integers, otherwise false.
 	 */
-	static isSafeInteger(point) {
-		for (const metric of point) {
+	static isSafeInteger(vector) {
+		for (const metric of vector) {
 			if (!Number.isSafeInteger(metric)) return false;
 		}
 		return true;
@@ -60,199 +63,251 @@ class Point {
 	static #join(metrics) {
 		return `(${metrics.join(`, `)})`;
 	}
+	constructor() {
+		if (new.target === Vector) throw new TypeError(`Unable to create an instance of an abstract class`);
+	}
 	//#endregion
 	//#region Modifiers
 	/**
-	 * Returns a string representation of the point with a fixed number of digits after the decimal point.
-	 * @param {number} [digits] The number of digits to appear after the decimal point.
-	 * @returns {string} A string representation of the point.
-	 */
-	toFixed(digits) {
-		return Point.#join(Array.from(this).map(metric => metric.toFixed(digits)));
-	}
-	/**
-	 * Returns a string representation of the point in exponential notation.
-	 * @param {number} [digits] The number of digits to appear after the decimal point.
-	 * @returns {string} A string representation of the point in exponential notation.
-	 */
-	toExponential(digits) {
-		return Point.#join(Array.from(this).map(metric => metric.toExponential(digits)));
-	}
-	/**
-	 * Returns a string representation of the point with a specified precision.
-	 * @param {number} [precision] The number of significant digits.
-	 * @returns {string} A string representation of the point with the specified precision.
-	 */
-	toPrecision(precision) {
-		return Point.#join(Array.from(this).map(metric => metric.toPrecision(precision)));
-	}
-	/**
-	 * Returns a string representation of the point in the specified radix (base).
-	 * @param {number} [radix] An integer between 2 and 36 specifying the base to use for representing numeric values.
-	 * @returns {string} A string representation of the point in the specified radix.
-	 */
-	toString(radix) {
-		return Point.#join(Array.from(this).map(metric => metric.toString(radix)));
-	}
-	/**
-	 * Returns a string representation of the point formatted according to the specified locale and formatting options.
-	 * @param {Intl.LocalesArgument} [locales] A string with a BCP 47 language tag, or an array of such strings.
-	 * @param {Intl.NumberFormatOptions} [options] An object with some or all of the following properties.
-	 * @returns {string} A string representation of the point formatted according to the specified locale and formatting options.
-	 */
-	toLocaleString(locales, options) {
-		return Point.#join(Array.from(this).map(metric => metric.toLocaleString(locales, options)));
-	}
-	/**
-	 * Returns an iterator object that yields each component of the point.
+	 * Returns an iterator object that yields each component of the vector.
 	 * @abstract
 	 * @returns {Iterator<number>} An iterator object.
 	 */
 	*[Symbol.iterator]() {
-		throw new ReferenceError(`Not implemented function`);
+		throw new ImplementationError();
+	}
+	/**
+	 * Returns a string representation of the vector with a fixed number of digits after the decimal vector.
+	 * @param {number} [digits] The number of digits to appear after the decimal vector.
+	 * @returns {string} A string representation of the vector.
+	 */
+	toFixed(digits) {
+		return Vector.#join(Array.from(this).map(metric => metric.toFixed(digits)));
+	}
+	/**
+	 * Returns a string representation of the vector in exponential notation.
+	 * @param {number} [digits] The number of digits to appear after the decimal vector.
+	 * @returns {string} A string representation of the vector in exponential notation.
+	 */
+	toExponential(digits) {
+		return Vector.#join(Array.from(this).map(metric => metric.toExponential(digits)));
+	}
+	/**
+	 * Returns a string representation of the vector with a specified precision.
+	 * @param {number} [precision] The number of significant digits.
+	 * @returns {string} A string representation of the vector with the specified precision.
+	 */
+	toPrecision(precision) {
+		return Vector.#join(Array.from(this).map(metric => metric.toPrecision(precision)));
+	}
+	/**
+	 * Returns a string representation of the vector in the specified radix (base).
+	 * @param {number} [radix] An integer between 2 and 36 specifying the base to use for representing numeric values.
+	 * @returns {string} A string representation of the vector in the specified radix.
+	 */
+	toString(radix) {
+		return Vector.#join(Array.from(this).map(metric => metric.toString(radix)));
+	}
+	/**
+	 * Returns a string representation of the vector formatted according to the specified locale and formatting options.
+	 * @param {Intl.LocalesArgument} [locales] A string with a BCP 47 language tag, or an array of such strings.
+	 * @param {Intl.NumberFormatOptions} [options] An object with some or all of the following properties.
+	 * @returns {string} A string representation of the vector formatted according to the specified locale and formatting options.
+	 */
+	toLocaleString(locales, options) {
+		return Vector.#join(Array.from(this).map(metric => metric.toLocaleString(locales, options)));
 	}
 	//#endregion
 }
 //#endregion
-//#region Point 1D
+//#region Vector 1D
 /**
- * Represents a point in one-dimensional space.
+ * Represents a vector in one-dimensional space.
  */
-class Point1D extends Point {
-	//#region Constructors
-	/** @type {RegExp} */
-	static #regexPointParser = /^\(\s*(\S+)\s*\)$/;
+class Vector1D extends Vector {
+	//#region Operations
 	/**
-	 * Parses a string representation of a point.
-	 * @param {string} string The string representation of the point.
-	 * @returns {Point1D} The parsed point.
-	 * @throws {SyntaxError} If the string is not a valid representation of a point.
-	 */
-	static parse(string) {
-		const match = Point1D.#regexPointParser.exec(string.trim());
-		if (match === null) throw new SyntaxError(`Invalid syntax '${string}' for 1D point`);
-		const [, x] = match.map(part => Number(part));
-		return new Point1D(x);
-	}
-	/**
-	 * Static method to clone a point.
-	 * @param {Readonly<Point1D>} source The point to clone.
-	 * @returns {Point1D} A new point with the same coordinates as the source point.
-	 */
-	static clone(source) {
-		return new Point1D(source.x);
-	}
-	/**
-	 * Static method to create a point with a repeated value.
-	 * @param {number} value The value to repeat.
-	 * @returns {Point1D} A new point with the specified value.
-	 */
-	static fill(value) {
-		return new Point1D(value);
-	}
-	/**
-	 * Returns the NaN point (NaN).
-	 * @readonly
-	 * @returns {Point1D} The NaN point.
-	 */
-	static get NAN() {
-		return Point1D.fill(NaN);
-	}
-	/** @type {Readonly<Point1D>} */
-	static #CONSTANT_NAN = Object.freeze(Point1D.NAN);
-	/**
-	 * Returns the constant NaN point (NaN).
-	 * @readonly
-	 * @returns {Readonly<Point1D>} The constant NaN point.
-	 */
-	static get CONSTANT_NAN() {
-		return this.#CONSTANT_NAN;
-	}
-	/**
-	 * Returns the zero point (0).
-	 * @readonly
-	 * @returns {Point1D} The zero point.
-	 */
-	static get ZERO() {
-		return Point1D.fill(0);
-	}
-	/** @type {Readonly<Point1D>} */
-	static #CONSTANT_ZERO = Object.freeze(Point1D.ZERO);
-	/**
-	 * Returns the constant zero point (0).
-	 * @readonly
-	 * @returns {Readonly<Point1D>} The constant zero point.
-	 */
-	static get CONSTANT_ZERO() {
-		return this.#CONSTANT_ZERO;
-	}
-	/**
-	 * Returns the single point (1).
-	 * @readonly
-	 * @returns {Point1D} The single point.
-	 */
-	static get SINGLE() {
-		return Point1D.fill(1);
-	}
-	/** @type {Readonly<Point1D>} */
-	static #CONSTANT_SINGLE = Object.freeze(Point1D.SINGLE);
-	/**
-	 * Returns the constant single point (1).
-	 * @readonly
-	 * @returns {Readonly<Point1D>} The constant single point.
-	 */
-	static get CONSTANT_SINGLE() {
-		return this.#CONSTANT_SINGLE;
-	}
-	/**
-	 * Returns the double point (2).
-	 * @readonly
-	 * @returns {Point1D} The double point.
-	 */
-	static get DOUBLE() {
-		return Point1D.fill(2);
-	}
-	/** @type {Readonly<Point1D>} */
-	static #CONSTANT_DOUBLE = Object.freeze(Point1D.DOUBLE);
-	/**
-	 * Returns the constant double point (2).
-	 * @readonly
-	 * @returns {Readonly<Point1D>} The constant double point.
-	 */
-	static get CONSTANT_DOUBLE() {
-		return this.#CONSTANT_DOUBLE;
-	}
-	/**
-	 * @param {number} x The x-coordinate of the point.
-	 */
-	constructor(x) {
-		super();
-		this.x = x;
-	}
-	//#endregion
-	//#region Methods
-	/**
-	 * Calculates the distance between two points.
-	 * @param {Readonly<Point1D>} first The first point.
-	 * @param {Readonly<Point1D>} second The second point.
-	 * @returns {number} The distance between the two points.
+	 * Calculates the distance between two vectors.
+	 * @param {Readonly<Vector1D>} first The first vector.
+	 * @param {Readonly<Vector1D>} second The second vector.
+	 * @returns {number} The distance between the two vectors.
 	 */
 	static getDistanceBetween(first, second) {
 		return hypot(first.x - second.x);
 	}
+	/**
+	 * Adds two vectors.
+	 * @param {Readonly<Vector1D>} first The first vector.
+	 * @param {Readonly<Vector1D>} second The second vector.
+	 * @returns {Vector1D} The result of the addition.
+	 */
+	static ["+"](first, second) {
+		return new Vector1D(first.x + second.x);
+	}
+	/**
+	 * Subtracts the second vector from the first.
+	 * @param {Readonly<Vector1D>} first The first vector.
+	 * @param {Readonly<Vector1D>} second The second vector.
+	 * @returns {Vector1D} The result of the subtraction.
+	 */
+	static ["-"](first, second) {
+		return new Vector1D(first.x - second.x);
+	}
+	/**
+	 * Multiplies two vectors.
+	 * @param {Readonly<Vector1D>} first The first vector.
+	 * @param {Readonly<Vector1D>} second The second vector.
+	 * @returns {Vector1D} The result of the multiplication.
+	 */
+	static ["*"](first, second) {
+		return new Vector1D(first.x * second.x);
+	}
+	/**
+	 * Divides the first vector by the second.
+	 * @param {Readonly<Vector1D>} first The first vector.
+	 * @param {Readonly<Vector1D>} second The second vector.
+	 * @returns {Vector1D} The result of the division.
+	 */
+	static ["/"](first, second) {
+		return new Vector1D(first.x / second.x);
+	}
+	//#endregion
+	//#region Presets
+	/**
+	 * Returns the new NaN vector - (NaN).
+	 * @readonly
+	 * @returns {Vector1D} The NaN vector.
+	 */
+	static get newNaN() {
+		return Vector1D.fill(NaN);
+	}
+	/**
+	 * Returns the new zero vector - (0).
+	 * @readonly
+	 * @returns {Vector1D} The zero vector.
+	 */
+	static get newZero() {
+		return Vector1D.fill(0);
+	}
+	/**
+	 * Returns the new single vector - (1).
+	 * @readonly
+	 * @returns {Vector1D} The single vector.
+	 */
+	static get newSingle() {
+		return Vector1D.fill(1);
+	}
+	/**
+	 * Returns the new double vector - (2).
+	 * @readonly
+	 * @returns {Vector1D} The double vector.
+	 */
+	static get newDouble() {
+		return Vector1D.fill(2);
+	}
+	//#endregion
+	//#region Constants
+	/** @type {Readonly<Vector1D>} */
+	static #CONSTANT_NAN = Object.freeze(Vector1D.newNaN);
+	/**
+	 * Returns the constant NaN vector - (NaN).
+	 * @readonly
+	 * @returns {Readonly<Vector1D>} The constant NaN vector.
+	 */
+	static get CONSTANT_NAN() {
+		return this.#CONSTANT_NAN;
+	}
+	/** @type {Readonly<Vector1D>} */
+	static #CONSTANT_ZERO = Object.freeze(Vector1D.newZero);
+	/**
+	 * Returns the constant zero vector - (0).
+	 * @readonly
+	 * @returns {Readonly<Vector1D>} The constant zero vector.
+	 */
+	static get CONSTANT_ZERO() {
+		return this.#CONSTANT_ZERO;
+	}
+	/** @type {Readonly<Vector1D>} */
+	static #CONSTANT_SINGLE = Object.freeze(Vector1D.newSingle);
+	/**
+	 * Returns the constant single vector - (1).
+	 * @readonly
+	 * @returns {Readonly<Vector1D>} The constant single vector.
+	 */
+	static get CONSTANT_SINGLE() {
+		return this.#CONSTANT_SINGLE;
+	}
+	/** @type {Readonly<Vector1D>} */
+	static #CONSTANT_DOUBLE = Object.freeze(Vector1D.newDouble);
+	/**
+	 * Returns the constant double vector - (2).
+	 * @readonly
+	 * @returns {Readonly<Vector1D>} The constant double vector.
+	 */
+	static get CONSTANT_DOUBLE() {
+		return this.#CONSTANT_DOUBLE;
+	}
+	//#endregion
+	//#region Builders
+	/** @type {RegExp} */
+	static #regexVectorParser = /^\(\s*(\S+)\s*\)$/;
+	/**
+	 * Parses a string representation of a vector.
+	 * @param {string} string The string representation of the vector.
+	 * @returns {Vector1D} The parsed vector.
+	 * @throws {SyntaxError} If the string is not a valid representation of a vector.
+	 */
+	static parse(string) {
+		const match = Vector1D.#regexVectorParser.exec(string.trim());
+		if (match === null) throw new SyntaxError(`Invalid syntax '${string}' for 1D vector`);
+		const [, x] = match.map(Number);
+		return new Vector1D(x);
+	}
+	/**
+	 * Static method to create a vector with a repeated value.
+	 * @param {number} value The value to repeat.
+	 * @returns {Vector1D} A new vector with the specified value.
+	 */
+	static fill(value) {
+		return new Vector1D(value);
+	}
+	/**
+	 * @overload
+	 * @param {number} x The x-coordinate of the vector.
+	 * 
+	 * @overload
+	 * @param {Readonly<Vector1D>} source A source vector to copy.
+	 */
+	/**
+	 * @param {[number] | [Readonly<Vector1D>]} args 
+	 */
+	constructor(...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector1D) {
+			super();
+			this.#x = arg1.x;
+			return;
+		}
+		super();
+		if (typeof (arg1) === `number`) {
+			this.#x = arg1;
+			return;
+		}
+		throw new TypeError(`No overload with these arguments`);
+	}
 	//#endregion
 	//#region Properties
 	/** @type {number} */
-	#x = 0;
+	#x;
 	/**
-	 * Gets the x-coordinate of the point.
+	 * Gets the x-coordinate of the vector.
 	 * @returns {number} The x-coordinate.
 	 */
 	get x() {
 		return this.#x;
 	}
 	/**
-	 * Sets the x-coordinate of the point.
+	 * Sets the x-coordinate of the vector.
 	 * @param {number} value The new value for the x-coordinate.
 	 */
 	set x(value) {
@@ -261,7 +316,7 @@ class Point1D extends Point {
 	//#endregion
 	//#region Modifiers
 	/**
-	 * Returns an iterator that yields the coordinates of the point.
+	 * Returns an iterator that yields the coordinates of the vector.
 	 * @returns {Iterator<number>} An iterator object that yields the coordinates.
 	 */
 	*[Symbol.iterator]() {
@@ -269,203 +324,309 @@ class Point1D extends Point {
 		return;
 	}
 	/**
-	 * Creates a clone of this point.
-	 * @returns {Point1D} A new point with the same coordinates as this point.
-	 */
-	clone() {
-		return Point1D.clone(this);
-	}
-	/**
-	 * Maps a callback function to the point's coordinates.
+	 * Maps a callback function to the vector's coordinates.
 	 * @param {(metric: number) => number} callback The callback function.
-	 * @returns {Point1D} A new point with the mapped coordinates.
+	 * @returns {Vector1D} A new vector with the mapped coordinates.
 	 */
 	map(callback) {
-		return new Point1D(callback(this.x));
+		return new Vector1D(callback(this.x));
 	}
 	/**
-	 * Adds another point to this point.
-	 * @param {Readonly<Point1D>} other The point to add.
-	 * @returns {Point1D} The result of adding the other point to this point.
+	 * Adds a scalar to the current vector.
+	 * @overload
+	 * @param {number} scalar A scalar value to add.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Adds another vector to the current vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to add.
+	 * @returns {this} The updated vector.
 	 */
-	[`+`](other) {
-		return new Point1D(this.x + other.x);
+	/**
+	 * @param {Readonly<Vector1D> | number} arg1 
+	 * @returns {this}
+	 */
+	["+="](arg1) {
+		if (arg1 instanceof Vector1D) {
+			this.x += arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x += arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Subtracts another point from this point.
-	 * @param {Readonly<Point1D>} other The point to subtract.
-	 * @returns {Point1D} The result of subtracting the other point from this point.
+	 * Subtracts a scalar from the current vector.
+	 * @overload
+	 * @param {number} scalar A scalar value to subtract.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Subtracts another vector from the current vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to subtract.
+	 * @returns {this} The updated vector.
 	 */
-	[`-`](other) {
-		return new Point1D(this.x - other.x);
+	/**
+	 * @param {Readonly<Vector1D> | number} arg1 
+	 * @returns {this}
+	 */
+	["-="](arg1) {
+		if (arg1 instanceof Vector1D) {
+			this.x -= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x -= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Multiplies this point by another point.
-	 * @param {Readonly<Point1D>} other The point to multiply by.
-	 * @returns {Point1D} The result of multiplying this point by the other point.
+	 * Multiplies the current vector by a scalar.
+	 * @overload
+	 * @param {number} scalar A scalar value to multiply by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Multiplies the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to multiply by.
+	 * @returns {this} The updated vector.
 	 */
-	[`*`](other) {
-		return new Point1D(this.x * other.x);
+	/**
+	 * @param {Readonly<Vector1D> | number} arg1 
+	 * @returns {this}
+	 */
+	["*="](arg1) {
+		if (arg1 instanceof Vector1D) {
+			this.x *= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x *= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Divides this point by another point.
-	 * @param {Readonly<Point1D>} other The point to divide by.
-	 * @returns {Point1D} The result of dividing this point by the other point.
+	 * Divides the current vector by a scalar.
+	 * @overload
+	 * @param {number} scalar A scalar value to divide by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Divides the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to divide by.
+	 * @returns {this} The updated vector.
 	 */
-	[`/`](other) {
-		return new Point1D(this.x / other.x);
-	}
 	/**
-	 * Calculates the distance from this point to another point.
-	 * @param {Readonly<Point1D>} other The other point.
-	 * @returns {number} The distance from this point to the other point.
+	 * @param {Readonly<Vector1D> | number} arg1 
+	 * @returns {this}
 	 */
-	getDistanceFrom(other) {
-		return Point1D.getDistanceBetween(this, other);
+	["/="](arg1) {
+		if (arg1 instanceof Vector1D) {
+			this.x /= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x /= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	//#endregion
 }
 //#endregion
-//#region Point 2D
+//#region Vector 2D
 /**
- * Represents a point in two-dimensional space.
+ * Represents a vector in two-dimensional space.
  */
-class Point2D extends Point1D {
-	//#region Constructors
-	/** @type {RegExp} */
-	static #regexPointParser = /^\(\s*(\S+)\s*,\s*(\S+)\s*\)$/;
+class Vector2D extends Vector1D {
+	//#region Operations
 	/**
-	 * Parses a string representation of a point.
-	 * @param {string} string The string representation of the point.
-	 * @returns {Point2D} The parsed point.
-	 * @throws {SyntaxError} If the string is not a valid representation of a point.
-	 */
-	static parse(string) {
-		const match = Point2D.#regexPointParser.exec(string.trim());
-		if (match === null) throw new SyntaxError(`Invalid syntax '${string}' for 2D point`);
-		const [, x, y] = match.map(part => Number(part));
-		return new Point2D(x, y);
-	}
-	/**
-	 * Static method to clone a point.
-	 * @param {Readonly<Point2D>} source The point to clone.
-	 * @returns {Point2D} A new point with the same coordinates as the source point.
-	 */
-	static clone(source) {
-		return new Point2D(source.x, source.y);
-	}
-	/**
-	 * Static method to create a point with a repeated value.
-	 * @param {number} value The value to repeat.
-	 * @returns {Point2D} A new point with the specified value.
-	 */
-	static fill(value) {
-		return new Point2D(value, value);
-	}
-	/**
-	 * Returns the NaN point (NaN, NaN).
-	 * @readonly
-	 * @returns {Point2D} The NaN point.
-	 */
-	static get NAN() {
-		return Point2D.fill(NaN);
-	}
-	/** @type {Readonly<Point2D>} */
-	static #CONSTANT_NAN = Object.freeze(Point2D.NAN);
-	/**
-	 * Returns the constant NaN point (NaN, NaN).
-	 * @readonly
-	 * @returns {Readonly<Point2D>} The constant NaN point.
-	 */
-	static get CONSTANT_NAN() {
-		return this.#CONSTANT_NAN;
-	}
-	/**
-	 * Returns the zero point (0, 0).
-	 * @readonly
-	 * @returns {Point2D} The zero point.
-	 */
-	static get ZERO() {
-		return Point2D.fill(0);
-	}
-	/** @type {Readonly<Point2D>} */
-	static #CONSTANT_ZERO = Object.freeze(Point2D.ZERO);
-	/**
-	 * Returns the constant zero point (0, 0).
-	 * @readonly
-	 * @returns {Readonly<Point2D>} The constant zero point.
-	 */
-	static get CONSTANT_ZERO() {
-		return this.#CONSTANT_ZERO;
-	}
-	/**
-	 * Returns the single point (1, 1).
-	 * @readonly
-	 * @returns {Point2D} The single point.
-	 */
-	static get SINGLE() {
-		return Point2D.fill(1);
-	}
-	/** @type {Readonly<Point2D>} */
-	static #CONSTANT_SINGLE = Object.freeze(Point2D.SINGLE);
-	/**
-	 * Returns the constant single point (1, 1).
-	 * @readonly
-	 * @returns {Readonly<Point2D>} The constant single point.
-	 */
-	static get CONSTANT_SINGLE() {
-		return this.#CONSTANT_SINGLE;
-	}
-	/**
-	 * Returns the double point (2, 2).
-	 * @readonly
-	 * @returns {Point2D} The double point.
-	 */
-	static get DOUBLE() {
-		return Point2D.fill(2);
-	}
-	/** @type {Readonly<Point2D>} */
-	static #CONSTANT_DOUBLE = Object.freeze(Point2D.DOUBLE);
-	/**
-	 * Returns the constant double point (2, 2).
-	 * @readonly
-	 * @returns {Readonly<Point2D>} The constant double point.
-	 */
-	static get CONSTANT_DOUBLE() {
-		return this.#CONSTANT_DOUBLE;
-	}
-	/**
-	 * @param {number} x The x-coordinate of the point.
-	 * @param {number} y The y-coordinate of the point.
-	 */
-	constructor(x, y) {
-		super(x);
-		this.y = y;
-	}
-	//#endregion
-	//#region Methods
-	/**
-	 * Calculates the distance between two points.
-	 * @param {Readonly<Point2D>} first The first point.
-	 * @param {Readonly<Point2D>} second The second point.
-	 * @returns {number} The distance between the two points.
+	 * Calculates the distance between two vectors.
+	 * @param {Readonly<Vector2D>} first The first vector.
+	 * @param {Readonly<Vector2D>} second The second vector.
+	 * @returns {number} The distance between the two vectors.
 	 */
 	static getDistanceBetween(first, second) {
 		return hypot(first.x - second.x, first.y - second.y);
 	}
+	/**
+	 * Adds two vectors.
+	 * @param {Readonly<Vector2D>} first The first vector.
+	 * @param {Readonly<Vector2D>} second The second vector.
+	 * @returns {Vector2D} The result of the addition.
+	 */
+	static ["+"](first, second) {
+		return new Vector2D(first.x + second.x, first.y + second.y);
+	}
+	/**
+	 * Subtracts the second vector from the first.
+	 * @param {Readonly<Vector2D>} first The first vector.
+	 * @param {Readonly<Vector2D>} second The second vector.
+	 * @returns {Vector2D} The result of the subtraction.
+	 */
+	static ["-"](first, second) {
+		return new Vector2D(first.x - second.x, first.y - second.y);
+	}
+	/**
+	 * Multiplies two vectors.
+	 * @param {Readonly<Vector2D>} first The first vector.
+	 * @param {Readonly<Vector2D>} second The second vector.
+	 * @returns {Vector2D} The result of the multiplication.
+	 */
+	static ["*"](first, second) {
+		return new Vector2D(first.x * second.x, first.y * second.y);
+	}
+	/**
+	 * Divides the first vector by the second.
+	 * @param {Readonly<Vector2D>} first The first vector.
+	 * @param {Readonly<Vector2D>} second The second vector.
+	 * @returns {Vector2D} The result of the division.
+	 */
+	static ["/"](first, second) {
+		return new Vector2D(first.x / second.x, first.y / second.y);
+	}
+	//#endregion
+	//#region Presets
+	/**
+	 * Returns the new NaN vector - (NaN, NaN).
+	 * @readonly
+	 * @returns {Vector2D} The NaN vector.
+	 */
+	static get newNaN() {
+		return Vector2D.fill(NaN);
+	}
+	/**
+	 * Returns the new zero vector - (0, 0).
+	 * @readonly
+	 * @returns {Vector2D} The zero vector.
+	 */
+	static get newZero() {
+		return Vector2D.fill(0);
+	}
+	/**
+	 * Returns the new single vector - (1, 1).
+	 * @readonly
+	 * @returns {Vector2D} The single vector.
+	 */
+	static get newSingle() {
+		return Vector2D.fill(1);
+	}
+	/**
+	 * Returns the new double vector - (2, 2).
+	 * @readonly
+	 * @returns {Vector2D} The double vector.
+	 */
+	static get newDouble() {
+		return Vector2D.fill(2);
+	}
+	//#endregion
+	//#region Constants
+	/** @type {Readonly<Vector2D>} */
+	static #CONSTANT_NAN = Object.freeze(Vector2D.newNaN);
+	/**
+	 * Returns the constant NaN vector - (NaN, NaN).
+	 * @readonly
+	 * @returns {Readonly<Vector2D>} The constant NaN vector.
+	 */
+	static get CONSTANT_NAN() {
+		return this.#CONSTANT_NAN;
+	}
+	/** @type {Readonly<Vector2D>} */
+	static #CONSTANT_ZERO = Object.freeze(Vector2D.newZero);
+	/**
+	 * Returns the constant zero vector - (0, 0).
+	 * @readonly
+	 * @returns {Readonly<Vector2D>} The constant zero vector.
+	 */
+	static get CONSTANT_ZERO() {
+		return this.#CONSTANT_ZERO;
+	}
+	/** @type {Readonly<Vector2D>} */
+	static #CONSTANT_SINGLE = Object.freeze(Vector2D.newSingle);
+	/**
+	 * Returns the constant single vector - (1, 1).
+	 * @readonly
+	 * @returns {Readonly<Vector2D>} The constant single vector.
+	 */
+	static get CONSTANT_SINGLE() {
+		return this.#CONSTANT_SINGLE;
+	}
+	/** @type {Readonly<Vector2D>} */
+	static #CONSTANT_DOUBLE = Object.freeze(Vector2D.newDouble);
+	/**
+	 * Returns the constant double vector - (2, 2).
+	 * @readonly
+	 * @returns {Readonly<Vector2D>} The constant double vector.
+	 */
+	static get CONSTANT_DOUBLE() {
+		return this.#CONSTANT_DOUBLE;
+	}
+	//#endregion
+	//#region Builders
+	/** @type {RegExp} */
+	static #regexVectorParser = /^\(\s*(\S+)\s*,\s*(\S+)\s*\)$/;
+	/**
+	 * Parses a string representation of a vector.
+	 * @param {string} string The string representation of the vector.
+	 * @returns {Vector2D} The parsed vector.
+	 * @throws {SyntaxError} If the string is not a valid representation of a vector.
+	 */
+	static parse(string) {
+		const match = Vector2D.#regexVectorParser.exec(string.trim());
+		if (match === null) throw new SyntaxError(`Invalid syntax '${string}' for 2D vector`);
+		const [, x, y] = match.map(Number);
+		return new Vector2D(x, y);
+	}
+	/**
+	 * Static method to create a vector with a repeated value.
+	 * @param {number} value The value to repeat.
+	 * @returns {Vector2D} A new vector with the specified value.
+	 */
+	static fill(value) {
+		return new Vector2D(value, value);
+	}
+	/**
+	 * @overload
+	 * @param {number} x The x-coordinate of the vector.
+	 * @param {number} y The y-coordinate of the vector.
+	 * 
+	 * @overload
+	 * @param {Readonly<Vector2D>} source A source vector to copy.
+	 */
+	/**
+	 * @param {[number, number] | [Readonly<Vector2D>]} args 
+	 */
+	constructor(...args) {
+		const [arg1, arg2] = args;
+		if (arg1 instanceof Vector2D) {
+			super(arg1.x);
+			this.#y = arg1.y;
+			return;
+		}
+		super(/** @type {number} */(arg1));
+		if (typeof (arg2) === `number`) {
+			this.#y = arg2;
+			return;
+		}
+		throw new TypeError(`No overload with these arguments`);
+	}
 	//#endregion
 	//#region Properties
 	/** @type {number} */
-	#y = 0;
+	#y;
 	/**
-	 * Gets the y-coordinate of the point.
+	 * Gets the y-coordinate of the vector.
 	 * @returns {number} The y-coordinate.
 	 */
 	get y() {
 		return this.#y;
 	}
 	/**
-	 * Sets the y-coordinate of the point.
+	 * Sets the y-coordinate of the vector.
 	 * @param {number} value The new value for the y-coordinate.
 	 */
 	set y(value) {
@@ -474,7 +635,7 @@ class Point2D extends Point1D {
 	//#endregion
 	//#region Modifiers
 	/**
-	 * Returns an iterator that yields the coordinates of the point.
+	 * Returns an iterator that yields the coordinates of the vector.
 	 * @returns {Iterator<number>} An iterator object that yields the coordinates.
 	 */
 	*[Symbol.iterator]() {
@@ -483,204 +644,358 @@ class Point2D extends Point1D {
 		return;
 	}
 	/**
-	 * Creates a clone of this point.
-	 * @returns {Point2D} A new point with the same coordinates as this point.
-	 */
-	clone() {
-		return Point2D.clone(this);
-	}
-	/**
-	 * Maps a callback function to the point's coordinates.
+	 * Maps a callback function to the vector's coordinates.
 	 * @param {(metric: number) => number} callback The callback function.
-	 * @returns {Point2D} A new point with the mapped coordinates.
+	 * @returns {Vector2D} A new vector with the mapped coordinates.
 	 */
 	map(callback) {
-		return new Point2D(callback(this.x), callback(this.y));
+		return new Vector2D(callback(this.x), callback(this.y));
 	}
 	/**
-	 * Adds another point to this point.
-	 * @param {Readonly<Point2D>} other The point to add.
-	 * @returns {Point2D} The result of adding the other point to this point.
+	 * Adds a scalar to the current vector.
+	 * @overload
+	 * @param {number} scalar A scalar value to add.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Adds another vector to the current vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to add.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Adds another vector to the current vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to add.
+	 * @returns {this} The updated vector.
 	 */
-	[`+`](other) {
-		return new Point2D(this.x + other.x, this.y + other.y);
+	/**
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D>]} args 
+	 * @returns {this}
+	 */
+	["+="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector2D) {
+			this.x += arg1.x;
+			this.y += arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x += arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x += arg1;
+			this.y += arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Subtracts another point from this point.
-	 * @param {Readonly<Point2D>} other The point to subtract.
-	 * @returns {Point2D} The result of subtracting the other point from this point.
+	 * Subtracts a scalar from the current vector.
+	 * @overload
+	 * @param {number} scalar A scalar value to subtract.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Subtracts another vector from the current vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to subtract.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Subtracts another vector from the current vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to subtract.
+	 * @returns {this} The updated vector.
 	 */
-	[`-`](other) {
-		return new Point2D(this.x - other.x, this.y - other.y);
+	/**
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D>]} args 
+	 * @returns {this}
+	 */
+	["-="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector2D) {
+			this.x -= arg1.x;
+			this.y -= arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x -= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x -= arg1;
+			this.y -= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Multiplies this point by another point.
-	 * @param {Readonly<Point2D>} other The point to multiply by.
-	 * @returns {Point2D} The result of multiplying this point by the other point.
+	 * Multiplies the current vector by a scalar.
+	 * @overload
+	 * @param {number} scalar A scalar value to multiply by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Multiplies the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to multiply by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Multiplies the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to multiply by.
+	 * @returns {this} The updated vector.
 	 */
-	[`*`](other) {
-		return new Point2D(this.x * other.x, this.y * other.y);
+	/**
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D>]} args 
+	 * @returns {this}
+	 */
+	["*="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector2D) {
+			this.x *= arg1.x;
+			this.y *= arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x *= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x *= arg1;
+			this.y *= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Divides this point by another point.
-	 * @param {Readonly<Point2D>} other The point to divide by.
-	 * @returns {Point2D} The result of dividing this point by the other point.
+	 * Divides the current vector by a scalar.
+	 * @overload
+	 * @param {number} scalar A scalar value to divide by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Divides the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to divide by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Divides the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to divide by.
+	 * @returns {this} The updated vector.
 	 */
-	[`/`](other) {
-		return new Point2D(this.x / other.x, this.y / other.y);
-	}
 	/**
-	 * Calculates the distance from this point to another point.
-	 * @param {Readonly<Point2D>} other The other point.
-	 * @returns {number} The distance from this point to the other point.
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D>]} args 
+	 * @returns {this}
 	 */
-	getDistanceFrom(other) {
-		return Point2D.getDistanceBetween(this, other);
+	["/="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector2D) {
+			this.x /= arg1.x;
+			this.y /= arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x /= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x /= arg1;
+			this.y /= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	//#endregion
 }
 //#endregion
-//#region Point 3D
+//#region Vector 3D
 /**
- * Represents a point in three-dimensional space.
+ * Represents a vector in three-dimensional space.
  */
-class Point3D extends Point2D {
-	//#region Constructors
-	/** @type {RegExp} */
-	static #regexPointParser = /^\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)$/;
+class Vector3D extends Vector2D {
+	//#region Operations
 	/**
-	 * Parses a string representation of a point.
-	 * @param {string} string The string representation of the point.
-	 * @returns {Point3D} The parsed point.
-	 * @throws {SyntaxError} If the string is not a valid representation of a point.
-	 */
-	static parse(string) {
-		const match = Point3D.#regexPointParser.exec(string.trim());
-		if (match === null) throw new SyntaxError(`Invalid syntax '${string}' for 3D point`);
-		const [, x, y, z] = match.map(part => Number(part));
-		return new Point3D(x, y, z);
-	}
-	/**
-	 * Static method to clone a point.
-	 * @param {Readonly<Point3D>} source The point to clone.
-	 * @returns {Point3D} A new point with the same coordinates as the source point.
-	 */
-	static clone(source) {
-		return new Point3D(source.x, source.y, source.z);
-	}
-	/**
-	 * Static method to create a point with a repeated value.
-	 * @param {number} value The value to repeat.
-	 * @returns {Point3D} A new point with the specified value.
-	 */
-	static fill(value) {
-		return new Point3D(value, value, value);
-	}
-	/**
-	 * Returns the NaN point (NaN, NaN, NaN).
-	 * @readonly
-	 * @returns {Point3D} The NaN point.
-	 */
-	static get NAN() {
-		return Point3D.fill(NaN);
-	}
-	/** @type {Readonly<Point3D>} */
-	static #CONSTANT_NAN = Object.freeze(Point3D.NAN);
-	/**
-	 * Returns the constant NaN point (NaN, NaN, NaN).
-	 * @readonly
-	 * @returns {Readonly<Point3D>} The constant NaN point.
-	 */
-	static get CONSTANT_NAN() {
-		return this.#CONSTANT_NAN;
-	}
-	/**
-	 * Returns the zero point (0, 0, 0).
-	 * @readonly
-	 * @returns {Point3D} The zero point.
-	 */
-	static get ZERO() {
-		return Point3D.fill(0);
-	}
-	/** @type {Readonly<Point3D>} */
-	static #CONSTANT_ZERO = Object.freeze(Point3D.ZERO);
-	/**
-	 * Returns the constant zero point (0, 0, 0).
-	 * @readonly
-	 * @returns {Readonly<Point3D>} The constant zero point.
-	 */
-	static get CONSTANT_ZERO() {
-		return this.#CONSTANT_ZERO;
-	}
-	/**
-	 * Returns the single point (1, 1, 1).
-	 * @readonly
-	 * @returns {Point3D} The single point.
-	 */
-	static get SINGLE() {
-		return Point3D.fill(1);
-	}
-	/** @type {Readonly<Point3D>} */
-	static #CONSTANT_SINGLE = Object.freeze(Point3D.SINGLE);
-	/**
-	 * Returns the constant single point (1, 1, 1).
-	 * @readonly
-	 * @returns {Readonly<Point3D>} The constant single point.
-	 */
-	static get CONSTANT_SINGLE() {
-		return this.#CONSTANT_SINGLE;
-	}
-	/**
-	 * Returns the double point (2, 2, 2).
-	 * @readonly
-	 * @returns {Point3D} The double point.
-	 */
-	static get DOUBLE() {
-		return Point3D.fill(2);
-	}
-	/** @type {Readonly<Point3D>} */
-	static #CONSTANT_DOUBLE = Object.freeze(Point3D.DOUBLE);
-	/**
-	 * Returns the constant double point (2, 2, 2).
-	 * @readonly
-	 * @returns {Readonly<Point3D>} The constant double point.
-	 */
-	static get CONSTANT_DOUBLE() {
-		return this.#CONSTANT_DOUBLE;
-	}
-	/**
-	 * @param {number} x The x-coordinate of the point.
-	 * @param {number} y The y-coordinate of the point.
-	 * @param {number} z The z-coordinate of the point.
-	 */
-	constructor(x, y, z) {
-		super(x, y);
-		this.z = z;
-	}
-	//#endregion
-	//#region Methods
-	/**
-	 * Calculates the distance between two points.
-	 * @param {Readonly<Point3D>} first The first point.
-	 * @param {Readonly<Point3D>} second The second point.
-	 * @returns {number} The distance between the two points.
+	 * Calculates the distance between two vectors.
+	 * @param {Readonly<Vector3D>} first The first vector.
+	 * @param {Readonly<Vector3D>} second The second vector.
+	 * @returns {number} The distance between the two vectors.
 	 */
 	static getDistanceBetween(first, second) {
 		return hypot(first.x - second.x, first.y - second.y, first.z - second.z);
 	}
+	/**
+	 * Adds two vectors.
+	 * @param {Readonly<Vector3D>} first The first vector.
+	 * @param {Readonly<Vector3D>} second The second vector.
+	 * @returns {Vector3D} The result of the addition.
+	 */
+	static ["+"](first, second) {
+		return new Vector3D(first.x + second.x, first.y + second.y, first.z + second.z);
+	}
+	/**
+	 * Subtracts the second vector from the first.
+	 * @param {Readonly<Vector3D>} first The first vector.
+	 * @param {Readonly<Vector3D>} second The second vector.
+	 * @returns {Vector3D} The result of the subtraction.
+	 */
+	static ["-"](first, second) {
+		return new Vector3D(first.x - second.x, first.y - second.y, first.z - second.z);
+	}
+	/**
+	 * Multiplies two vectors.
+	 * @param {Readonly<Vector3D>} first The first vector.
+	 * @param {Readonly<Vector3D>} second The second vector.
+	 * @returns {Vector3D} The result of the multiplication.
+	 */
+	static ["*"](first, second) {
+		return new Vector3D(first.x * second.x, first.y * second.y, first.z * second.z);
+	}
+	/**
+	 * Divides the first vector by the second.
+	 * @param {Readonly<Vector3D>} first The first vector.
+	 * @param {Readonly<Vector3D>} second The second vector.
+	 * @returns {Vector3D} The result of the division.
+	 */
+	static ["/"](first, second) {
+		return new Vector3D(first.x / second.x, first.y / second.y, first.z / second.z);
+	}
+	//#endregion
+	//#region Presets
+	/**
+	 * Returns the new NaN vector - (NaN, NaN, NaN).
+	 * @readonly
+	 * @returns {Vector3D} The NaN vector.
+	 */
+	static get newNaN() {
+		return Vector3D.fill(NaN);
+	}
+	/**
+	 * Returns the new zero vector - (0, 0, 0).
+	 * @readonly
+	 * @returns {Vector3D} The zero vector.
+	 */
+	static get newZero() {
+		return Vector3D.fill(0);
+	}
+	/**
+	 * Returns the new single vector - (1, 1, 1).
+	 * @readonly
+	 * @returns {Vector3D} The single vector.
+	 */
+	static get newSingle() {
+		return Vector3D.fill(1);
+	}
+	/**
+	 * Returns the new double vector - (2, 2, 2).
+	 * @readonly
+	 * @returns {Vector3D} The double vector.
+	 */
+	static get newDouble() {
+		return Vector3D.fill(2);
+	}
+	//#endregion
+	//#region Constants
+	/** @type {Readonly<Vector3D>} */
+	static #CONSTANT_NAN = Object.freeze(Vector3D.newNaN);
+	/**
+	 * Returns the constant NaN vector - (NaN, NaN, NaN).
+	 * @readonly
+	 * @returns {Readonly<Vector3D>} The constant NaN vector.
+	 */
+	static get CONSTANT_NAN() {
+		return this.#CONSTANT_NAN;
+	}
+	/** @type {Readonly<Vector3D>} */
+	static #CONSTANT_ZERO = Object.freeze(Vector3D.newZero);
+	/**
+	 * Returns the constant zero vector - (0, 0, 0).
+	 * @readonly
+	 * @returns {Readonly<Vector3D>} The constant zero vector.
+	 */
+	static get CONSTANT_ZERO() {
+		return this.#CONSTANT_ZERO;
+	}
+	/** @type {Readonly<Vector3D>} */
+	static #CONSTANT_SINGLE = Object.freeze(Vector3D.newSingle);
+	/**
+	 * Returns the constant single vector - (1, 1, 1).
+	 * @readonly
+	 * @returns {Readonly<Vector3D>} The constant single vector.
+	 */
+	static get CONSTANT_SINGLE() {
+		return this.#CONSTANT_SINGLE;
+	}
+	/** @type {Readonly<Vector3D>} */
+	static #CONSTANT_DOUBLE = Object.freeze(Vector3D.newDouble);
+	/**
+	 * Returns the constant double vector - (2, 2, 2).
+	 * @readonly
+	 * @returns {Readonly<Vector3D>} The constant double vector.
+	 */
+	static get CONSTANT_DOUBLE() {
+		return this.#CONSTANT_DOUBLE;
+	}
+	//#endregion
+	//#region Builders
+	/** @type {RegExp} */
+	static #regexVectorParser = /^\(\s*(\S+)\s*,\s*(\S+)\s*,\s*(\S+)\s*\)$/;
+	/**
+	 * Parses a string representation of a vector.
+	 * @param {string} string The string representation of the vector.
+	 * @returns {Vector3D} The parsed vector.
+	 * @throws {SyntaxError} If the string is not a valid representation of a vector.
+	 */
+	static parse(string) {
+		const match = Vector3D.#regexVectorParser.exec(string.trim());
+		if (match === null) throw new SyntaxError(`Invalid syntax '${string}' for 3D vector`);
+		const [, x, y, z] = match.map(Number);
+		return new Vector3D(x, y, z);
+	}
+	/**
+	 * Static method to create a vector with a repeated value.
+	 * @param {number} value The value to repeat.
+	 * @returns {Vector3D} A new vector with the specified value.
+	 */
+	static fill(value) {
+		return new Vector3D(value, value, value);
+	}
+	/**
+	 * @overload
+	 * @param {number} x The x-coordinate of the vector.
+	 * @param {number} y The y-coordinate of the vector.
+	 * @param {number} z The z-coordinate of the vector.
+	 * 
+	 * @overload
+	 * @param {Readonly<Vector3D>} source A source vector to copy.
+	 */
+	/**
+	 * @param {[number, number, number] | [Readonly<Vector3D>]} args 
+	 */
+	constructor(...args) {
+		const [arg1, arg2, arg3] = args;
+		if (arg1 instanceof Vector3D) {
+			super(arg1.x, arg1.y);
+			this.#z = arg1.z;
+			return;
+		}
+		super(/** @type {number} */(arg1), /** @type {number} */(arg2));
+		if (typeof (arg3) === `number`) {
+			this.#z = arg3;
+			return;
+		}
+		throw new TypeError(`No overload with these arguments`);
+	}
 	//#endregion
 	//#region Properties
 	/** @type {number} */
-	#z = 0;
+	#z;
 	/**
-	 * Gets the z-coordinate of the point.
+	 * Gets the z-coordinate of the vector.
 	 * @returns {number} The z-coordinate.
 	 */
 	get z() {
 		return this.#z;
 	}
 	/**
-	 * Sets the z-coordinate of the point.
+	 * Sets the z-coordinate of the vector.
 	 * @param {number} value The new value for the z-coordinate.
 	 */
 	set z(value) {
@@ -689,7 +1004,7 @@ class Point3D extends Point2D {
 	//#endregion
 	//#region Modifiers
 	/**
-	 * Returns an iterator that yields the coordinates of the point.
+	 * Returns an iterator that yields the coordinates of the vector.
 	 * @returns {Iterator<number>} An iterator object that yields the coordinates.
 	 */
 	*[Symbol.iterator]() {
@@ -699,130 +1014,214 @@ class Point3D extends Point2D {
 		return;
 	}
 	/**
-	 * Creates a clone of this point.
-	 * @returns {Point3D} A new point with the same coordinates as this point.
-	 */
-	clone() {
-		return Point3D.clone(this);
-	}
-	/**
-	 * Maps a callback function to the point's coordinates.
+	 * Maps a callback function to the vector's coordinates.
 	 * @param {(metric: number) => number} callback The callback function.
-	 * @returns {Point3D} A new point with the mapped coordinates.
+	 * @returns {Vector3D} A new vector with the mapped coordinates.
 	 */
 	map(callback) {
-		return new Point3D(callback(this.x), callback(this.y), callback(this.z));
+		return new Vector3D(callback(this.x), callback(this.y), callback(this.z));
 	}
 	/**
-	 * Adds another point to this point.
-	 * @param {Readonly<Point3D>} other The point to add.
-	 * @returns {Point3D} The result of adding the other point to this point.
+	 * Adds a scalar to the current vector.
+	 * @overload
+	 * @param {number} scalar A scalar value to add.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Adds another vector to the current vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to add.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Adds another vector to the current vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to add.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Adds another vector to the current vector.
+	 * @overload
+	 * @param {Readonly<Vector3D>} other Another vector to add.
+	 * @returns {this} The updated vector.
 	 */
-	[`+`](other) {
-		return new Point3D(this.x + other.x, this.y + other.y, this.z + other.z);
+	/**
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D> | Readonly<Vector3D>]} args 
+	 * @returns {this}
+	 */
+	["+="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector3D) {
+			this.x += arg1.x;
+			this.y += arg1.y;
+			this.z += arg1.z;
+			return this;
+		}
+		if (arg1 instanceof Vector2D) {
+			this.x += arg1.x;
+			this.y += arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x += arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x += arg1;
+			this.y += arg1;
+			this.z += arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Subtracts another point from this point.
-	 * @param {Readonly<Point3D>} other The point to subtract.
-	 * @returns {Point3D} The result of subtracting the other point from this point.
+	 * Subtracts a scalar from the current vector.
+	 * @overload
+	 * @param {number} scalar A scalar value to subtract.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Subtracts another vector from the current vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to subtract.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Subtracts another vector from the current vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to subtract.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Subtracts another vector from the current vector.
+	 * @overload
+	 * @param {Readonly<Vector3D>} other Another vector to subtract.
+	 * @returns {this} The updated vector.
 	 */
-	[`-`](other) {
-		return new Point3D(this.x - other.x, this.y - other.y, this.z - other.z);
+	/**
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D> | Readonly<Vector3D>]} args 
+	 * @returns {this}
+	 */
+	["-="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector3D) {
+			this.x -= arg1.x;
+			this.y -= arg1.y;
+			this.z -= arg1.z;
+			return this;
+		}
+		if (arg1 instanceof Vector2D) {
+			this.x -= arg1.x;
+			this.y -= arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x -= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x -= arg1;
+			this.y -= arg1;
+			this.z -= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Multiplies this point by another point.
-	 * @param {Readonly<Point3D>} other The point to multiply by.
-	 * @returns {Point3D} The result of multiplying this point by the other point.
+	 * Multiplies the current vector by a scalar.
+	 * @overload
+	 * @param {number} scalar A scalar value to multiply by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Multiplies the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to multiply by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Multiplies the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to multiply by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Multiplies the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector3D>} other Another vector to multiply by.
+	 * @returns {this} The updated vector.
 	 */
-	[`*`](other) {
-		return new Point3D(this.x * other.x, this.y * other.y, this.z * other.z);
+	/**
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D> | Readonly<Vector3D>]} args 
+	 * @returns {this}
+	 */
+	["*="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector3D) {
+			this.x *= arg1.x;
+			this.y *= arg1.y;
+			this.z *= arg1.z;
+			return this;
+		}
+		if (arg1 instanceof Vector2D) {
+			this.x *= arg1.x;
+			this.y *= arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x *= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x *= arg1;
+			this.y *= arg1;
+			this.z *= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Divides this point by another point.
-	 * @param {Readonly<Point3D>} other The point to divide by.
-	 * @returns {Point3D} The result of dividing this point by the other point.
+	 * Divides the current vector by a scalar.
+	 * @overload
+	 * @param {number} scalar A scalar value to divide by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Divides the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector1D>} other Another vector to divide by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Divides the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector2D>} other Another vector to divide by.
+	 * @returns {this} The updated vector.
+	 * 
+	 * Divides the current vector by another vector.
+	 * @overload
+	 * @param {Readonly<Vector3D>} other Another vector to divide by.
+	 * @returns {this} The updated vector.
 	 */
-	[`/`](other) {
-		return new Point3D(this.x / other.x, this.y / other.y, this.z / other.z);
-	}
 	/**
-	 * Calculates the distance from this point to another point.
-	 * @param {Readonly<Point3D>} other The other point.
-	 * @returns {number} The distance from this point to the other point.
+	 * @param {[number | Readonly<Vector1D> | Readonly<Vector2D> | Readonly<Vector3D>]} args 
+	 * @returns {this}
 	 */
-	getDistanceFrom(other) {
-		return Point3D.getDistanceBetween(this, other);
+	["/="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Vector3D) {
+			this.x /= arg1.x;
+			this.y /= arg1.y;
+			this.z /= arg1.z;
+			return this;
+		}
+		if (arg1 instanceof Vector2D) {
+			this.x /= arg1.x;
+			this.y /= arg1.y;
+			return this;
+		}
+		if (arg1 instanceof Vector1D) {
+			this.x /= arg1.x;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.x /= arg1;
+			this.y /= arg1;
+			this.z /= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	//#endregion
-}
-//#endregion
-
-//#region Matrix
-/**
- * Represents a matrix with generic data type.
- * @template T
- */
-class Matrix {
-	/**
-	 * @param {Readonly<Point2D>} size The size of the matrix.
-	 * @param {(position: Point2D) => T} initializer The value initializer for all elements in the matrix.
-	 * @throws {TypeError} If the x or y coordinate of the size is not an integer.
-	 * @throws {RangeError} If the x or y coordinate of the size is negative.
-	 */
-	constructor(size, initializer) {
-		if (!Point.isInteger(size)) throw new TypeError(`The size ${size} must be a finite integer point`);
-		if (0 > size.x || 0 > size.y) throw new RangeError(`The size ${size} is out of range [(0, 0) - (+∞, +∞))`);
-		this.#size = size;
-		/** @type {T[][]} */
-		const data = (this.#data = new Array(size.y));
-		for (let y = 0; y < data.length; y++) {
-			/** @type {T[]} */
-			const row = (data[y] = new Array(size.x));
-			for (let x = 0; x < row.length; x++) {
-				row[x] = initializer(new Point2D(x, y));
-			}
-		}
-	}
-	/** @type {Readonly<Point2D>} */
-	#size;
-	/** 
-	 * Gets the size of the matrix.
-	 * @readonly 
-	 * @returns {Readonly<Point2D>} The size of the matrix.
-	 */
-	get size() {
-		return this.#size;
-	}
-	/** @type {T[][]} */
-	#data;
-	/**
-	 * Gets the value at the specified position in the matrix.
-	 * @param {Readonly<Point2D>} position The position to get the value from.
-	 * @returns {T} The value at the specified position.
-	 * @throws {TypeError} If the x or y coordinate of the position is not an integer.
-	 * @throws {RangeError} If the x or y coordinate of the position is out of range.
-	 */
-	get(position) {
-		if (!Point.isInteger(position)) throw new TypeError(`The position ${position} must be a finite integer point`);
-		const { x, y } = position;
-		const size = this.#size;
-		if (0 > x || x >= size.x || 0 > y || y >= size.y) throw new RangeError(`The position ${position} is out of range [(0, 0) - ${size})`);
-		return this.#data[y][x];
-	}
-	/**
-	 * Sets the value at the specified position in the matrix.
-	 * @param {Readonly<Point2D>} position The position to set the value at.
-	 * @param {T} value The value to set.
-	 * @throws {TypeError} If the x or y coordinate of the position is not an integer.
-	 * @throws {RangeError} If the x or y coordinate of the position is out of range.
-	 */
-	set(position, value) {
-		if (!Point.isInteger(position)) throw new TypeError(`The position ${position} must be a finite integer point`);
-		const { x, y } = position;
-		const size = this.#size;
-		if (0 > x || x >= size.x || 0 > y || y >= size.y) throw new RangeError(`The position ${position} is out of range [(0, 0) - ${size})`);
-		this.#data[y][x] = value;
-	}
 }
 //#endregion
 
@@ -876,7 +1275,83 @@ class Timespan {
 		return (negativity ? -1 : 1) * ((((hours) * 60 + minutes) * 60 + seconds) * 1000 + milliseconds);
 	}
 	//#endregion
-	//#region Constructors
+	//#region Operations
+	/**
+	 * Adds two timespans and returns the result as a new Timespan.
+	 * @param {Readonly<Timespan>} first The first timespan to add.
+	 * @param {Readonly<Timespan>} second The second timespan to add.
+	 * @returns {Timespan} A new Timespan representing the sum of the two timespans.
+	 */
+	static ["+"](first, second) {
+		return new Timespan(first)["+="](second);
+	}
+	/**
+	 * Subtracts the second timespan from the first and returns the result as a new Timespan.
+	 * @param {Readonly<Timespan>} first The timespan from which the second will be subtracted.
+	 * @param {Readonly<Timespan>} second The timespan to subtract.
+	 * @returns {Timespan} A new Timespan representing the difference between the two timespans.
+	 */
+	static ["-"](first, second) {
+		return new Timespan(first)["-="](second);
+	}
+	/**
+	 * Multiplies two timespans and returns the result as a new Timespan.
+	 * @param {Readonly<Timespan>} first The first timespan to multiply.
+	 * @param {Readonly<Timespan>} second The second timespan to multiply.
+	 * @returns {Timespan} A new Timespan representing the product of the two timespans.
+	 */
+	static ["*"](first, second) {
+		return new Timespan(first)["*="](second);
+	}
+	/**
+	 * Divides the first timespan by the second and returns the result as a new Timespan.
+	 * @param {Readonly<Timespan>} first The timespan to be divided.
+	 * @param {Readonly<Timespan>} second The timespan to divide by.
+	 * @returns {Timespan} A new Timespan representing the result of the division.
+	 */
+	static ["/"](first, second) {
+		return new Timespan(first)["/="](second);
+	}
+	//#endregion
+	//#region Presets
+	/**
+	 * Represents a new zero timespan.
+	 * @readonly
+	 * @returns {Timespan}
+	 */
+	static get newZero() { return Timespan.viaTime(false, 0, 0, 0, 0); };
+	/**
+	 * Represents a new timespan of one millisecond.
+	 * @readonly
+	 * @returns {Timespan}
+	 */
+	static get newMillisecond() { return Timespan.viaTime(false, 0, 0, 0, 1); };
+	/**
+	 * Represents a new timespan of one second.
+	 * @readonly
+	 * @returns {Timespan}
+	 */
+	static get newSecond() { return Timespan.viaTime(false, 0, 0, 1, 0); };
+	/**
+	 * Represents a new timespan of one minute.
+	 * @readonly
+	 * @returns {Timespan}
+	 */
+	static get newMinute() { return Timespan.viaTime(false, 0, 1, 0, 0); };
+	/**
+	 * Represents a new timespan of one hour.
+	 * @readonly
+	 * @returns {Timespan}
+	 */
+	static get newHour() { return Timespan.viaTime(false, 1, 0, 0, 0); };
+	/**
+	 * Represents a new timespan of one day.
+	 * @readonly
+	 * @returns {Timespan}
+	 */
+	static get newDay() { return Timespan.viaTime(false, 24, 0, 0, 0); };
+	//#endregion
+	//#region Builders
 	/** @type {RegExp} */
 	static #patternTimespan = /^(-)?(?:(?:(\d+):)?(\d+):)?(\d+)(?:\.(\d+))?$/;
 	/**
@@ -927,72 +1402,39 @@ class Timespan {
 		return result;
 	}
 	/**
-	 * Clones a Timespan object.
+	 * @overload
+	 * 
+	 * @overload
 	 * @param {Readonly<Timespan>} source The source Timespan object.
-	 * @returns {Timespan} The cloned Timespan object.
 	 */
-	static clone(source) {
-		const result = new Timespan();
-		result.#duration = source.duration;
-		result.#negativity = source.negativity;
-		result.#hours = source.hours;
-		result.#minutes = source.minutes;
-		result.#seconds = source.seconds;
-		result.#milliseconds = source.milliseconds;
-		return result;
-	}
-	//#endregion
-	//#region Presets
 	/**
-	 * Represents a zero timespan.
-	 * @readonly
-	 * @returns {Timespan}
+	 * @param {Readonly<Timespan> | void} arg1 
 	 */
-	static get ZERO() { return Timespan.viaTime(false, 0, 0, 0, 0); };
-	/**
-	 * Represents a timespan of one millisecond.
-	 * @readonly
-	 * @returns {Timespan}
-	 */
-	static get MILLISECOND() { return Timespan.viaTime(false, 0, 0, 0, 1); };
-	/**
-	 * Represents a timespan of one second.
-	 * @readonly
-	 * @returns {Timespan}
-	 */
-	static get SECOND() { return Timespan.viaTime(false, 0, 0, 1, 0); };
-	/**
-	 * Represents a timespan of one minute.
-	 * @readonly
-	 * @returns {Timespan}
-	 */
-	static get MINUTE() { return Timespan.viaTime(false, 0, 1, 0, 0); };
-	/**
-	 * Represents a timespan of one hour.
-	 * @readonly
-	 * @returns {Timespan}
-	 */
-	static get HOUR() { return Timespan.viaTime(false, 1, 0, 0, 0); };
-	/**
-	 * Represents a timespan of one day.
-	 * @readonly
-	 * @returns {Timespan}
-	 */
-	static get DAY() { return Timespan.viaTime(false, 24, 0, 0, 0); };
-	//#endregion
-	//#region Methods
-	/**
-	 * Inverts the sign of a timespan.
-	 * @param {Readonly<Timespan>} timespan The timespan to invert.
-	 * @returns {Timespan} A new timespan representing the negation of the current timespan.
-	 */
-	static invert(timespan) {
-		return timespan.clone().invert();
+	constructor(arg1) {
+		if (arg1 instanceof Timespan) {
+			this.#duration = arg1.duration;
+			this.#negativity = arg1.negativity;
+			this.#hours = arg1.hours;
+			this.#minutes = arg1.minutes;
+			this.#seconds = arg1.seconds;
+			this.#milliseconds = arg1.milliseconds;
+			return;
+		}
+		if (typeof (arg1) === `undefined`) {
+			this.#duration = 0;
+			this.#negativity = false;
+			this.#hours = 0;
+			this.#minutes = 0;
+			this.#seconds = 0;
+			this.#milliseconds = 0;
+			return;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	//#endregion
 	//#region Properties
 	/** @type {number} */
-	#duration = 0;
+	#duration;
 	/**
 	 * Gets the duration of the timespan in milliseconds.
 	 * @type {number}
@@ -1010,7 +1452,7 @@ class Timespan {
 		[this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds] = Timespan.#toTime(this.#duration);
 	}
 	/** @type {boolean} */
-	#negativity = false;
+	#negativity;
 	/**
 	 * Gets whether the timespan is negative.
 	 * @type {boolean}
@@ -1027,7 +1469,7 @@ class Timespan {
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
 	/** @type {number} */
-	#hours = 0;
+	#hours;
 	/**
 	 * Gets the hours component of the timespan.
 	 * @type {number}
@@ -1045,7 +1487,7 @@ class Timespan {
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
 	/** @type {number} */
-	#minutes = 0;
+	#minutes;
 	/**
 	 * Gets the minutes component of the timespan.
 	 * @type {number}
@@ -1063,7 +1505,7 @@ class Timespan {
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
 	/** @type {number} */
-	#seconds = 0;
+	#seconds;
 	/**
 	 * Gets the seconds component of the timespan.
 	 * @type {number}
@@ -1081,7 +1523,7 @@ class Timespan {
 		this.#duration = Timespan.#toDuration(this.#negativity, this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
 	}
 	/** @type {number} */
-	#milliseconds = 0;
+	#milliseconds;
 	/**
 	 * Gets the milliseconds component of the timespan.
 	 * @type {number}
@@ -1123,8 +1565,16 @@ class Timespan {
 		return result;
 	}
 	/**
-	 * @param {any} hint 
-	 * @returns {any}
+	 * Converts the timespan to a primitive type based on the provided hint.
+	 * @template {keyof PrimitivesHintMap} K
+	 * @overload
+	 * @param {K} hint The hint for the primitive type.
+	 * @returns {PrimitivesHintMap[K]} The corresponding primitive value.
+	 */
+	/**
+	 * @template {keyof PrimitivesHintMap} K
+	 * @param {K} hint 
+	 * @returns {PrimitivesHintMap[keyof PrimitivesHintMap]}
 	 */
 	[Symbol.toPrimitive](hint) {
 		switch (hint) {
@@ -1135,51 +1585,112 @@ class Timespan {
 		}
 	}
 	/**
-	 * Creates a shallow copy of the timespan.
-	 * @returns {Timespan} A new timespan instance that is a clone of the current one.
-	 */
-	clone() {
-		return Timespan.clone(this);
-	}
-	/**
-	 * Adds another timespan to the current timespan.
+	 * Adds a number of milliseconds to this timespan.
+	 * @overload
+	 * @param {number} duration The duration to add in milliseconds.
+	 * @returns {this} The updated timespan.
+	 * 
+	 * Adds another timespan to this timespan.
+	 * @overload
 	 * @param {Readonly<Timespan>} other The timespan to add.
-	 * @returns {Timespan} A new timespan representing the sum of the current timespan and the other timespan.
+	 * @returns {this} The updated timespan.
 	 */
-	[`+`](other) {
-		return Timespan.viaDuration(this.duration + other.duration);
+	/**
+	 * @param {[number | Readonly<Timespan>]} args 
+	 * @returns {this}
+	 */
+	["+="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Timespan) {
+			this.duration += arg1.duration;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.duration += arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Subtracts another timespan from the current timespan.
+	 * Subtracts a number of milliseconds from this timespan.
+	 * @overload
+	 * @param {number} duration The duration to subtract in milliseconds.
+	 * @returns {this} The updated timespan.
+	 * 
+	 * Subtracts another timespan from this timespan.
+	 * @overload
 	 * @param {Readonly<Timespan>} other The timespan to subtract.
-	 * @returns {Timespan} A new timespan representing the difference between the current timespan and the other timespan.
+	 * @returns {this} The updated timespan.
 	 */
-	[`-`](other) {
-		return Timespan.viaDuration(this.duration - other.duration);
+	/**
+	 * @param {[number | Readonly<Timespan>]} args 
+	 * @returns {this}
+	 */
+	["-="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Timespan) {
+			this.duration -= arg1.duration;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.duration -= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Multiplies the duration of the timespan by a factor.
-	 * @param {number} factor The factor by which to multiply the duration.
-	 * @returns {Timespan} A new timespan representing the duration multiplied by the factor.
+	 * Multiplies this timespan by a number of milliseconds.
+	 * @overload
+	 * @param {number} duration The duration to multiply by.
+	 * @returns {this} The updated timespan.
+	 * 
+	 * Multiplies this timespan by another timespan.
+	 * @overload
+	 * @param {Readonly<Timespan>} other The timespan to multiply by.
+	 * @returns {this} The updated timespan.
 	 */
-	[`*`](factor) {
-		return Timespan.viaDuration(this.duration * factor);
+	/**
+	 * @param {[number | Readonly<Timespan>]} args 
+	 * @returns {this}
+	 */
+	["*="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Timespan) {
+			this.duration *= arg1.duration;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.duration *= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	/**
-	 * Divides the duration of the timespan by a factor.
-	 * @param {number} factor The factor by which to divide the duration.
-	 * @returns {Timespan} A new timespan representing the duration divided by the factor.
+	 * Divides this timespan by a number of milliseconds.
+	 * @overload
+	 * @param {number} duration The duration to divide by.
+	 * @returns {this} The updated timespan.
+	 * 
+	 * Divides this timespan by another timespan.
+	 * @overload
+	 * @param {Readonly<Timespan>} other The timespan to divide by.
+	 * @returns {this} The updated timespan.
 	 */
-	[`/`](factor) {
-		return Timespan.viaDuration(this.duration / factor);
-	}
 	/**
-	 * Inverts the current timespan, changing its sign.
-	 * @returns {Timespan} The current timespan.
+	 * @param {[number | Readonly<Timespan>]} args 
+	 * @returns {this}
 	 */
-	invert() {
-		this.duration *= -1;
-		return this;
+	["/="](...args) {
+		const [arg1] = args;
+		if (arg1 instanceof Timespan) {
+			this.duration /= arg1.duration;
+			return this;
+		}
+		if (typeof (arg1) === `number`) {
+			this.duration /= arg1;
+			return this;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	//#endregion
 }
@@ -1193,32 +1704,28 @@ class Stopwatch {
 	 * @param {boolean} launch Whether to start the stopwatch immediately.
 	 */
 	constructor(launch = false) {
-		let previous = 0;
-		/**
-		 * @param {number} current 
-		 * @returns {void}
-		 */
-		const callback = (current) => {
-			const difference = current - previous;
+		this.#launched = launch;
+
+		const engine = new FastEngine(true);
+
+		let previous = performance.now();
+		engine.addEventListener(`update`, (event) => {
+			let current = performance.now();
 			if (this.#launched) {
-				this.#elapsed += difference;
+				this.#elapsed += current - previous;
 			}
 			previous = current;
-			requestAnimationFrame(callback);
-		};
-		requestAnimationFrame(callback);
-
-		this.#launched = launch;
+		});
 	}
-	/** @type {number} */
+	/** @type {DOMHighResTimeStamp} */
 	#elapsed = 0;
 	/**
-	 * Gets the elapsed time as a Timespan instance.
+	 * Gets the elapsed time as milliseconds.
 	 * @readonly
-	 * @returns {Timespan}
+	 * @returns {DOMHighResTimeStamp}
 	 */
 	get elapsed() {
-		return Timespan.viaDuration(this.#elapsed);
+		return this.#elapsed;
 	}
 	/**
 	 * Resets the elapsed time to zero.
@@ -1247,4 +1754,73 @@ class Stopwatch {
 }
 //#endregion
 
-export { Point, Point1D, Point2D, Point3D, Matrix, Timespan, Stopwatch };
+//#region Matrix
+/**
+ * Represents a matrix with generic data type.
+ * @template T
+ */
+class Matrix {
+	/**
+	 * @param {Readonly<Vector2D>} size The size of the matrix.
+	 * @param {(position: Vector2D) => T} initializer The value initializer for all elements in the matrix.
+	 * @throws {TypeError} If the x or y coordinate of the size is not an integer.
+	 * @throws {RangeError} If the x or y coordinate of the size is negative.
+	 */
+	constructor(size, initializer) {
+		if (!Vector.isInteger(size)) throw new TypeError(`The size ${size} must be a finite integer vector`);
+		if (0 > size.x || 0 > size.y) throw new RangeError(`The size ${size} is out of range [(0, 0) - (+∞, +∞))`);
+		this.#size = size;
+		/** @type {T[][]} */
+		const data = (this.#data = new Array(size.y));
+		for (let y = 0; y < data.length; y++) {
+			/** @type {T[]} */
+			const row = (data[y] = new Array(size.x));
+			for (let x = 0; x < row.length; x++) {
+				row[x] = initializer(new Vector2D(x, y));
+			}
+		}
+	}
+	/** @type {Readonly<Vector2D>} */
+	#size;
+	/** 
+	 * Gets the size of the matrix.
+	 * @readonly 
+	 * @returns {Readonly<Vector2D>} The size of the matrix.
+	 */
+	get size() {
+		return this.#size;
+	}
+	/** @type {T[][]} */
+	#data;
+	/**
+	 * Gets the value at the specified position in the matrix.
+	 * @param {Readonly<Vector2D>} position The position to get the value from.
+	 * @returns {T} The value at the specified position.
+	 * @throws {TypeError} If the x or y coordinate of the position is not an integer.
+	 * @throws {RangeError} If the x or y coordinate of the position is out of range.
+	 */
+	get(position) {
+		if (!Vector.isInteger(position)) throw new TypeError(`The position ${position} must be a finite integer vector`);
+		const { x, y } = position;
+		const size = this.#size;
+		if (0 > x || x >= size.x || 0 > y || y >= size.y) throw new RangeError(`The position ${position} is out of range [(0, 0) - ${size})`);
+		return this.#data[y][x];
+	}
+	/**
+	 * Sets the value at the specified position in the matrix.
+	 * @param {Readonly<Vector2D>} position The position to set the value at.
+	 * @param {T} value The value to set.
+	 * @throws {TypeError} If the x or y coordinate of the position is not an integer.
+	 * @throws {RangeError} If the x or y coordinate of the position is out of range.
+	 */
+	set(position, value) {
+		if (!Vector.isInteger(position)) throw new TypeError(`The position ${position} must be a finite integer vector`);
+		const { x, y } = position;
+		const size = this.#size;
+		if (0 > x || x >= size.x || 0 > y || y >= size.y) throw new RangeError(`The position ${position} is out of range [(0, 0) - ${size})`);
+		this.#data[y][x] = value;
+	}
+}
+//#endregion
+
+export { Vector, Vector1D, Vector2D, Vector3D, Timespan, Stopwatch, Matrix };

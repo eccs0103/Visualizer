@@ -3,16 +3,11 @@ body {
 	inset: 0;
 }
 
-dialog.loader img[alt="Logo"] {
-	content: url(../resources/loading.gif);
-}
-
 canvas#display {
 	position: absolute;
 	inset: 0;
 	width: 100%;
 	height: 100%;
-	z-index: 1;
 }
 
 div#interface {
@@ -22,178 +17,103 @@ div#interface {
 	height: 100%;
 	display: grid;
 	grid-template:
-		'playlist-area	-1-			settings-area	' 1fr
-		'-2-			status-area	-3-				' auto
-		'time-area		-4-			fullscreen-area	' 1fr
-		/ 1fr auto 1fr
+		'audio-control-area			audio-auxiliary-area	' auto
+		'playback-control-area		playback-auxiliary-area	' 1fr
+		'playback-time-track-area	playback-time-track-area' auto
+		/ 1fr auto
 	;
-	place-items: baseline;
-	z-index: 2;
+	overflow: hidden;
 }
 
-div#interface img.icon {
-	filter: invert(1);
+div#interface > *#audio-control {
+	grid-area: audio-control-area;
 }
 
-@keyframes hide-interface {
-	0% {
-		opacity: 1;
-	}
-
-	100% {
-		opacity: 0;
+audio#player[data-ready] ~ div#interface button#audio-drive {
+	& img[alt="Audio drive"].icon {
+		content: url(../resources/icons/eject.svg);
 	}
 }
 
-@keyframes show-interface {
-	0% {
-		opacity: 0;
-	}
-
-	100% {
-		opacity: 1;
-	}
+div#interface > *#playback-control {
+	grid-area: playback-control-area;
+	align-items: end;
 }
 
-audio#player ~ div#interface {
-	animation: show-interface 50ms ease-in both;
+audio#player[data-ready][data-playing] ~ div#interface > *#playback-control img[alt="Status"].icon {
+	content: url(../resources/icons/pause.svg);
 }
 
-audio#player[data-playing] ~ div#interface {
-	animation: hide-interface 200ms ease-out both;
-
-	& > * {
-		pointer-events: none;
-	}
+div#interface > *#playback-auxiliary {
+	grid-area: playback-auxiliary-area;
+	align-items: end;
 }
 
-label[for="toggle-playlist"] {
-	grid-area: playlist-area;
-	place-self: start start;
-	z-index: 4;
+div#interface > input#playback-time-track {
+	grid-area: playback-time-track-area;
 }
 
-input#toggle-playlist:checked + label[for="toggle-playlist"] {
-	background-color: revert;
-
-	& > img.icon {
-		content: url(../resources/icons/eject.png);
-	}
-}
-
-a[href="../pages/settings"] {
-	grid-area: settings-area;
-	place-self: start end;
-	z-index: 4;
-}
-
-img[alt="Status"].icon {
-	grid-area: status-area;
-	place-self: center center;
-	height: calc(var(--size-standart) * 3);
-	content: url(../resources/icons/pause.png);
-	pointer-events: none;
-	z-index: 4;
-}
-
-audio#player:not([data-ready]) ~ div#interface img[alt="Status"].icon {
-	pointer-events: none;
-	opacity: 0.5;
-	transition: var(--time-duration);
-}
-
-audio#player:not([data-playing]) ~ div#interface img[alt="Status"].icon {
-	content: url(../resources/icons/play.png);
-}
-
-span#time {
-	grid-area: time-area;
-	place-self: end start;
-	pointer-events: none;
-	z-index: 4;
-}
-
-button#toggle-fullscreen {
-	grid-area: fullscreen-area;
-	place-self: end end;
-	z-index: 4;
-}
-
-:root:fullscreen button#toggle-fullscreen img.icon {
-	content: url(../resources/icons/exit-fullscreen.png);
-}
-
-input#time-track {
-	position: absolute;
-	inset: auto 0 0 0;
+input#playback-time-track {
+	grid-area: playback-time-track-area;
+	width: 100%;
 	height: var(--size-standart);
-	z-index: 3;
+	position: relative;
+	--track-value: 0%;
 
 	&::-webkit-slider-thumb {
 		visibility: hidden;
 	}
 
+	&::before {
+		content: "";
+		background-image: linear-gradient(0deg, hsl(from var(--color-highlight) h 0% l / 25%) 0%, transparent 50%);
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 100%;
+	}
+
 	&::after {
 		content: "";
-		background-image: linear-gradient(0deg, var(--color-highlight) 25%, transparent 50%);
+		background-image: linear-gradient(0deg, var(--color-highlight) 0%, transparent 50%);
 		position: absolute;
 		inset: 0 auto 0 0;
 		width: var(--track-value);
 	}
 }
 
-audio#player:not([data-ready]) ~ div#interface input#time-track {
-	pointer-events: none;
-}
-
-@keyframes show-configurator {
-	0% {
-		width: 0;
-		display: none;
-	}
-
-	100% {
-		width: fit-content;
-	}
-}
-
-@keyframes hide-configurator {
-	0% {
-		width: fit-content;
-	}
-
-	100% {
-		width: 0;
-		display: none;
-	}
-}
-
-div#configurator {
+dialog#configurator {
 	position: absolute;
-	inset: 0 auto 0 0;
-	min-width: 60vmin;
-	max-width: 100vmin;
-	width: fit-content;
-	z-index: 5;
+	min-width: 30vmax;
+	max-width: 100%;
+	max-height: 100%;
+	overflow: auto;
 }
 
-*.range {
-	display: grid;
-	grid-template:
-		'slider-area' 1fr
-		/ 1fr
-	;
-	align-items: center;
-
-	& > input[type="range"] {
-		grid-area: slider-area;
-
-		&:first-of-type::-webkit-slider-thumb {
-			clip-path: inset(0 52% 0 0);
-		}
-
-		&:last-of-type::-webkit-slider-thumb {
-			clip-path: inset(0 0 0 52%);
-		}
+@media screen and (orientation: portrait) {
+	dialog#configurator {
+		inset: auto 0 0 0;
+		width: 100%;
+		height: 60vmax;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
 	}
+}
+
+@media screen and (orientation: landscape) {
+	dialog#configurator {
+		inset: 0 0 0 auto;
+		width: 30vmax;
+		height: 100%;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+}
+
+div:has(button#close-configurator) {
+	position: sticky;
+	top: 0;
+}
+
+dialog.loader img[alt="Logo"] {
+	content: url(../resources/loading.gif);
 }

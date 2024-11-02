@@ -1,113 +1,53 @@
 "use strict";
 
-new class {
-	/** @type {HTMLElement} */
-	#body;
-	/** @type {HTMLDialogElement} */
-	#dialogAlert;
-	/** @type {HTMLDivElement} */
-	#divAlertHeader;
-	/** @type {HTMLHeadingElement} */
-	#h3AlertTitle;
-	/** @type {HTMLDivElement} */
-	#divAlertCoontainer;
-	/** @type {HTMLDialogElement} */
-	#dialogConfirm;
-	/** @type {HTMLDivElement} */
-	#divConfirmHeader;
-	/** @type {HTMLHeadingElement} */
-	#h3ConfirmTitle;
-	/** @type {HTMLDivElement} */
-	#divConfirmCoontainer;
-	/** @type {HTMLDivElement} */
-	#divConfirmFooter;
-	/** @type {HTMLButtonElement} */
-	#buttonConfirmAccept;
-	/** @type {HTMLButtonElement} */
-	#buttonConfirmDecline;
-	/** @type {HTMLDialogElement} */
-	#dialogPrompt;
-	/** @type {HTMLDivElement} */
-	#divPromptHeader;
-	/** @type {HTMLHeadingElement} */
-	#h3PromptTitle;
-	/** @type {HTMLDivElement} */
-	#divPromptCoontainer;
-	/** @type {HTMLDivElement} */
-	#divPromptFooter;
-	/** @type {HTMLButtonElement} */
-	#buttonPromptAccept;
-	/** @type {HTMLInputElement} */
-	#inputPrompt;
-	constructor() {
-		this.#body = document.body;
+const body = document.body;
 
-		//#region Dialog alert
-		this.#dialogAlert = this.#body.appendChild(document.createElement(`dialog`));
-		this.#dialogAlert.classList.add(`pop-up`, `alert`, `layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`);
+//#region Dialog alert
+const dialogAlert = body.appendChild(document.createElement(`dialog`));
+dialogAlert.classList.add(`pop-up`, `alert`, `layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`);
 
-		this.#divAlertHeader = this.#dialogAlert.appendChild(document.createElement(`div`));
-		this.#divAlertHeader.classList.add(`header`, `flex`, `centered`);
+const divAlertCoontainer = dialogAlert.appendChild(document.createElement(`div`));
+divAlertCoontainer.classList.add(`container`);
+divAlertCoontainer.innerText = `Something went wrong. This text wasn't supposed to appear before you. There might be an internal core error.`;
+//#endregion
+//#region Dialog confirm
+const dialogConfirm = body.appendChild(document.createElement(`dialog`));
+dialogConfirm.classList.add(`pop-up`, `confirm`, `layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`);
 
-		this.#h3AlertTitle = this.#divAlertHeader.appendChild(document.createElement(`h3`));
-		this.#h3AlertTitle.innerText = `Title`;
+const divConfirmContainer = dialogConfirm.appendChild(document.createElement(`div`));
+divConfirmContainer.classList.add(`container`);
+divConfirmContainer.innerText = `Something went wrong. This text wasn't supposed to appear before you. There might be an internal core error.`;
 
-		this.#divAlertCoontainer = this.#dialogAlert.appendChild(document.createElement(`div`));
-		this.#divAlertCoontainer.classList.add(`container`);
-		this.#divAlertCoontainer.innerText = `Something went wrong. This text wasn't supposed to appear before you. There might be an internal core error.`;
-		//#endregion
-		//#region Dialog confirm
-		this.#dialogConfirm = this.#body.appendChild(document.createElement(`dialog`));
-		this.#dialogConfirm.classList.add(`pop-up`, `confirm`, `layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`);
+const divConfirmFooter = dialogConfirm.appendChild(document.createElement(`div`));
+divConfirmFooter.classList.add(`footer`, `flex`, `centered`, `with-gap`);
 
-		this.#divConfirmHeader = this.#dialogConfirm.appendChild(document.createElement(`div`));
-		this.#divConfirmHeader.classList.add(`header`, `flex`, `centered`);
+const buttonConfirmAccept = divConfirmFooter.appendChild(document.createElement(`button`));
+buttonConfirmAccept.classList.add(`layer`, `rounded`, `flex`, `with-padding`, `highlight`);
+buttonConfirmAccept.innerText = `Accept`;
 
-		this.#h3ConfirmTitle = this.#divConfirmHeader.appendChild(document.createElement(`h3`));
-		this.#h3ConfirmTitle.innerText = `Title`;
+const buttonConfirmDecline = divConfirmFooter.appendChild(document.createElement(`button`));
+buttonConfirmDecline.classList.add(`layer`, `rounded`, `flex`, `with-padding`, `invalid`);
+buttonConfirmDecline.innerText = `Decline`;
+//#endregion
+//#region Dialog prompt
+const dialogPrompt = body.appendChild(document.createElement(`dialog`));
+dialogPrompt.classList.add(`pop-up`, `prompt`, `layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`);
 
-		this.#divConfirmCoontainer = this.#dialogConfirm.appendChild(document.createElement(`div`));
-		this.#divConfirmCoontainer.classList.add(`container`);
-		this.#divConfirmCoontainer.innerText = `Something went wrong. This text wasn't supposed to appear before you. There might be an internal core error.`;
+const divPromptContainer = dialogPrompt.appendChild(document.createElement(`div`));
+divPromptContainer.classList.add(`container`);
+divPromptContainer.innerText = `Something went wrong. This text wasn't supposed to appear before you. There might be an internal core error.`;
 
-		this.#divConfirmFooter = this.#dialogConfirm.appendChild(document.createElement(`div`));
-		this.#divConfirmFooter.classList.add(`footer`, `flex`, `centered`, `with-gap`);
+const divPromptFooter = dialogPrompt.appendChild(document.createElement(`div`));
+divPromptFooter.classList.add(`footer`, `flex`, `centered`, `with-gap`);
 
-		this.#buttonConfirmAccept = this.#divConfirmFooter.appendChild(document.createElement(`button`));
-		this.#buttonConfirmAccept.classList.add(`layer`, `rounded`, `flex`, `with-padding`, `highlight`);
-		this.#buttonConfirmAccept.innerText = `Accept`;
+const buttonPromptAccept = divPromptFooter.appendChild(document.createElement(`button`));
+buttonPromptAccept.classList.add(`layer`, `rounded`, `flex`, `with-padding`, `highlight`);
+buttonPromptAccept.innerText = `Accept`;
 
-		this.#buttonConfirmDecline = this.#divConfirmFooter.appendChild(document.createElement(`button`));
-		this.#buttonConfirmDecline.classList.add(`layer`, `rounded`, `flex`, `with-padding`, `invalid`);
-		this.#buttonConfirmDecline.innerText = `Decline`;
-		//#endregion
-		//#region Dialog prompt
-		this.#dialogPrompt = this.#body.appendChild(document.createElement(`dialog`));
-		this.#dialogPrompt.classList.add(`pop-up`, `prompt`, `layer`, `rounded`, `with-padding`, `with-gap`, `flex`, `column`);
+const inputPrompt = divPromptFooter.appendChild(document.createElement(`input`));
+inputPrompt.classList.add(`depth`, `rounded`, `flex`, `with-padding`);
+inputPrompt.type = `text`;
+inputPrompt.placeholder = `Enter text...`;
+//#endregion
 
-		this.#divPromptHeader = this.#dialogPrompt.appendChild(document.createElement(`div`));
-		this.#divPromptHeader.classList.add(`header`, `flex`, `centered`);
-
-		this.#h3PromptTitle = this.#divPromptHeader.appendChild(document.createElement(`h3`));
-		this.#h3PromptTitle.innerText = `Title`;
-
-		this.#divPromptCoontainer = this.#dialogPrompt.appendChild(document.createElement(`div`));
-		this.#divPromptCoontainer.classList.add(`container`);
-		this.#divPromptCoontainer.innerText = `Something went wrong. This text wasn't supposed to appear before you. There might be an internal core error.`;
-
-		this.#divPromptFooter = this.#dialogPrompt.appendChild(document.createElement(`div`));
-		this.#divPromptFooter.classList.add(`footer`, `flex`, `centered`, `with-gap`);
-
-		this.#buttonPromptAccept = this.#divPromptFooter.appendChild(document.createElement(`button`));
-		this.#buttonPromptAccept.classList.add(`layer`, `rounded`, `flex`, `with-padding`, `highlight`);
-		this.#buttonPromptAccept.innerText = `Accept`;
-
-		this.#inputPrompt = this.#divPromptFooter.appendChild(document.createElement(`input`));
-		this.#inputPrompt.classList.add(`depth`, `rounded`, `flex`, `with-padding`);
-		this.#inputPrompt.type = `text`;
-		this.#inputPrompt.placeholder = `Enter text...`;
-		//#endregion
-
-		Array.from(document.getElementsByTagName(`script`)).at(-1)?.remove();
-	}
-}();
+export { dialogAlert, divAlertCoontainer, dialogConfirm, divConfirmContainer, buttonConfirmAccept, buttonConfirmDecline, dialogPrompt, divPromptContainer, buttonPromptAccept, inputPrompt };

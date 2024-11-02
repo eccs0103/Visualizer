@@ -106,8 +106,16 @@ body {
 *.flex {
 	display: flex;
 
+	&.reversed {
+		flex-direction: row-reverse;
+	}
+
 	&.column {
 		flex-direction: column;
+
+		&.reversed {
+			flex-direction: column-reverse;
+		}
 	}
 
 	&:where(.primary-centered, .centered) {
@@ -246,8 +254,9 @@ dialog {
 	}
 
 	&.pop-up div.container {
-		overflow: hidden auto;
+		overflow: auto;
 		word-wrap: break-word;
+		white-space: pre;
 	}
 }
 

@@ -1,7 +1,7 @@
 "use strict";
 
 import { } from "./extensions.js";
-import { Matrix, Point2D } from "./measures.js";
+import { Matrix, Vector2D } from "./measures.js";
 
 const { min, max, trunc, abs } = Math;
 
@@ -98,17 +98,125 @@ class Color {
 		const lightness = (maximum + minimum) / 2;
 		return [trunc(hue * 60), trunc(saturation * 100), trunc(lightness * 100)];
 	}
-	/** @type {RegExp} */
-	static #patternHEXDigitCorrector = /^(?!.{2})/;
 	/**
 	 * @param {number} number 
 	 * @returns {string}
 	 */
 	static #toHEXString(number) {
-		return number.toString(16).replace(Color.#patternHEXDigitCorrector, `0`);
+		return number.toString(16).padStart(2, `0`);
 	}
 	//#endregion
-	//#region Constructors
+	//#region Presets
+	/**
+	 * Transparent color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newTransparent() { return Color.viaRGB(0, 0, 0, 0); };
+	/**
+	 * Maroon color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newMaroon() { return Color.viaRGB(128, 0, 0); };
+	/**
+	 * Red color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newRed() { return Color.viaRGB(255, 0, 0); };
+	/**
+	 * Orange color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newOrange() { return Color.viaRGB(255, 165, 0); };
+	/**
+	 * Yellow color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newYellow() { return Color.viaRGB(255, 255, 0); };
+	/**
+	 * Olive color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newOlive() { return Color.viaRGB(128, 128, 0); };
+	/**
+	 * Green color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newGreen() { return Color.viaRGB(0, 128, 0); };
+	/**
+	 * Purple color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newPurple() { return Color.viaRGB(128, 0, 128); };
+	/**
+	 * Fuchsia color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newFuchsia() { return Color.viaRGB(255, 0, 255); };
+	/**
+	 * Lime color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newLime() { return Color.viaRGB(0, 255, 0); };
+	/**
+	 * Teal color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newTeal() { return Color.viaRGB(0, 128, 128); };
+	/**
+	 * Aqua color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newAqua() { return Color.viaRGB(0, 255, 255); };
+	/**
+	 * Blue color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newBlue() { return Color.viaRGB(0, 0, 255); };
+	/**
+	 * Navy color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newNavy() { return Color.viaRGB(0, 0, 128); };
+	/**
+	 * Black color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newBlack() { return Color.viaRGB(0, 0, 0); };
+	/**
+	 * Gray color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newGray() { return Color.viaRGB(128, 128, 128); };
+	/**
+	 * Silver color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newSilver() { return Color.viaRGB(192, 192, 192); };
+	/**
+	 * White color preset.
+	 * @readonly
+	 * @returns {Color}
+	 */
+	static get newWhite() { return Color.viaRGB(255, 255, 255); };
+	//#endregion
+	//#region Builders
 	/** @type {RegExp} */
 	static #patternRGB = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i;
 	/** @type {RegExp} */
@@ -217,131 +325,36 @@ class Color {
 		return result;
 	}
 	/**
-	 * Creates a clone of the specified Color object.
-	 * @param {Readonly<Color>} source The Color object to clone.
-	 * @returns {Color} A new Color object with the same properties as the source color.
+	 * @overload
+	 * 
+	 * @overload
+	 * @param {Readonly<Color>} source The source Color object.
 	 */
-	static clone(source) {
-		const result = new Color();
-		result.#red = source.red;
-		result.#green = source.green;
-		result.#blue = source.blue;
-		result.#hue = source.hue;
-		result.#saturation = source.saturation;
-		result.#lightness = source.lightness;
-		result.#alpha = source.alpha;
-		return result;
+	/**
+	 * @param {Readonly<Color> | void} arg1 
+	 */
+	constructor(arg1) {
+		if (arg1 instanceof Color) {
+			this.#red = arg1.red;
+			this.#green = arg1.green;
+			this.#blue = arg1.blue;
+			this.#hue = arg1.hue;
+			this.#saturation = arg1.saturation;
+			this.#lightness = arg1.lightness;
+			this.#alpha = arg1.alpha;
+			return;
+		}
+		if (arg1 instanceof Color) {
+			this.#red = 0;
+			this.#green = 0;
+			this.#blue = 0;
+			this.#hue = 0;
+			this.#saturation = 0;
+			this.#lightness = 0;
+			this.#alpha = 1;
+			return;
+		}
 	}
-	//#endregion
-	//#region Presets
-	/**
-	 * Transparent color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get TRANSPARENT() { return Color.viaRGB(0, 0, 0, 0); };
-	/**
-	 * Maroon color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get MAROON() { return Color.viaRGB(128, 0, 0); };
-	/**
-	 * Red color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get RED() { return Color.viaRGB(255, 0, 0); };
-	/**
-	 * Orange color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get ORANGE() { return Color.viaRGB(255, 165, 0); };
-	/**
-	 * Yellow color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get YELLOW() { return Color.viaRGB(255, 255, 0); };
-	/**
-	 * Olive color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get OLIVE() { return Color.viaRGB(128, 128, 0); };
-	/**
-	 * Green color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get GREEN() { return Color.viaRGB(0, 128, 0); };
-	/**
-	 * Purple color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get PURPLE() { return Color.viaRGB(128, 0, 128); };
-	/**
-	 * Fuchsia color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get FUCHSIA() { return Color.viaRGB(255, 0, 255); };
-	/**
-	 * Lime color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get LIME() { return Color.viaRGB(0, 255, 0); };
-	/**
-	 * Teal color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get TEAL() { return Color.viaRGB(0, 128, 128); };
-	/**
-	 * Aqua color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get AQUA() { return Color.viaRGB(0, 255, 255); };
-	/**
-	 * Blue color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get BLUE() { return Color.viaRGB(0, 0, 255); };
-	/**
-	 * Navy color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get NAVY() { return Color.viaRGB(0, 0, 128); };
-	/**
-	 * Black color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get BLACK() { return Color.viaRGB(0, 0, 0); };
-	/**
-	 * Gray color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get GRAY() { return Color.viaRGB(128, 128, 128); };
-	/**
-	 * Silver color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get SILVER() { return Color.viaRGB(192, 192, 192); };
-	/**
-	 * White color preset.
-	 * @readonly
-	 * @returns {Color}
-	 */
-	static get WHITE() { return Color.viaRGB(255, 255, 255); };
 	//#endregion
 	//#region Methods
 	/**
@@ -353,7 +366,7 @@ class Color {
 	 * @throws {TypeError} If the ratio is not finite.
 	 */
 	static mix(first, second, ratio = 0.5) {
-		return first.clone().mix(second, ratio);
+		return new Color(first).mix(second, ratio);
 	}
 	/**
 	 * Converts a color to grayscale.
@@ -363,7 +376,7 @@ class Color {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static grayscale(source, scale = 1) {
-		return source.clone().grayscale(scale);
+		return new Color(source).grayscale(scale);
 	}
 	/**
 	 * Inverts a color.
@@ -373,7 +386,7 @@ class Color {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static invert(source, scale = 1) {
-		return source.clone().invert(scale);
+		return new Color(source).invert(scale);
 	}
 	/**
 	 * Applies a sepia tone effect to a color.
@@ -383,7 +396,7 @@ class Color {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static sepia(source, scale = 1) {
-		return source.clone().sepia(scale);
+		return new Color(source).sepia(scale);
 	}
 	/**
 	 * Rotates the hue of a color.
@@ -393,7 +406,7 @@ class Color {
 	 * @throws {TypeError} If the angle is not finite.
 	 */
 	static rotate(source, angle) {
-		return source.clone().rotate(angle);
+		return new Color(source).rotate(angle);
 	}
 	/**
 	 * Saturates a color.
@@ -403,7 +416,7 @@ class Color {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static saturate(source, scale) {
-		return source.clone().saturate(scale);
+		return new Color(source).saturate(scale);
 	}
 	/**
 	 * Illuminates a color.
@@ -413,7 +426,7 @@ class Color {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static illuminate(source, scale) {
-		return source.clone().illuminate(scale);
+		return new Color(source).illuminate(scale);
 	}
 	/**
 	 * Changes the alpha transparency of a color.
@@ -423,12 +436,12 @@ class Color {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static pass(source, scale) {
-		return source.clone().pass(scale);
+		return new Color(source).pass(scale);
 	}
 	//#endregion
 	//#region Properties
 	/** @type {number} */
-	#red = 0;
+	#red;
 	/**
 	 * Gets the red color component.
 	 * @returns {number}
@@ -447,7 +460,7 @@ class Color {
 		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
 	}
 	/** @type {number} */
-	#green = 0;
+	#green;
 	/**
 	 * Gets the green color component.
 	 * @returns {number}
@@ -466,7 +479,7 @@ class Color {
 		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
 	}
 	/** @type {number} */
-	#blue = 0;
+	#blue;
 	/**
 	 * Gets the blue color component.
 	 * @returns {number}
@@ -485,7 +498,7 @@ class Color {
 		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
 	}
 	/** @type {number} */
-	#hue = 0;
+	#hue;
 	/**
 	 * Gets the hue color component.
 	 * @returns {number}
@@ -504,7 +517,7 @@ class Color {
 		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
 	}
 	/** @type {number} */
-	#saturation = 0;
+	#saturation;
 	/**
 	 * Gets the saturation color component.
 	 * @returns {number}
@@ -523,7 +536,7 @@ class Color {
 		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
 	}
 	/** @type {number} */
-	#lightness = 0;
+	#lightness;
 	/**
 	 * Gets the lightness color component.
 	 * @returns {number}
@@ -542,7 +555,7 @@ class Color {
 		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
 	}
 	/** @type {number} */
-	#alpha = 1;
+	#alpha;
 	/**
 	 * Gets the alpha color component.
 	 * @returns {number}
@@ -574,13 +587,6 @@ class Color {
 			case ColorFormats.HEX: return `#${Color.#toHEXString(this.red)}${Color.#toHEXString(this.green)}${Color.#toHEXString(this.blue)}${deep ? Color.#toHEXString(trunc(this.alpha * 255)) : ``}`;
 			default: throw new TypeError(`Invalid '${format}' color format`);
 		}
-	}
-	/**
-	 * Creates a clone of the current color instance.
-	 * @returns {Color} A new instance of Color that is a clone of this color.
-	 */
-	clone() {
-		return Color.clone(this);
 	}
 	/**
 	 * Mixes the current color with another color based on a given ratio.
@@ -710,9 +716,9 @@ class Texture extends Matrix {
 		const size = texture.size;
 		const imageData = new ImageData(size.x, size.y);
 		const data = imageData.data;
-		/** @type {Point2D} */
-		const position = Point2D.NAN;
-		for (let y = 0; y < size.x; y++) {
+		/** @type {Vector2D} */
+		const position = Vector2D.newNaN;
+		for (let y = 0; y < size.y; y++) {
 			for (let x = 0; x < size.x; x++) {
 				position.x = x;
 				position.y = y;
@@ -732,12 +738,12 @@ class Texture extends Matrix {
 	 * @returns {Texture} The created texture.
 	 */
 	static fromImageData(imageData) {
-		const size = new Point2D(imageData.width, imageData.height);
+		const size = new Vector2D(imageData.width, imageData.height);
 		const texture = new Texture(size);
 		const data = imageData.data;
-		/** @type {Point2D} */
-		const position = Point2D.NAN;
-		for (let y = 0; y < size.x; y++) {
+		/** @type {Vector2D} */
+		const position = Vector2D.newNaN;
+		for (let y = 0; y < size.y; y++) {
 			for (let x = 0; x < size.x; x++) {
 				position.x = x;
 				position.y = y;
@@ -756,30 +762,35 @@ class Texture extends Matrix {
 	//#endregion
 	//#region Contructors
 	/**
-	 * Clones the texture.
-	 * @param {Readonly<Texture>} source The texture to clone.
-	 * @returns {Texture} The cloned texture.
-	 */
-	static clone(source) {
-		const result = new Texture(source.size);
-		/** @type {Point2D} */
-		const position = Point2D.NAN;
-		for (let y = 0; y < source.size.x; y++) {
-			for (let x = 0; x < source.size.x; x++) {
-				position.x = x;
-				position.y = y;
-				result.set(position, source.get(position).clone());
-			}
-		}
-		return result;
-	}
-	/**
-	 * @param {Readonly<Point2D>} size The size of the texture.
+	 * @overload
+	 * @param {Readonly<Vector2D>} size The size of the texture.
 	 * @throws {TypeError} If the x or y coordinate of the size is not an integer.
 	 * @throws {RangeError} If the x or y coordinate of the size is negative.
+	 * 
+	 * @overload
+	 * @param {Readonly<Texture>} source The texture to clone.
 	 */
-	constructor(size) {
-		super(size, () => Color.TRANSPARENT);
+	/**
+	 * @param {Readonly<Texture> | Readonly<Vector2D>} arg1 
+	 */
+	constructor(arg1) {
+		if (arg1 instanceof Texture) {
+			super(arg1.size, () => Color.newTransparent);
+			const position = Vector2D.newNaN;
+			for (let y = 0; y < arg1.size.y; y++) {
+				for (let x = 0; x < arg1.size.x; x++) {
+					position.x = x;
+					position.y = y;
+					this.set(position, new Color(arg1.get(position)));
+				}
+			}
+			return;
+		}
+		if (arg1 instanceof Vector2D) {
+			super(arg1, () => Color.newTransparent);
+			return;
+		}
+		throw new TypeError(`No overload with these arguments`);
 	}
 	//#endregion
 	//#region Methods
@@ -792,7 +803,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the ratio is not finite.
 	 */
 	static mix(first, second, ratio = 0.5) {
-		return first.clone().mix(second, ratio);
+		return new Texture(first).mix(second, ratio);
 	}
 	/**
 	 * Converts the texture to grayscale.
@@ -802,7 +813,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static grayscale(source, scale = 1) {
-		return source.clone().grayscale(scale);
+		return new Texture(source).grayscale(scale);
 	}
 	/**
 	 * Inverts the colors of the texture.
@@ -812,7 +823,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static invert(source, scale = 1) {
-		return source.clone().invert(scale);
+		return new Texture(source).invert(scale);
 	}
 	/**
 	 * Applies sepia effect to the texture.
@@ -822,7 +833,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static sepia(source, scale = 1) {
-		return source.clone().sepia(scale);
+		return new Texture(source).sepia(scale);
 	}
 	/**
 	 * Rotates the hue of the texture.
@@ -832,7 +843,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the angle is not finite.
 	 */
 	static rotate(source, angle) {
-		return source.clone().rotate(angle);
+		return new Texture(source).rotate(angle);
 	}
 	/**
 	 * Saturates the colors of the texture.
@@ -842,7 +853,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static saturate(source, scale) {
-		return source.clone().saturate(scale);
+		return new Texture(source).saturate(scale);
 	}
 	/**
 	 * Illuminates the texture.
@@ -852,7 +863,7 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static illuminate(source, scale) {
-		return source.clone().illuminate(scale);
+		return new Texture(source).illuminate(scale);
 	}
 	/**
 	 * Sets the transparency of the texture.
@@ -862,23 +873,15 @@ class Texture extends Matrix {
 	 * @throws {TypeError} If the scale is not finite.
 	 */
 	static pass(source, scale) {
-		return source.clone().pass(scale);
+		return new Texture(source).pass(scale);
 	}
 	//#endregion
 	//#region Modifiers
 	/**
-	 * Clones current the texture.
-	 * @returns {Texture} The cloned texture.
-	 */
-	clone() {
-		return Texture.clone(this);
-	}
-	/**
-	 * @param {(position: Point2D) => void} callback 
+	 * @param {(position: Vector2D) => void} callback 
 	 */
 	#traverse(callback) {
-		/** @type {Point2D} */
-		const position = Point2D.NAN;
+		const position = Vector2D.newNaN;
 		for (let y = 0; y < this.size.x; y++) {
 			for (let x = 0; x < this.size.x; x++) {
 				position.x = x;

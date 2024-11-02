@@ -1,24 +1,23 @@
 "use strict";
 
-import { } from "./modules/diagnostics.js";
-import { } from "./modules/extensions.js";
-import { FastEngine } from "./modules/generators.js";
-import { } from "./modules/measures.js";
-import { } from "./modules/palette.js";
-import { } from "./modules/storage.js";
+import { DataPair } from "./modules/extensions.js";
+import { StaticEngine } from "./modules/generators.js";
 
-const { sqpw, sqrt, log2 } = Math;
+const { sqpw, sqrt, log2, round } = Math;
 
 //#region Data types
 /**
+ * Enum representing data types for audio analysis.
  * @enum {number}
  */
 const DataTypes = {
 	/**
+	 * Frequency spectrum data.
 	 * @readonly
 	 */
 	frequency: 0,
 	/**
+	 * Time domain data.
 	 * @readonly
 	 */
 	timeDomain: 1,
@@ -30,14 +29,56 @@ const arrayDataTypes = Object.freeze(Object.values(DataTypes));
 //#endregion
 //#region Audio package
 /**
- * @typedef {InstanceType<AudioPackage.Manager>} AudioPackageManager
+ * @typedef {InstanceType<typeof AudioPackage.Manager>} AudioPackageManager
  */
 
+/**
+ * Class representing audio analysis data.
+ * Used to store and retrieve audio metrics, such as volume and amplitude.
+ */
 class AudioPackage {
 	//#region Manager
+	/**
+	 * Manager for controlling and configuring audio analysis parameters.
+	 */
 	static Manager = class AudioPackageManager {
 		/**
-		 * @param {HTMLMediaElement} media 
+		 * @param {number} value 
+		 * @returns {boolean}
+		 */
+		static checkQuality(value) {
+			if (!Number.isInteger(value)) return false;
+			if (5 > value || value > 15) return false;
+			return true;
+		}
+		/**
+		 * @param {number} value 
+		 * @returns {boolean}
+		 */
+		static checkSmoothing(value) {
+			if (!Number.isFinite(value)) return false;
+			if (0 > value || value > 1) return false;
+			return true;
+		}
+		/**
+		 * @param {number} value 
+		 * @returns {boolean}
+		 */
+		static checkFocus(value) {
+			if (!Number.isFinite(value)) return false;
+			return true;
+		}
+		/**
+		 * @param {number} value 
+		 * @returns {boolean}
+		 */
+		static checkSpread(value) {
+			if (!Number.isFinite(value)) return false;
+			if (0 >= value) return false;
+			return true;
+		}
+		/**
+		 * @param {HTMLMediaElement} media The media element for audio analysis.
 		 */
 		constructor(media) {
 			this.#media = media;
@@ -50,8 +91,6 @@ class AudioPackage {
 			source.connect(analyser);
 			analyser.connect(audioContext.destination);
 
-			analyser.smoothingTimeConstant = 0.7;
-
 			const audioPackage = this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
 		}
 		/** @type {HTMLMediaElement} */
@@ -61,70 +100,90 @@ class AudioPackage {
 		/** @type {AnalyserNode} */
 		#analyser;
 		/**
+		 * Gets the quality level of the audio analysis, influencing analysis detail.
+		 * Higher values provide more detailed audio analysis.
 		 * @returns {number}
 		 */
 		get quality() {
 			return log2(this.#analyser.fftSize);
 		}
 		/**
+		 * Sets the quality level for audio analysis.
+		 * Acceptable values range between 5 and 15.
 		 * @param {number} value 
 		 * @returns {void}
 		 */
 		set quality(value) {
-			if (!Number.isInteger(value)) return;
-			if (5 > value || value > 15) return;
+			if (!AudioPackageManager.checkQuality(value)) return;
 			const analyser = this.#analyser;
 			analyser.fftSize = (1 << value);
+			this.#package.#tapeLength = analyser.frequencyBinCount;
 			this.#package.#datalist = new Map(arrayDataTypes.map(type => [type, new Uint8Array(analyser.frequencyBinCount)]));
 		}
 		/**
+		 * Gets the smoothing level applied to the analysis for a smoother transition between values.
 		 * @returns {number}
 		 */
 		get smoothing() {
 			return this.#analyser.smoothingTimeConstant;
 		}
 		/**
+		 * Sets the smoothing level for the analysis.
+		 * Acceptable values range from 0 (no smoothing) to 1 (maximum smoothing).
 		 * @param {number} value 
 		 * @returns {void}
 		 */
 		set smoothing(value) {
-			if (!Number.isFinite(value)) return;
-			if (0 > value || value > 1) return;
+			if (!AudioPackage.Manager.checkSmoothing(value)) return;
 			this.#analyser.smoothingTimeConstant = value;
 		}
 		/**
+		 * Gets the focus level of the audio analysis, which adjusts the central volume value.
 		 * @returns {number}
 		 */
-		get minDecibels() {
-			return this.#analyser.minDecibels;
+		get focus() {
+			const { minDecibels, maxDecibels } = this.#analyser;
+			return (minDecibels + maxDecibels) / 2;
 		}
 		/**
+		 * Sets the focus level for the analysis.
+		 * This shifts the central volume value for analysis purposes.
 		 * @param {number} value 
 		 * @returns {void}
 		 */
-		set minDecibels(value) {
-			if (!Number.isFinite(value)) return;
-			if (value >= this.#analyser.maxDecibels) return;
-			this.#analyser.minDecibels = value;
+		set focus(value) {
+			if (!AudioPackageManager.checkFocus(value)) return;
+			const { spread } = this;
+			const analyser = this.#analyser;
+			analyser.minDecibels = value - spread;
+			analyser.maxDecibels = value + spread;
 		}
 		/**
+		 * Gets the range of volume levels used in the analysis.
+		 * This adjusts the width of the analyzed volume range.
 		 * @returns {number}
 		 */
-		get maxDecibels() {
-			return this.#analyser.maxDecibels;
+		get spread() {
+			const { minDecibels, maxDecibels } = this.#analyser;
+			return (maxDecibels - minDecibels) / 2;
 		}
 		/**
+		 * Sets the volume range for the analysis, expanding or contracting the focus area.
+		 * The value must be greater than 0.
 		 * @param {number} value 
 		 * @returns {void}
 		 */
-		set maxDecibels(value) {
-			if (!Number.isFinite(value)) return;
-			if (this.#analyser.minDecibels >= value) return;
-			this.#analyser.maxDecibels = value;
+		set spread(value) {
+			if (!AudioPackageManager.checkSpread(value)) return;
+			const { focus } = this;
+			const analyser = this.#analyser;
+			analyser.minDecibels = focus - value;
+			analyser.maxDecibels = focus + value;
 		}
 		/** @type {AudioPackage} */
 		#package;
 		/**
+		 * Package serviced by manager.
 		 * @readonly
 		 * @returns {AudioPackage}
 		 */
@@ -132,6 +191,8 @@ class AudioPackage {
 			return this.#package;
 		}
 		/**
+		 * Updates the audio analysis data for the current media element state.
+		 * Retrieves updated values for volume and amplitude.
 		 * @returns {void}
 		 */
 		update() {
@@ -172,7 +233,8 @@ class AudioPackage {
 		return result;
 	}
 	/**
-	 * @param {number} length 
+	 * @param {number} length The length of data to analyze.
+	 * @throws {TypeError} If invoked outside internal class code.
 	 */
 	constructor(length) {
 		if (AudioPackage.#locked) throw new TypeError(`Illegal constructor`);
@@ -184,6 +246,7 @@ class AudioPackage {
 	/** @type {number} */
 	#tapeLength;
 	/**
+	 * Gets the total number of measurements in audio data.
 	 * @readonly
 	 * @returns {number}
 	 */
@@ -193,9 +256,10 @@ class AudioPackage {
 	/** @type {Map<DataTypes, Uint8Array>} */
 	#datalist;
 	/**
-	 * @param {DataTypes} type 
-	 * @returns {Uint8Array}
-	 * @throws {TypeError}
+	 * Retrieves audio data for the specified type.
+	 * @param {DataTypes} type The data type (e.g., frequency or time domain).
+	 * @returns {Uint8Array} The data array for analysis.
+	 * @throws {TypeError} If an invalid data type is specified.
 	 */
 	getData(type) {
 		const data = this.#datalist.get(type);
@@ -205,9 +269,10 @@ class AudioPackage {
 	/** @type {Map<DataTypes, number>} */
 	#volumes;
 	/**
-	 * @param {DataTypes} type 
-	 * @returns {number}
-	 * @throws {TypeError}
+	 * Gets the current volume level for the specified data type.
+	 * @param {DataTypes} type The data type.
+	 * @returns {number} The volume level.
+	 * @throws {TypeError} If an invalid data type is specified.
 	 */
 	getVolume(type) {
 		const volume = this.#volumes.get(type);
@@ -217,9 +282,10 @@ class AudioPackage {
 	/** @type {Map<DataTypes, number>} */
 	#amplitudes;
 	/**
-	 * @param {DataTypes} type 
-	 * @returns {number}
-	 * @throws {TypeError}
+	 * Gets the current amplitude level for the specified data type.
+	 * @param {DataTypes} type The data type.
+	 * @returns {number} The amplitude level.
+	 * @throws {TypeError} If an invalid data type is specified.
 	 */
 	getAmplitude(type) {
 		const amplitude = this.#amplitudes.get(type);
@@ -230,11 +296,7 @@ class AudioPackage {
 //#endregion
 //#region Visualizer
 /**
- * @typedef {InstanceType<Visualizer.Visualization>} VisualizerVisualization
- */
-
-/**
- * @typedef {(new (...args: void[]) => VisualizerVisualization)} VisualizationMethod
+ * @typedef {InstanceType<typeof Visualizer.Visualiztion>} VisualizerVisualiztion
  */
 
 /**
@@ -245,16 +307,33 @@ class AudioPackage {
  * @typedef {EventListener & UncomposedVisualizerEventMap} VisualizerEventMap
  */
 
+/**
+ * Class to manipulate visualizations.
+ */
 class Visualizer extends EventTarget {
-	//#region Visualization
-	static Visualization = class VisualizerVisualization {
+	//#region Visualiztion
+	/**
+	 * Abstract base class for creating custom visualizations for the visualizer.
+	 * @abstract
+	 */
+	static Visualiztion = class VisualizerVisualiztion {
 		constructor() {
-			if (Visualizer.#locked) throw new TypeError(`Illegal constructor`);
-			this.#visualizer = Visualizer.#temporary;
+			if (new.target === VisualizerVisualiztion) throw new TypeError(`Unable to create an instance of an abstract class`);
 		}
-		/** @type {Visualizer} */
-		#visualizer;
+		/** @type {Visualizer?} */
+		#owner;
 		/**
+		 * @readonly
+		 * @returns {Visualizer}
+		 */
+		get #visualizer() {
+			const visualizer = this.#owner ?? Visualizer.#self;
+			if (visualizer === null) throw new Error(`Visualizer is currently unavailable.`);
+			this.#owner = visualizer;
+			return visualizer;
+		}
+		/**
+		 * The rendering context for drawing.
 		 * @readonly
 		 * @returns {CanvasRenderingContext2D}
 		 */
@@ -262,6 +341,7 @@ class Visualizer extends EventTarget {
 			return this.#visualizer.#context;
 		}
 		/**
+		 * The audio data for analysis.
 		 * @readonly
 		 * @returns {AudioPackage}
 		 */
@@ -269,6 +349,7 @@ class Visualizer extends EventTarget {
 			return this.#visualizer.#manager.package;
 		}
 		/**
+		 * True if the visualizer is active, false otherwise.
 		 * @readonly
 		 * @returns {boolean}
 		 */
@@ -276,6 +357,7 @@ class Visualizer extends EventTarget {
 			return this.#visualizer.#engine.launched;
 		}
 		/**
+		 * Time delta since the last update.
 		 * @readonly
 		 * @returns {number}
 		 */
@@ -283,6 +365,7 @@ class Visualizer extends EventTarget {
 			return this.#visualizer.#engine.delta;
 		}
 		/**
+		 * Frames per second.
 		 * @readonly
 		 * @returns {number}
 		 */
@@ -290,44 +373,79 @@ class Visualizer extends EventTarget {
 			return this.#visualizer.#engine.FPS;
 		}
 		/**
+		 * Clears the canvas and resets the view.
 		 * @returns {Promise<void>}
 		 */
-		async resize() { }
+		async resize() {
+			const { context } = this;
+			const { width, height } = context.canvas;
+			const transform = context.getTransform();
+			context.clearRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
+		}
 		/**
+		 * Updates the visualization with new audio data.
 		 * @returns {Promise<void>}
 		 */
-		async update() { }
+		async update() {
+			const { context } = this;
+			const { width, height } = context.canvas;
+			const transform = context.getTransform();
+			context.clearRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
+		}
 	};
 	//#endregion
 
-	/** @type {Map<string, VisualizationMethod>} */
-	static #visualizations = new Map();
 	/**
+	 * @param {number} value 
+	 * @returns {boolean}
+	 */
+	static checkRateAvailability(value) {
+		if (!Number.isInteger(value)) return false;
+		if (30 > value || value > 300) return false;
+		if (value % 30 !== 0) return false;
+		return true;
+	}
+	/** @type {Map<string, VisualizerVisualiztion>} */
+	static #attachments = new Map();
+	/**
+	 * Attaches a visualization to the visualizer.
+	 * @param {string} name The name of the visualization.
+	 * @param {VisualizerVisualiztion} visualization The visualization instance.
+	 * @returns {void}
+	 */
+	static attach(name, visualization) {
+		if (Visualizer.#attachments.has(name)) throw new Error(`Visualization with name '${name}' already attached`);
+		Visualizer.#attachments.set(name, visualization);
+	}
+	/**
+	 * First available visualization name.
+	 * @readonly
+	 * @returns {string}
+	 */
+	static get defaultVisualization() {
+		const result = Visualizer.#attachments.keys().next();
+		if (result.done) throw new ReferenceError(`Unable to find any visualization`);
+		return result.value;
+	}
+	/**
+	 * List of available visualization names.
 	 * @readonly
 	 * @returns {string[]}
 	 */
 	static get visualizations() {
-		return Array.from(Visualizer.#visualizations.keys());
+		return Visualizer.#attachments.keys().toArray();
 	}
+	/** @type {Visualizer?} */
+	static #self = null;
 	/**
-	 * @param {string} name 
-	 * @param {VisualizationMethod} method 
-	 * @returns {void}
-	 */
-	static attach(name, method) {
-		if (Visualizer.#visualizations.has(name)) throw new Error(`Visualization with name '${name}' already attached`);
-		Visualizer.#visualizations.set(name, method);
-	}
-	/** @type {Visualizer} */
-	static #temporary;
-	/**
-	 * @param {HTMLCanvasElement} canvas 
-	 * @param {HTMLMediaElement} media 
-	 * @param {string} name 
+	 * Builds and initializes a new visualizer instance.
+	 * @param {HTMLCanvasElement} canvas The canvas element for drawing.
+	 * @param {HTMLMediaElement} media The media element for audio input.
 	 * @returns {Promise<Visualizer>}
 	 */
-	static async build(canvas, media, name) {
-		const visualizer = Visualizer.#temporary = Visualizer.#construct();
+	static async build(canvas, media) {
+		const visualizer = Visualizer.#self = Visualizer.#construct();
+
 		visualizer.#canvas = canvas;
 		visualizer.#fixCanvasSize();
 		window.addEventListener(`resize`, (event) => visualizer.#fixCanvasSize());
@@ -340,7 +458,7 @@ class Visualizer extends EventTarget {
 
 		const manager = visualizer.#manager = new AudioPackage.Manager(media);
 
-		const engine = visualizer.#engine = new FastEngine();
+		const engine = visualizer.#engine = new StaticEngine();
 		media.addEventListener(`play`, (event) => {
 			engine.launched = true;
 		});
@@ -352,9 +470,9 @@ class Visualizer extends EventTarget {
 			engine.launched = false;
 		});
 
-		const method = Visualizer.#visualizations.get(name);
-		if (method === undefined) throw new Error(`Visualization with name '${name}' doesn't attached`);
-		const visualization = visualizer.#visualization = Visualizer.#visualize(method);
+		const attachment = Array.from(Visualizer.#attachments).at(0);
+		if (attachment === undefined) throw new Error(`No visualization is attached to the visualizer.`);
+		visualizer.#attachment = DataPair.fromArray(attachment);
 		await visualizer.#triggerVisualizationResize();
 		window.addEventListener(`resize`, async (event) => await visualizer.#triggerVisualizationResize());
 		await visualizer.#triggerVisualizationUpdate();
@@ -374,17 +492,6 @@ class Visualizer extends EventTarget {
 		Visualizer.#locked = true;
 		return result;
 	}
-	/**
-	 * @param {VisualizationMethod} method 
-	 * @param {ConstructorParameters<VisualizationMethod>} args 
-	 * @returns {VisualizerVisualization}
-	 */
-	static #visualize(method, ...args) {
-		Visualizer.#locked = false;
-		const result = Reflect.construct(method, args);
-		Visualizer.#locked = true;
-		return result;
-	}
 	constructor() {
 		super();
 		if (Visualizer.#locked) throw new TypeError(`Illegal constructor`);
@@ -392,24 +499,80 @@ class Visualizer extends EventTarget {
 	/**
 	 * @template {keyof VisualizerEventMap} K
 	 * @param {K} type
-	 * @param {(this: FastEngine, ev: VisualizerEventMap[K]) => any} listener
+	 * @param {(this: Visualizer, ev: VisualizerEventMap[K]) => any} listener
 	 * @param {boolean | AddEventListenerOptions} options
 	 * @returns {void}
 	 */
 	addEventListener(type, listener, options = false) {
-		// @ts-ignore
-		return super.addEventListener(type, listener, options);
+		return super.addEventListener(type, /** @type {EventListenerOrEventListenerObject} */(listener), options);
 	}
 	/**
 	 * @template {keyof VisualizerEventMap} K
 	 * @param {K} type
-	 * @param {(this: FastEngine, ev: VisualizerEventMap[K]) => any} listener
+	 * @param {(this: Visualizer, ev: VisualizerEventMap[K]) => any} listener
 	 * @param {boolean | EventListenerOptions} options
 	 * @returns {void}
 	 */
 	removeEventListener(type, listener, options = false) {
-		// @ts-ignore
-		return super.addEventListener(type, listener, options);
+		return super.addEventListener(type, /** @type {EventListenerOrEventListenerObject} */(listener), options);
+	}
+	/** @type {StaticEngine} */
+	#engine;
+	/**
+	 * Gets the current frame rate limit.
+	 * @returns {number}
+	 */
+	get rate() {
+		return round(this.#engine.limit);
+	}
+	/**
+	 * Sets a new frame rate limit within an allowable range.
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set rate(value) {
+		if (!Visualizer.checkRateAvailability(value)) return;
+		this.#engine.limit = value;
+	}
+	/** @type {DataPair<string, VisualizerVisualiztion>} */
+	#attachment;
+	/**
+	 * Gets the name of the current visualization.
+	 * @returns {string}
+	 */
+	get visualization() {
+		return this.#attachment.key;
+	}
+	/**
+	 * Sets a new visualization by its name.
+	 * @param {string} value The key name of the visualization to attach.
+	 * @returns {void}
+	 * @throws {Error} If the specified visualization is not attached.
+	 */
+	set visualization(value) {
+		const visualization = Visualizer.#attachments.get(value);
+		if (visualization === undefined) throw new Error(`Visualization with name '${value}' doesn't attached`);
+		this.#attachment = new DataPair(value, visualization);
+		Promise.all([
+			visualization.resize(),
+			visualization.update(),
+		]);
+	}
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #triggerVisualizationResize() {
+		await this.#attachment.value.resize();
+		await this.#attachment.value.update();
+		this.dispatchEvent(new UIEvent(`resize`));
+	}
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #triggerVisualizationUpdate() {
+		this.#manager.update();
+		await this.#attachment.value.update();
+		this.dispatchEvent(new UIEvent(`update`));
 	}
 	/** @type {HTMLCanvasElement} */
 	#canvas;
@@ -435,12 +598,14 @@ class Visualizer extends EventTarget {
 	/** @type {AudioPackageManager} */
 	#manager;
 	/**
+	 * Quality level of the visualization.
 	 * @returns {number}
 	 */
 	get quality() {
 		return this.#manager.quality;
 	}
 	/**
+	 * Sets the quality level for visualization.
 	 * @param {number} value 
 	 * @returns {void}
 	 */
@@ -448,12 +613,14 @@ class Visualizer extends EventTarget {
 		this.#manager.quality = value;
 	}
 	/**
+	 * Smoothing level of the visualization.
 	 * @returns {number}
 	 */
 	get smoothing() {
 		return this.#manager.smoothing;
 	}
 	/**
+	 * Sets the smoothing level for visualization.
 	 * @param {number} value 
 	 * @returns {void}
 	 */
@@ -461,52 +628,378 @@ class Visualizer extends EventTarget {
 		this.#manager.smoothing = value;
 	}
 	/**
+	 * Focus level of the visualization.
 	 * @returns {number}
 	 */
-	get minDecibels() {
-		return this.#manager.minDecibels;
+	get focus() {
+		return this.#manager.focus;
 	}
 	/**
+	 * Sets the focus level for visualization.
 	 * @param {number} value 
 	 * @returns {void}
 	 */
-	set minDecibels(value) {
-		this.#manager.minDecibels = value;
+	set focus(value) {
+		this.#manager.focus = value;
 	}
 	/**
+	 * Spread level of the visualization.
 	 * @returns {number}
 	 */
-	get maxDecibels() {
-		return this.#manager.maxDecibels;
+	get spread() {
+		return this.#manager.spread;
 	}
 	/**
+	 * Sets the spread level for visualization.
 	 * @param {number} value 
 	 * @returns {void}
 	 */
-	set maxDecibels(value) {
-		this.#manager.maxDecibels = value;
-	}
-	/** @type {FastEngine} */
-	#engine;
-	/** @type {VisualizerVisualization} */
-	#visualization;
-	/**
-	 * @returns {Promise<void>}
-	 */
-	async #triggerVisualizationResize() {
-		await this.#visualization.resize();
-		await this.#visualization.update();
-		this.dispatchEvent(new UIEvent(`resize`));
-	}
-	/**
-	 * @returns {Promise<void>}
-	 */
-	async #triggerVisualizationUpdate() {
-		this.#manager.update();
-		await this.#visualization.update();
-		this.dispatchEvent(new UIEvent(`update`));
+	set spread(value) {
+		this.#manager.spread = value;
 	}
 }
 //#endregion
 
-export { DataTypes, AudioPackage, Visualizer };
+//#region Visualization configuration
+/**
+ * @typedef {Object} VisualizationConfigurationNotation
+ * @property {number} [quality]
+ * @property {number} [smoothing]
+ * @property {number} [focus]
+ * @property {number} [spread]
+ */
+
+class VisualizationConfiguration {
+	/**
+	 * @param {any} source 
+	 * @returns {VisualizationConfiguration}
+	 */
+	static import(source, name = `source`) {
+		try {
+			const shell = Object.import(source);
+			const result = new VisualizationConfiguration();
+			const quality = Reflect.get(shell, `quality`);
+			if (quality !== undefined) {
+				result.quality = Number.import(quality, `property quality`);
+			}
+			const smoothing = Reflect.get(shell, `smoothing`);
+			if (smoothing !== undefined) {
+				result.smoothing = Number.import(smoothing, `property smoothing`);
+			}
+			const focus = Reflect.get(shell, `focus`);
+			if (focus !== undefined) {
+				result.focus = Number.import(focus, `property focus`);
+			}
+			const spread = Reflect.get(shell, `spread`);
+			if (spread !== undefined) {
+				result.spread = Number.import(spread, `property spread`);
+			}
+			return result;
+		} catch (error) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		}
+	}
+	/**
+	 * @returns {VisualizationConfigurationNotation}
+	 */
+	export() {
+		return {
+			quality: this.#quality,
+			smoothing: this.#smoothing,
+			focus: this.#focus,
+			spread: this.#spread,
+		};
+	}
+	/** @type {number} */
+	#quality = 10;
+	/**
+	 * @returns {number}
+	 */
+	get quality() {
+		return this.#quality;
+	}
+	/**
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set quality(value) {
+		if (!AudioPackage.Manager.checkQuality(value)) throw new Error(`Invalid value '${value}' for quality`);
+		this.#quality = value;
+	}
+	/** @type {number} */
+	#smoothing = 0.7;
+	/**
+	 * @returns {number}
+	 */
+	get smoothing() {
+		return this.#smoothing;
+	}
+	/**
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set smoothing(value) {
+		if (!AudioPackage.Manager.checkSmoothing(value)) throw new Error(`Invalid value '${value}' for smoothing`);
+		this.#smoothing = value;
+	}
+	/** @type {number} */
+	#focus = -65;
+	/**
+	 * @returns {number}
+	 */
+	get focus() {
+		return this.#focus;
+	}
+	/**
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set focus(value) {
+		if (!AudioPackage.Manager.checkFocus(value)) throw new Error(`Invalid value '${value}' for focus`);
+		this.#focus = value;
+	}
+	/** @type {number} */
+	#spread = 35;
+	/**
+	 * @returns {number}
+	 */
+	get spread() {
+		return this.#spread;
+	}
+	/**
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set spread(value) {
+		if (!AudioPackage.Manager.checkSpread(value)) throw new Error(`Invalid value '${value}' for spread`);
+		this.#spread = value;
+	}
+}
+//#endregion
+//#region Visualization attachment
+/**
+ * @typedef {[string, VisualizationConfigurationNotation]} VisualizationAttachmentNotation
+ */
+
+class VisualizationAttachment {
+	/**
+	 * @param {any} source 
+	 * @returns {VisualizationAttachment}
+	 */
+	static import(source, name = `source`) {
+		try {
+			const shell = Array.import(source);
+			const name = String.import(shell[0], `property name`);
+			const configuration = VisualizationConfiguration.import(shell[1], `property configuration`);
+			return new VisualizationAttachment(name, configuration);
+		} catch (error) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		}
+	}
+	/**
+	 * @returns {VisualizationAttachmentNotation}
+	 */
+	export() {
+		return [
+			this.#name,
+			this.#configuration.export()
+		];
+	}
+	/**
+	 * @param {Readonly<[string, VisualizationConfiguration]>} source 
+	 * @returns {VisualizationAttachment}
+	 */
+	static fromArray(source) {
+		const [name, configuration] = source;
+		return new VisualizationAttachment(name, configuration);
+	}
+	/**
+	 * @returns {[string, VisualizationConfiguration]}
+	 */
+	toArray() {
+		return [this.#name, this.#configuration];
+	}
+	/**
+	 * @param {string} name 
+	 * @param {VisualizationConfiguration} configuration 
+	 */
+	constructor(name, configuration) {
+		this.#name = name;
+		this.#configuration = configuration;
+	}
+	/** @type {string} */
+	#name;
+	/**
+	 * @readonly
+	 * @returns {string}
+	 */
+	get name() {
+		return this.#name;
+	}
+	/** @type {VisualizationConfiguration} */
+	#configuration;
+	/**
+	 * @readonly
+	 * @returns {VisualizationConfiguration}
+	 */
+	get configuration() {
+		return this.#configuration;
+	}
+}
+//#endregion
+//#region Visualizer configuration
+/**
+ * @typedef {Object} VisualizerConfigurationNotation
+ * @property {number} [rate]
+ * @property {string} [visualization]
+ * @property {VisualizationAttachmentNotation[]} [attachments]
+ */
+
+class VisualizerConfiguration {
+	/**
+	 * @param {any} source 
+	 * @returns {VisualizerConfiguration}
+	 */
+	static import(source, name = `source`) {
+		try {
+			const shell = Object.import(source);
+			const result = new VisualizerConfiguration();
+			const rate = Reflect.get(shell, `rate`);
+			if (rate !== undefined) {
+				result.rate = Number.import(rate, `property rate`);
+			}
+			const visualization = Reflect.get(shell, `visualization`);
+			if (visualization !== undefined) {
+				result.visualization = String.import(visualization, `property visualization`);
+			}
+			const attachments = Reflect.get(shell, `attachments`);
+			if (attachments !== undefined) {
+				const mapping = new Map(Array.import(attachments, `property attachments`).map((item, index) => VisualizationAttachment.import(item, `property attachments[${(index)}]`).toArray()));
+				result.#mapping = new Map(Visualizer.visualizations.map(name => [name, mapping.get(name) ?? new VisualizationConfiguration()]));
+			}
+			return result;
+		} catch (error) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		}
+	}
+	/**
+	 * @returns {VisualizerConfigurationNotation}
+	 */
+	export() {
+		return {
+			rate: this.#rate,
+			visualization: this.#visualization,
+			attachments: Array.from(this.#mapping).map(attachment => VisualizationAttachment.fromArray(attachment).export())
+		};
+	};
+	/** @type {number} */
+	#rate = 120;
+	/**
+	 * @returns {number}
+	 */
+	get rate() {
+		return this.#rate;
+	}
+	/**
+	 * @param {number} value 
+	 * @returns {void}
+	 */
+	set rate(value) {
+		if (!Visualizer.checkRateAvailability(value)) throw new Error(`Invalid value '${value}' for rate`);
+		this.#rate = value;
+	}
+	/** @type {string} */
+	#visualization = Visualizer.defaultVisualization;
+	/**
+	 * @returns {string}
+	 */
+	get visualization() {
+		return this.#visualization;
+	}
+	/**
+	 * @param {string} value 
+	 * @returns {void}
+	 */
+	set visualization(value) {
+		if (!Visualizer.visualizations.includes(value)) throw new Error(`Invalid value '${value}' for visualization`);
+		this.#visualization = value;
+	}
+	/** @type {Map<string, VisualizationConfiguration>} */
+	#mapping = new Map(Visualizer.visualizations.map(name => [name, new VisualizationConfiguration()]));
+	/**
+	 * @readonly
+	 * @returns {VisualizationConfiguration}
+	 */
+	get configuration() {
+		const configuration = this.#mapping.get(this.#visualization);
+		if (configuration === undefined) throw new Error(`Unable to find configuration for visualization '${this.#visualization}'`);
+		return configuration;
+	}
+}
+//#endregion
+//#region Settings
+/**
+ * @typedef {Object} SettingsNotation
+ * @property {boolean} [isOpenedConfigurator]
+ * @property {VisualizerConfigurationNotation} visualizer
+ */
+
+class Settings {
+	/**
+	 * @param {any} source 
+	 * @returns {Settings}
+	 */
+	static import(source, name = `source`) {
+		try {
+			const shell = Object.import(source);
+			const result = new Settings();
+			const isOpenedConfigurator = Reflect.get(shell, `isOpenedConfigurator`);
+			if (isOpenedConfigurator !== undefined) {
+				result.isOpenedConfigurator = Boolean.import(isOpenedConfigurator, `property isOpenedConfigurator`);
+			}
+			const visualizer = Reflect.get(shell, `visualizer`);
+			if (visualizer !== undefined) {
+				result.#visualizer = VisualizerConfiguration.import(visualizer, `property visualizer`);
+			}
+			return result;
+		} catch (error) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		}
+	}
+	/**
+	 * @returns {SettingsNotation}
+	 */
+	export() {
+		return {
+			isOpenedConfigurator: this.#isOpenedConfigurator,
+			visualizer: this.#visualizer.export(),
+		};
+	}
+	/** @type {boolean} */
+	#isOpenedConfigurator = false;
+	/**
+	 * @returns {boolean}
+	 */
+	get isOpenedConfigurator() {
+		return this.#isOpenedConfigurator;
+	}
+	/**
+	 * @param {boolean} value 
+	 * @returns {void}
+	 */
+	set isOpenedConfigurator(value) {
+		this.#isOpenedConfigurator = value;
+	}
+	/** @type {VisualizerConfiguration} */
+	#visualizer = new VisualizerConfiguration();
+	/**
+	 * @readonly
+	 * @returns {VisualizerConfiguration}
+	 */
+	get visualizer() {
+		return this.#visualizer;
+	}
+}
+//#endregion
+
+export { DataTypes, AudioPackage, Visualizer, Settings };
