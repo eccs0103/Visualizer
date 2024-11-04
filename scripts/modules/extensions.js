@@ -1131,22 +1131,6 @@ Window.prototype.promptAsync = async function (message = ``, _default = ``) {
 	}
 };
 
-/**
- * Executes an action and handles any errors that occur.
- * @param {() => unknown} action The action to be executed.
- * @param {boolean} silent In silent mode errors are silently ignored; otherwise, they are thrown and the page is reloaded.
- * @returns {Promise<void>} A promise that resolves the action.
- */
-Window.prototype.assert = async function (action, silent = false) {
-	try {
-		await action();
-	} catch (error) {
-		if (silent) return;
-		await this.alertAsync(Error.from(error));
-		location.reload();
-	}
-};
-
 void async function () {
 	const subtitle = bSubtitle.innerText;
 	const period = 4;

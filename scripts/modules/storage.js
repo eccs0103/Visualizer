@@ -345,13 +345,13 @@ class Database {
 	 * @returns {Promise<Readonly<string[]>>}
 	 */
 	static get databases() {
-		return Promise.fulfill(async () => {
+		return new Promise(async (resolve) => {
 			const databases = [];
 			for (const { name } of await indexedDB.databases()) {
 				if (name === undefined) continue;
 				databases.push(name);
 			}
-			return Object.freeze(databases);
+			resolve(Object.freeze(databases));
 		});
 	}
 	/**

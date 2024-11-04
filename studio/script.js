@@ -1,4 +1,3 @@
-/** @typedef {import("../scripts/structure.js").SettingsNotation} SettingsNotation */
 /** @typedef {import("../scripts/modules/storage.js").DatabaseStore} DatabaseStore */
 
 "use strict";
@@ -8,34 +7,75 @@ import { Timespan } from "../scripts/modules/measures.js";
 import { ArchiveManager, Database } from "../scripts/modules/storage.js";
 import { Settings, Visualizer } from "../scripts/structure.js";
 
-
+//#region Alert severity
+/**
+ * @enum {number}
+ */
+const AlertSeverity = {
+	/**
+	 * Ignore the response, taking no action.
+	 * @readonly
+	 */
+	ignore: 0,
+	/**
+	 * Log the response for informational purposes.
+	 * @readonly
+	 */
+	log: 1,
+	/**
+	 * Throw an error in response to a critical event.
+	 * @readonly
+	 */
+	throw: 2,
+};
+Object.freeze(AlertSeverity);
+//#endregion
 //#region Controller
 /**
  * Represents the controller for the application.
  */
 class Controller {
-	//#region Launch
+	//#region Internal
 	/** @type {boolean} */
 	static #locked = true;
 	/**
 	 * Starts the main application flow.
-	 * @param {ConstructorParameters<typeof Controller>} args 
-	 * @returns {Promise<Controller>}
+	 * @returns {Promise<void>}
 	 */
-	static async construct(...args) {
+	static async launch() {
 		Controller.#locked = false;
-		const self = new Controller(...args);
+		const self = new Controller();
 		Controller.#locked = true;
 
-		await self.#main();
-
-		return self;
+		try {
+			await self.#main();
+		} catch (error) {
+			await self.#catch(Error.from(error));
+		}
 	}
 	constructor() {
 		if (Controller.#locked) throw new TypeError(`Illegal constructor`);
 	}
+	/** @type {AlertSeverity} */
+	#severity = AlertSeverity.throw;
+	/**
+	 * @param {Error} error 
+	 * @returns {Promise<void>}
+	 */
+	async #catch(error) {
+		switch (this.#severity) {
+			case AlertSeverity.ignore: break;
+			case AlertSeverity.log: {
+				console.error(error);
+			} break;
+			case AlertSeverity.throw: {
+				await window.alertAsync(error);
+				location.reload();
+			} break;
+		}
+	}
 	//#endregion
-	//#region Logic
+	//#region Implementation
 	/** @type {DatabaseStore} */
 	#storeAudiolist;
 	/**
@@ -229,7 +269,7 @@ class Controller {
 			if (!await this.#saveRecentAudio(audioRecent)) event.preventDefault();
 		});
 
-		const visualizer = await Visualizer.build(canvas, audioPlayer);
+		const visualizer = Visualizer.build(canvas, audioPlayer);
 		visualizer.rate = settings.visualizer.rate;
 		visualizer.visualization = settings.visualizer.visualization;
 		visualizer.quality = settings.visualizer.configuration.quality;
@@ -315,6 +355,7 @@ class Controller {
 		await this.#setConfiguratorActivity(settings.isOpenedConfigurator);
 		buttonCloseConfigurator.addEventListener(`click`, async (event) => {
 			await this.#setConfiguratorActivity(false);
+			settings.isOpenedConfigurator = dialogConfigurator.open;
 		});
 
 		inputVisualizerRate.value = String(visualizer.rate);
@@ -397,5 +438,5 @@ class Controller {
 	//#endregion
 }
 
-await window.assert(Controller.construct);
+await Controller.launch();
 //#endregion

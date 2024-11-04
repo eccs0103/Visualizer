@@ -425,13 +425,6 @@ interface Window {
 	 */
 	promptAsync(message?: string, _default?: string): Promise<string?>;
 	/**
-	 * Executes an action and handles any errors that occur.
-	 * @param action The action to be executed.
-	 * @param silent In silent mode errors are silently ignored; otherwise, they are thrown and the page is reloaded.
-	 * @returns A promise that resolves the action.
-	 */
-	assert(action: VoidFunction, silent?: boolean): Promise<void>;
-	/**
 	 * Asynchronously loads a promise with a loading animation.
 	 * @template T
 	 * @param promise The promise to load.

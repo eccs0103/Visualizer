@@ -43,7 +43,8 @@ class AudioPackage {
 	 */
 	static Manager = class AudioPackageManager {
 		/**
-		 * @param {number} value 
+		 * Checks if the given quality value is within the acceptable range.
+		 * @param {number} value The quality level to validate.
 		 * @returns {boolean}
 		 */
 		static checkQuality(value) {
@@ -52,7 +53,8 @@ class AudioPackage {
 			return true;
 		}
 		/**
-		 * @param {number} value 
+		 * Validates the smoothing level for audio analysis.
+		 * @param {number} value The smoothing level to validate.
 		 * @returns {boolean}
 		 */
 		static checkSmoothing(value) {
@@ -61,7 +63,8 @@ class AudioPackage {
 			return true;
 		}
 		/**
-		 * @param {number} value 
+		 * Checks if the provided focus value is a valid number.
+		 * @param {number} value The focus level to validate.
 		 * @returns {boolean}
 		 */
 		static checkFocus(value) {
@@ -69,7 +72,8 @@ class AudioPackage {
 			return true;
 		}
 		/**
-		 * @param {number} value 
+		 * Validates the spread level for audio analysis.
+		 * @param {number} value The spread level to validate.
 		 * @returns {boolean}
 		 */
 		static checkSpread(value) {
@@ -86,17 +90,15 @@ class AudioPackage {
 			media.addEventListener(`play`, (event) => window.assert(async () => {
 				await audioContext.resume();
 			}));
-			const source = this.#source = audioContext.createMediaElementSource(media);
+			const source = audioContext.createMediaElementSource(media);
 			const analyser = this.#analyser = audioContext.createAnalyser();
 			source.connect(analyser);
 			analyser.connect(audioContext.destination);
 
-			const audioPackage = this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
+			this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
 		}
 		/** @type {HTMLMediaElement} */
 		#media;
-		/** @type {MediaElementAudioSourceNode} */
-		#source;
 		/** @type {AnalyserNode} */
 		#analyser;
 		/**
@@ -223,25 +225,23 @@ class AudioPackage {
 	/** @type {boolean} */
 	static #locked = true;
 	/**
-	 * @param {ConstructorParameters<typeof AudioPackage>} args 
+	 * @param {number} length The length of data to analyze.
 	 * @returns {AudioPackage}
 	 */
-	static #construct(...args) {
+	static #construct(length) {
 		AudioPackage.#locked = false;
-		const result = new AudioPackage(...args);
+		const self = new AudioPackage();
 		AudioPackage.#locked = true;
-		return result;
+
+		self.#tapeLength = length;
+		self.#datalist = new Map(arrayDataTypes.map(type => [type, new Uint8Array(length)]));
+		self.#volumes = new Map(arrayDataTypes.map(type => [type, 0]));
+		self.#amplitudes = new Map(arrayDataTypes.map(type => [type, 0]));
+
+		return self;
 	}
-	/**
-	 * @param {number} length The length of data to analyze.
-	 * @throws {TypeError} If invoked outside internal class code.
-	 */
-	constructor(length) {
+	constructor() {
 		if (AudioPackage.#locked) throw new TypeError(`Illegal constructor`);
-		this.#tapeLength = length;
-		this.#datalist = new Map(arrayDataTypes.map(type => [type, new Uint8Array(length)]));
-		this.#volumes = new Map(arrayDataTypes.map(type => [type, 0]));
-		this.#amplitudes = new Map(arrayDataTypes.map(type => [type, 0]));
 	}
 	/** @type {number} */
 	#tapeLength;
@@ -374,9 +374,9 @@ class Visualizer extends EventTarget {
 		}
 		/**
 		 * Clears the canvas and resets the view.
-		 * @returns {Promise<void>}
+		 * @returns {void}
 		 */
-		async resize() {
+		resize() {
 			const { context } = this;
 			const { width, height } = context.canvas;
 			const transform = context.getTransform();
@@ -384,9 +384,9 @@ class Visualizer extends EventTarget {
 		}
 		/**
 		 * Updates the visualization with new audio data.
-		 * @returns {Promise<void>}
+		 * @returns {void}
 		 */
-		async update() {
+		update() {
 			const { context } = this;
 			const { width, height } = context.canvas;
 			const transform = context.getTransform();
@@ -396,11 +396,12 @@ class Visualizer extends EventTarget {
 	//#endregion
 
 	/**
-	 * @param {number} value 
-	 * @returns {boolean}
+	 * Checks if the given frame rate value validity.
+	 * @param {number} value The frame rate value to check.
+	 * @returns {boolean} True if the value is valid; otherwise, false.
 	 */
-	static checkRateAvailability(value) {
-		if (!Number.isInteger(value)) return false;
+	static checkRate(value) {
+		if (!Number.isFinite(value)) return false;
 		if (30 > value || value > 300) return false;
 		if (value % 30 !== 0) return false;
 		return true;
@@ -424,7 +425,7 @@ class Visualizer extends EventTarget {
 	 */
 	static get defaultVisualization() {
 		const result = Visualizer.#attachments.keys().next();
-		if (result.done) throw new ReferenceError(`Unable to find any visualization`);
+		if (result.done) throw new ReferenceError(`Unable to find any attachment`);
 		return result.value;
 	}
 	/**
@@ -433,64 +434,56 @@ class Visualizer extends EventTarget {
 	 * @returns {string[]}
 	 */
 	static get visualizations() {
-		return Visualizer.#attachments.keys().toArray();
+		return Array.from(Visualizer.#attachments.keys());
 	}
+	/** @type {boolean} */
+	static #locked = true;
 	/** @type {Visualizer?} */
 	static #self = null;
 	/**
 	 * Builds and initializes a new visualizer instance.
 	 * @param {HTMLCanvasElement} canvas The canvas element for drawing.
 	 * @param {HTMLMediaElement} media The media element for audio input.
-	 * @returns {Promise<Visualizer>}
+	 * @returns {Visualizer}
 	 */
-	static async build(canvas, media) {
-		const visualizer = Visualizer.#self = Visualizer.#construct();
+	static build(canvas, media) {
+		Visualizer.#locked = false;
+		const self = this.#self = new Visualizer();
+		Visualizer.#locked = true;
 
-		visualizer.#canvas = canvas;
-		visualizer.#fixCanvasSize();
-		window.addEventListener(`resize`, (event) => visualizer.#fixCanvasSize());
+		self.#canvas = canvas;
+		self.#fixCanvasSize();
+		window.addEventListener(`resize`, (event) => self.#fixCanvasSize());
 
 		const context = canvas.getContext(`2d`);
 		if (context === null) throw new Error(`Unable to get context`);
-		visualizer.#context = context;
-		visualizer.#fixContextSize();
-		window.addEventListener(`resize`, (event) => visualizer.#fixContextSize());
+		self.#context = context;
+		self.#fixContextSize();
+		window.addEventListener(`resize`, (event) => self.#fixContextSize());
 
-		const manager = visualizer.#manager = new AudioPackage.Manager(media);
+		self.#manager = new AudioPackage.Manager(media);
 
-		const engine = visualizer.#engine = new StaticEngine();
+		const engine = self.#engine = new StaticEngine();
 		media.addEventListener(`play`, (event) => {
 			engine.launched = true;
 		});
 		media.addEventListener(`pause`, (event) => {
 			engine.launched = false;
 		});
-		media.addEventListener(`emptied`, async (event) => {
-			await visualizer.#triggerVisualizationUpdate();
+		media.addEventListener(`emptied`, (event) => {
+			self.#triggerVisualizationUpdate();
 			engine.launched = false;
 		});
 
 		const attachment = Array.from(Visualizer.#attachments).at(0);
 		if (attachment === undefined) throw new Error(`No visualization is attached to the visualizer.`);
-		visualizer.#attachment = DataPair.fromArray(attachment);
-		await visualizer.#triggerVisualizationResize();
-		window.addEventListener(`resize`, async (event) => await visualizer.#triggerVisualizationResize());
-		await visualizer.#triggerVisualizationUpdate();
-		engine.addEventListener(`update`, async (event) => await visualizer.#triggerVisualizationUpdate());
+		self.#attachment = DataPair.fromArray(attachment);
+		self.#triggerVisualizationResize();
+		window.addEventListener(`resize`, (event) => self.#triggerVisualizationResize());
+		self.#triggerVisualizationUpdate();
+		engine.addEventListener(`update`, (event) => self.#triggerVisualizationUpdate());
 
-		return visualizer;
-	}
-	/** @type {boolean} */
-	static #locked = true;
-	/**
-	 * @param {ConstructorParameters<typeof Visualizer>} args 
-	 * @returns {Visualizer}
-	 */
-	static #construct(...args) {
-		Visualizer.#locked = false;
-		const result = new Visualizer(...args);
-		Visualizer.#locked = true;
-		return result;
+		return self;
 	}
 	constructor() {
 		super();
@@ -531,8 +524,8 @@ class Visualizer extends EventTarget {
 	 * @returns {void}
 	 */
 	set rate(value) {
-		if (!Visualizer.checkRateAvailability(value)) return;
-		this.#engine.limit = value;
+		if (!Visualizer.checkRate(value)) return;
+		this.#engine.limit = round(value);
 	}
 	/** @type {DataPair<string, VisualizerVisualiztion>} */
 	#attachment;
@@ -553,25 +546,24 @@ class Visualizer extends EventTarget {
 		const visualization = Visualizer.#attachments.get(value);
 		if (visualization === undefined) throw new Error(`Visualization with name '${value}' doesn't attached`);
 		this.#attachment = new DataPair(value, visualization);
-		Promise.all([
-			visualization.resize(),
-			visualization.update(),
-		]);
+		this.#triggerVisualizationResize();
 	}
 	/**
-	 * @returns {Promise<void>}
+	 * @returns {void}
 	 */
-	async #triggerVisualizationResize() {
-		await this.#attachment.value.resize();
-		await this.#attachment.value.update();
+	#triggerVisualizationResize() {
+		const { value: visualization } = this.#attachment;
+		visualization.resize();
+		visualization.update();
 		this.dispatchEvent(new UIEvent(`resize`));
 	}
 	/**
-	 * @returns {Promise<void>}
+	 * @returns {void}
 	 */
-	async #triggerVisualizationUpdate() {
-		this.#manager.update();
-		await this.#attachment.value.update();
+	#triggerVisualizationUpdate() {
+		const manager = this.#manager, { value: visualization } = this.#attachment;
+		manager.update();
+		visualization.update();
 		this.dispatchEvent(new UIEvent(`update`));
 	}
 	/** @type {HTMLCanvasElement} */
@@ -580,9 +572,9 @@ class Visualizer extends EventTarget {
 	 * @returns {void}
 	 */
 	#fixCanvasSize() {
-		const { width, height } = this.#canvas.getBoundingClientRect();
-		this.#canvas.width = width;
-		this.#canvas.height = height;
+		const canvas = this.#canvas, { width, height } = canvas.getBoundingClientRect();
+		canvas.width = width;
+		canvas.height = height;
 	}
 	/** @type {CanvasRenderingContext2D} */
 	#context;
@@ -590,10 +582,10 @@ class Visualizer extends EventTarget {
 	 * @returns {void}
 	 */
 	#fixContextSize() {
-		const transform = this.#context.getTransform();
-		transform.e = this.#canvas.width / 2;
-		transform.f = this.#canvas.height / 2;
-		this.#context.setTransform(transform);
+		const context = this.#context, { canvas } = context, transform = context.getTransform();
+		transform.e = canvas.width / 2;
+		transform.f = canvas.height / 2;
+		context.setTransform(transform);
 	}
 	/** @type {AudioPackageManager} */
 	#manager;
@@ -672,6 +664,7 @@ class Visualizer extends EventTarget {
 class VisualizationConfiguration {
 	/**
 	 * @param {any} source 
+	 * @param {string} name 
 	 * @returns {VisualizationConfiguration}
 	 */
 	static import(source, name = `source`) {
@@ -784,6 +777,7 @@ class VisualizationConfiguration {
 class VisualizationAttachment {
 	/**
 	 * @param {any} source 
+	 * @param {string} name 
 	 * @returns {VisualizationAttachment}
 	 */
 	static import(source, name = `source`) {
@@ -858,6 +852,7 @@ class VisualizationAttachment {
 class VisualizerConfiguration {
 	/**
 	 * @param {any} source 
+	 * @param {string} name 
 	 * @returns {VisualizerConfiguration}
 	 */
 	static import(source, name = `source`) {
@@ -905,7 +900,7 @@ class VisualizerConfiguration {
 	 * @returns {void}
 	 */
 	set rate(value) {
-		if (!Visualizer.checkRateAvailability(value)) throw new Error(`Invalid value '${value}' for rate`);
+		if (!Visualizer.checkRate(value)) throw new Error(`Invalid value '${value}' for rate`);
 		this.#rate = value;
 	}
 	/** @type {string} */
@@ -947,6 +942,7 @@ class VisualizerConfiguration {
 class Settings {
 	/**
 	 * @param {any} source 
+	 * @param {string} name 
 	 * @returns {Settings}
 	 */
 	static import(source, name = `source`) {
