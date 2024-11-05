@@ -87,9 +87,13 @@ class AudioPackage {
 		constructor(media) {
 			this.#media = media;
 			const audioContext = new AudioContext();
-			media.addEventListener(`play`, (event) => window.assert(async () => {
-				await audioContext.resume();
-			}));
+			media.addEventListener(`play`, async (event) => {
+				try {
+					await audioContext.resume();
+				} catch (error) {
+					await window.alertAsync(Error.from(error));
+				}
+			});
 			const source = audioContext.createMediaElementSource(media);
 			const analyser = this.#analyser = audioContext.createAnalyser();
 			source.connect(analyser);
@@ -177,8 +181,7 @@ class AudioPackage {
 		 */
 		set spread(value) {
 			if (!AudioPackageManager.checkSpread(value)) return;
-			const { focus } = this;
-			const analyser = this.#analyser;
+			const analyser = this.#analyser, { focus } = this;
 			analyser.minDecibels = focus - value;
 			analyser.maxDecibels = focus + value;
 		}
@@ -201,6 +204,7 @@ class AudioPackage {
 			const analyser = this.#analyser;
 			const tapeLength = analyser.frequencyBinCount;
 			const audioPackage = this.#package;
+
 			for (const [type, data] of audioPackage.#datalist) {
 				if (!arrayDataTypes.includes(type)) continue;
 				if (this.#media.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
@@ -211,9 +215,9 @@ class AudioPackage {
 				} else data.fill(0);
 				let summary = 0, summarySquare = 0;
 				for (let index = 0; index < tapeLength; index++) {
-					const datul = data[index];
-					summary += datul;
-					summarySquare += sqpw(datul);
+					const datum = data[index];
+					summary += datum;
+					summarySquare += sqpw(datum);
 				}
 				audioPackage.#volumes.set(type, summary / tapeLength);
 				audioPackage.#amplitudes.set(type, sqrt(summarySquare / tapeLength));
