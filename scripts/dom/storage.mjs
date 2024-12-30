@@ -1,6 +1,6 @@
 "use strict";
 
-import { DataPair } from "./extensions.js";
+import { DataPair } from "../core/extensions.mjs";
 
 //#region Archive
 /**
@@ -92,7 +92,7 @@ class ArchiveManager {
 		window.addEventListener(`beforeunload`, (event) => {
 			try {
 				archive.data = self.#content.export();
-			} catch (error) {
+			} catch (reason) {
 				event.preventDefault();
 			}
 		});
@@ -227,7 +227,7 @@ class Database {
 		 */
 		insert(...values) {
 			return this.#openStoreWith(async (IDBOS) => {
-				const keys = [];
+				const keys = (/** @type {number[]} */ ([]));
 				for (const value of values) {
 					keys.push(Number(await Database.#resolve(IDBOS.add(value))));
 				}
@@ -241,7 +241,7 @@ class Database {
 		 */
 		select(...keys) {
 			return this.#openStoreWith(async (IDBOS) => {
-				const values = [];
+				const values = (/** @type {any[]} */ ([]));
 				for (const key of keys) {
 					values.push(await Database.#resolve(IDBOS.get(Number(key))));
 				}

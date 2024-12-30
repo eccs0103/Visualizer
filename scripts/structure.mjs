@@ -1,7 +1,14 @@
 "use strict";
 
-import { DataPair } from "./modules/extensions.js";
-import { StaticEngine } from "./modules/generators.js";
+import { DataPair } from "./core/extensions.mjs";
+import { } from "./core/generators.mjs";
+import { } from "./core/measures.mjs";
+import { } from "./core/palette.mjs";
+import { StaticEngine } from "./dom/generators.mjs";
+
+import { } from "./workers/extensions.mjs";
+import { } from "./workers/generators.mjs";
+import { } from "./workers/measures.mjs";
 
 const { sqpw, sqrt, log2, round } = Math;
 
@@ -86,18 +93,20 @@ class AudioPackage {
 		 */
 		constructor(media) {
 			this.#media = media;
-			const audioContext = new AudioContext();
+			const context = new AudioContext();
 			media.addEventListener(`play`, async (event) => {
 				try {
-					await audioContext.resume();
-				} catch (error) {
-					await window.alertAsync(Error.from(error));
+					await context.resume();
+				} catch (reason) {
+					await window.alertAsync(Error.from(reason));
 				}
 			});
-			const source = audioContext.createMediaElementSource(media);
-			const analyser = this.#analyser = audioContext.createAnalyser();
+
+			const source = context.createMediaElementSource(media);
+			const analyser = this.#analyser = context.createAnalyser();
+
 			source.connect(analyser);
-			analyser.connect(audioContext.destination);
+			analyser.connect(context.destination);
 
 			this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
 		}
@@ -207,20 +216,22 @@ class AudioPackage {
 
 			for (const [type, data] of audioPackage.#datalist) {
 				if (!arrayDataTypes.includes(type)) continue;
+
 				if (this.#media.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
 					switch (type) {
 						case DataTypes.frequency: analyser.getByteFrequencyData(data); break;
 						case DataTypes.timeDomain: analyser.getByteTimeDomainData(data); break;
 					}
 				} else data.fill(0);
-				let summary = 0, summarySquare = 0;
+
+				let linear = 0, quadratic = 0;
 				for (let index = 0; index < tapeLength; index++) {
 					const datum = data[index];
-					summary += datum;
-					summarySquare += sqpw(datum);
+					linear += datum;
+					quadratic += sqpw(datum);
 				}
-				audioPackage.#volumes.set(type, summary / tapeLength);
-				audioPackage.#amplitudes.set(type, sqrt(summarySquare / tapeLength));
+				audioPackage.#volumes.set(type, linear / tapeLength);
+				audioPackage.#amplitudes.set(type, sqrt(quadratic / tapeLength));
 			}
 		}
 	};
@@ -240,7 +251,7 @@ class AudioPackage {
 		self.#tapeLength = length;
 		self.#datalist = new Map(arrayDataTypes.map(type => [type, new Uint8Array(length)]));
 		self.#volumes = new Map(arrayDataTypes.map(type => [type, 0]));
-		self.#amplitudes = new Map(arrayDataTypes.map(type => [type, 0]));
+		self.#amplitudes = new Map(arrayDataTypes.map(type => [type, 0.5]));
 
 		return self;
 	}
@@ -304,11 +315,9 @@ class AudioPackage {
  */
 
 /**
- * @typedef {Object} UncomposedVisualizerEventMap
- * @property {Event} update
- * @property {UIEvent} resize
- * 
- * @typedef {EventListener & UncomposedVisualizerEventMap} VisualizerEventMap
+ * @typedef {object} VisualizerEventMap
+ * @property {Event} trigger
+ * @property {Event} resize
  */
 
 /**
@@ -457,13 +466,12 @@ class Visualizer extends EventTarget {
 
 		self.#canvas = canvas;
 		self.#fixCanvasSize();
-		window.addEventListener(`resize`, (event) => self.#fixCanvasSize());
+		window.addEventListener(`resize`, event => self.#fixCanvasSize());
 
-		const context = canvas.getContext(`2d`);
-		if (context === null) throw new Error(`Unable to get context`);
+		const context = canvas.getContext(`2d`) ?? Error.throws(`Unable to get context`);
 		self.#context = context;
 		self.#fixContextSize();
-		window.addEventListener(`resize`, (event) => self.#fixContextSize());
+		window.addEventListener(`resize`, event => self.#fixContextSize());
 
 		self.#manager = new AudioPackage.Manager(media);
 
@@ -479,13 +487,12 @@ class Visualizer extends EventTarget {
 			engine.launched = false;
 		});
 
-		const attachment = Array.from(Visualizer.#attachments).at(0);
-		if (attachment === undefined) throw new Error(`No visualization is attached to the visualizer.`);
+		const attachment = Array.from(Visualizer.#attachments).at(0) ?? Error.throws(`No visualization is attached to the visualizer.`);
 		self.#attachment = DataPair.fromArray(attachment);
 		self.#triggerVisualizationResize();
-		window.addEventListener(`resize`, (event) => self.#triggerVisualizationResize());
+		window.addEventListener(`resize`, event => self.#triggerVisualizationResize());
 		self.#triggerVisualizationUpdate();
-		engine.addEventListener(`update`, (event) => self.#triggerVisualizationUpdate());
+		engine.addEventListener(`trigger`, event => self.#triggerVisualizationUpdate());
 
 		return self;
 	}
@@ -495,23 +502,51 @@ class Visualizer extends EventTarget {
 	}
 	/**
 	 * @template {keyof VisualizerEventMap} K
-	 * @param {K} type
-	 * @param {(this: Visualizer, ev: VisualizerEventMap[K]) => any} listener
-	 * @param {boolean | AddEventListenerOptions} options
+	 * @overload
+	 * @param {K} type 
+	 * @param {(this: Visualizer, ev: VisualizerEventMap[K]) => any} listener 
+	 * @param {boolean | AddEventListenerOptions} [options] 
+	 * @returns {void}
+	 */
+	/**
+	 * @overload
+	 * @param {string} type 
+	 * @param {EventListenerOrEventListenerObject} listener 
+	 * @param {boolean | AddEventListenerOptions} [options] 
+	 * @returns {void}
+	 */
+	/**
+	 * @param {string} type 
+	 * @param {EventListenerOrEventListenerObject} listener 
+	 * @param {boolean | AddEventListenerOptions} options 
 	 * @returns {void}
 	 */
 	addEventListener(type, listener, options = false) {
-		return super.addEventListener(type, /** @type {EventListenerOrEventListenerObject} */(listener), options);
+		return super.addEventListener(type, listener, options);
 	}
 	/**
 	 * @template {keyof VisualizerEventMap} K
-	 * @param {K} type
-	 * @param {(this: Visualizer, ev: VisualizerEventMap[K]) => any} listener
-	 * @param {boolean | EventListenerOptions} options
+	 * @overload
+	 * @param {K} type 
+	 * @param {(this: Visualizer, ev: VisualizerEventMap[K]) => any} listener 
+	 * @param {boolean | EventListenerOptions} [options] 
+	 * @returns {void}
+	 */
+	/**
+	 * @overload
+	 * @param {string} type 
+	 * @param {EventListenerOrEventListenerObject} listener 
+	 * @param {boolean | EventListenerOptions} [options] 
+	 * @returns {void}
+	 */
+	/**
+	 * @param {string} type 
+	 * @param {EventListenerOrEventListenerObject} listener 
+	 * @param {boolean | EventListenerOptions} options 
 	 * @returns {void}
 	 */
 	removeEventListener(type, listener, options = false) {
-		return super.addEventListener(type, /** @type {EventListenerOrEventListenerObject} */(listener), options);
+		return super.removeEventListener(type, listener, options);
 	}
 	/** @type {StaticEngine} */
 	#engine;
@@ -559,7 +594,7 @@ class Visualizer extends EventTarget {
 		const { value: visualization } = this.#attachment;
 		visualization.resize();
 		visualization.update();
-		this.dispatchEvent(new UIEvent(`resize`));
+		this.dispatchEvent(new Event(`resize`));
 	}
 	/**
 	 * @returns {void}
@@ -568,7 +603,7 @@ class Visualizer extends EventTarget {
 		const manager = this.#manager, { value: visualization } = this.#attachment;
 		manager.update();
 		visualization.update();
-		this.dispatchEvent(new UIEvent(`update`));
+		this.dispatchEvent(new Event(`trigger`));
 	}
 	/** @type {HTMLCanvasElement} */
 	#canvas;
@@ -674,26 +709,26 @@ class VisualizationConfiguration {
 	static import(source, name = `source`) {
 		try {
 			const shell = Object.import(source);
-			const result = new VisualizationConfiguration();
+			const configuration = new VisualizationConfiguration();
 			const quality = Reflect.get(shell, `quality`);
 			if (quality !== undefined) {
-				result.quality = Number.import(quality, `property quality`);
+				configuration.quality = Number.import(quality, `property quality`);
 			}
 			const smoothing = Reflect.get(shell, `smoothing`);
 			if (smoothing !== undefined) {
-				result.smoothing = Number.import(smoothing, `property smoothing`);
+				configuration.smoothing = Number.import(smoothing, `property smoothing`);
 			}
 			const focus = Reflect.get(shell, `focus`);
 			if (focus !== undefined) {
-				result.focus = Number.import(focus, `property focus`);
+				configuration.focus = Number.import(focus, `property focus`);
 			}
 			const spread = Reflect.get(shell, `spread`);
 			if (spread !== undefined) {
-				result.spread = Number.import(spread, `property spread`);
+				configuration.spread = Number.import(spread, `property spread`);
 			}
-			return result;
-		} catch (error) {
-			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+			return configuration;
+		} catch (cause) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause });
 		}
 	}
 	/**
@@ -790,8 +825,8 @@ class VisualizationAttachment {
 			const name = String.import(shell[0], `property name`);
 			const configuration = VisualizationConfiguration.import(shell[1], `property configuration`);
 			return new VisualizationAttachment(name, configuration);
-		} catch (error) {
-			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		} catch (cause) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause });
 		}
 	}
 	/**
@@ -877,8 +912,8 @@ class VisualizerConfiguration {
 				result.#mapping = new Map(Visualizer.visualizations.map(name => [name, mapping.get(name) ?? new VisualizationConfiguration()]));
 			}
 			return result;
-		} catch (error) {
-			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		} catch (cause) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause });
 		}
 	}
 	/**
@@ -962,8 +997,8 @@ class Settings {
 				result.#visualizer = VisualizerConfiguration.import(visualizer, `property visualizer`);
 			}
 			return result;
-		} catch (error) {
-			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause: error });
+		} catch (cause) {
+			throw new TypeError(`Unable to import ${(name)} due its ${typename(source)} type`, { cause });
 		}
 	}
 	/**

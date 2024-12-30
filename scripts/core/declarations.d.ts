@@ -1,4 +1,4 @@
-/// <reference path="./extensions.js" />
+/// <reference path="./extensions.mjs" />
 
 /**
  * A mapping interface that associates primitive types with string keys.
@@ -119,9 +119,15 @@ interface String {
 	 */
 	toTitleCase(): string;
 	/**
-	 * Converts the string to title case based on the specified locale, where the first letter of each word is capitalized.
-	 * @param locale The locale to use for the conversion, defaults to the user's language.
-	 * @returns The string converted to title case based on the specified locale.
+	 * Converts the string to title case based on the specified locale(s), capitalizing the first letter of each word.
+	 * @param locales A single locale or an array of locales for locale-aware case conversion.
+	 * @returns The string converted to title case with locale-awareness.
+	 */
+	toLocalTitleCase(locales?: string | string[]): string;
+	/**
+	 * Converts the string to title case based on the specified locale(s), capitalizing the first letter of each word.
+	 * @param locales An argument supported by `Intl` for locale-aware case conversion.
+	 * @returns The string converted to title case with locale-awareness.
 	 */
 	toLocalTitleCase(locales?: Intl.LocalesArgument): string;
 	/**
@@ -189,7 +195,7 @@ interface ObjectConstructor {
 	 * @throws {ReferenceError} Throws a ReferenceError if the source is undefined.
 	 * @throws {TypeError} Throws a TypeError if the source is not an object or null.
 	 */
-	import(source: any, name?: string): Object;
+	import(source: any, name?: string): object;
 	/**
 	 * Applies a callback function to a non-nullable value, or returns the original nullable value.
 	 * @template T The type of the input value.
@@ -216,7 +222,17 @@ interface Object {
 	 * Exports the object.
 	 * @returns The exported object.
 	 */
-	export(): Object;
+	export(): object;
+}
+
+interface IteratorConstructor {
+	/**
+	 * Generates a range of integers between the specified minimum and maximum values (exclusive).
+	 * @param min The minimum value of the range (inclusive).
+	 * @param max The maximum value of the range (exclusive).
+	 * @returns A generator yielding integers in the specified range.
+	 */
+	range(min: number, max: number): Generator<number>;
 }
 
 interface ArrayConstructor {
@@ -230,12 +246,12 @@ interface ArrayConstructor {
 	 */
 	import(source: any, name?: string): any[];
 	/**
-	 * Generates a sequence of numbers from min to max (exclusive).
-	 * @param min The starting number of the sequence (inclusive).
-	 * @param max The ending number of the sequence (exclusive).
-	 * @returns An array containing the sequence of numbers.
+	 * Creates an array of integers between the specified minimum and maximum values (exclusive).
+	 * @param min The minimum value of the range (inclusive).
+	 * @param max The maximum value of the range (exclusive).
+	 * @returns An array containing integers in the specified range.
 	 */
-	sequence(min: number, max: number): number[];
+	range(min: number, max: number): number[];
 }
 
 interface Array<T> {
@@ -248,7 +264,6 @@ interface Array<T> {
 	 * Swaps the elements at the given indices in the array.
 	 * @param index1 The index of the first element.
 	 * @param index2 The index of the second element.
-	 * @returns {void}
 	 */
 	swap(index1: number, index2: number): void;
 }
@@ -280,29 +295,34 @@ interface Math {
 	toRadians(degrees: number): number;
 }
 
-interface PromiseConstructor {
+interface Promise<T> {
 	/**
-	 * Creates a promise that resolves after the specified timeout.
-	 * @param timeout The timeout in milliseconds.
-	 * @returns A promise that resolves after the timeout.
+	 * Checks if the promise is fulfilled.
 	 */
-	withTimeout(timeout: number): Promise<void>;
+	readonly fulfilled: Promise<boolean>;
 	/**
-	 * Creates a promise that can be controlled with an abort signal.
-	 * @template T
-	 * @param callback The callback to execute with an abort signal, resolve, and reject functions.
-	 * @returns A promise that can be controlled with an abort signal.
+	 * Retrieves the value of a resolved promise.
+	 * @throws {Error} Throws an error if the promise is rejected.
 	 */
-	withSignal<T>(callback: (signal: AbortSignal, resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+	readonly value: Promise<T>;
+	/**
+	 * Retrieves the reason of a rejected promise.
+	 * @throws {Error} Throws an error if the promise is fulfilled.
+	 */
+	readonly reason: Promise<any>;
 }
 
 interface ErrorConstructor {
 	/**
-	 * Generates an Error object from the provided input.
-	 * @param exception The exception input.
-	 * @returns An Error object representing the input.
+	 * Generates an error object from the provided input.
+	 * @param reason The reason input.
 	 */
-	from(exception: any): Error;
+	from(reason: any): Error;
+	/**
+	 * Throws an error based on the provided input.
+	 * @param reason The reason for the error.
+	 */
+	throws(reason?: any): never;
 }
 
 interface Error {
@@ -326,171 +346,4 @@ namespace globalThis {
 	 * @returns The type name of the value.
 	 */
 	function typename(value: any): string;
-}
-
-interface ParentNode {
-	/**
-	 * Retrieves an element of the specified type and selectors.
-	 * @template T
-	 * @param type The type of element to retrieve.
-	 * @param selectors The selectors to search for the element.
-	 * @returns The element instance.
-	 * @throws {TypeError} If the element is missing or has an invalid type.
-	 */
-	getElement<T extends typeof Element>(type: T, selectors: string): InstanceType<T>;
-	/**
-	 * Asynchronously retrieves an element of the specified type and selectors.
-	 * @template T
-	 * @param type The type of element to retrieve.
-	 * @param selectors The selectors to search for the element.
-	 * @returns The element instance.
-	 * @throws {TypeError} If the element is missing or has an invalid type.
-	 */
-	getElementAsync<T extends typeof Element>(type: T, selectors: string): Promise<InstanceType<T>>;
-	/**
-	 * Retrieves elements of the specified type and selectors.
-	 * @template T
-	 * @param type The type of elements to retrieve.
-	 * @param selectors The selectors to search for the elements.
-	 * @returns The NodeList of element instances.
-	 * @throws {TypeError} If any element is missing or has an invalid type.
-	 */
-	getElements<T extends typeof Element>(type: T, selectors: string): NodeListOf<InstanceType<T>>;
-	/**
-	 * Asynchronously retrieves elements of the specified type and selectors.
-	 * @template T
-	 * @param type The type of elements to retrieve.
-	 * @param selectors The selectors to search for the elements.
-	 * @returns The NodeList of element instances.
-	 * @throws {TypeError} If any element is missing or has an invalid type.
-	 */
-	getElementsAsync<T extends typeof Element>(type: T, selectors: string): Promise<NodeListOf<InstanceType<T>>>;
-}
-
-interface Element {
-	/**
-	 * Retrieves the closest ancestor element of the specified type and selectors.
-	 * @template T
-	 * @param type The type of element to retrieve.
-	 * @param selectors The selectors to search for the element.
-	 * @returns The element instance.
-	 * @throws {TypeError} If the element is missing or has an invalid type.
-	 */
-	getClosest<T extends typeof Element>(type: T, selectors: string): InstanceType<T>;
-	/**
-	 * Asynchronously retrieves the closest ancestor element of the specified type and selectors.
-	 * @template T
-	 * @param type The type of element to retrieve.
-	 * @param selectors The selectors to search for the element.
-	 * @returns The element instance.
-	 * @throws {TypeError} If the element is missing or has an invalid type.
-	 */
-	getClosestAsync<T extends typeof Element>(type: T, selectors: string): Promise<InstanceType<T>>;
-}
-
-interface Document {
-	/**
-	 * Asynchronously loads an image from the specified URL.
-	 * @param url The URL of the image to be loaded.
-	 * @returns A promise that resolves with the loaded image element.
-	 * @throws {Error} If the image fails to load.
-	 */
-	loadImage(url: string): Promise<HTMLImageElement>;
-	/**
-	 * Asynchronously loads multiple images from the provided URLs.
-	 * @param urls An array of image URLs to be loaded.
-	 * @returns A promise that resolves with an array of loaded image elements.
-	 * @throws {Error} If any image fails to load.
-	 */
-	loadImages(urls: string[]): Promise<HTMLImageElement[]>;
-}
-
-interface Window {
-	/**
-	 * Asynchronously displays an alert message.
-	 * @param message The message to display.
-	 * @returns A promise that resolves when the alert is closed.
-	 */
-	alertAsync(message?: any): Promise<void>;
-	/**
-	 * Asynchronously displays a confirmation dialog.
-	 * @param message The message to display.
-	 * @returns A promise that resolves to true if the user confirms, and false otherwise.
-	 */
-	confirmAsync(message?: string): Promise<boolean>;
-	/**
-	 * Asynchronously displays a prompt dialog.
-	 * @param message The message to display.
-	 * @returns A promise that resolves to the user's input value if accepted, or null if canceled.
-	 */
-	promptAsync(message?: string, _default?: string): Promise<string?>;
-	/**
-	 * Asynchronously loads a promise with a loading animation.
-	 * @template T
-	 * @param promise The promise to load.
-	 * @param delay The delay before the loading animation starts.
-	 * @param duration The duration of the loading animation.
-	 * @returns A promise that resolves to the result of the input promise.
-	 */
-	load<T>(promise: Promise<T>, delay?: number, duration?: number): Promise<T>;
-}
-
-/**
- * Asynchronously displays an alert message.
- * @param message The message to display.
- * @param title The title of the alert.
- * @returns A promise that resolves when the alert is closed.
- */
-declare function alertAsync(message?: any): Promise<void>;
-/**
- * Asynchronously displays a confirmation dialog.
- * @param message The message to display.
- * @param title The title of the confirmation dialog.
- * @returns A promise that resolves to true if the user confirms, and false otherwise.
- */
-declare function confirmAsync(message?: string): Promise<boolean>;
-/**
- * Asynchronously displays a prompt dialog.
- * @param message The message to display.
- * @param title The title of the prompt dialog.
- * @returns A promise that resolves to the user's input value if accepted, or null if canceled.
- */
-declare function promptAsync(message?: string, _default?: string): Promise<string?>;
-/**
- * Executes an action and handles any errors that occur.
- * @param action The action to be executed.
- * @param silent In silent mode errors are silently ignored; otherwise, they are thrown and the page is reloaded.
- * @returns A promise that resolves the action.
- */
-declare function assert(action: VoidFunction, silent?: boolean): Promise<void>;
-/**
- * Asynchronously loads a promise with a loading animation.
- * @template T
- * @param promise The promise to load.
- * @param duration The duration of the loading animation.
- * @param delay The delay before the loading animation starts.
- * @returns A promise that resolves to the result of the input promise.
- */
-declare function load<T>(promise: Promise<T>, duration?: number, delay?: number): Promise<T>;
-
-interface Navigator {
-	/**
-	 * Retrieves the data path based on developer and application name metadata.
-	 * @returns The data path.
-	 */
-	readonly dataPath: string;
-	/**
-	 * Retrieves the version information from the metadata.
-	 * @returns An instance representing the version.
-	 */
-	readonly version: VersionManager;
-	/**
-	 * А property to interact with the color scheme in webpage.
-	 */
-	colorScheme: string;
-	/**
-	 * Downloads the specified file.
-	 * @param file The file to download.
-	 */
-	download(file: File): void;
 }

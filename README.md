@@ -5,7 +5,8 @@ Music Visualizer.
 Upload any song to visualize it.  
 - - -
 ## Feed
-### 2.2.1 : Adaptive Core 3.1.6 (04.11.2024)
+### 2.2.1 : Adaptive Core 3.3.1 (30.12.2024)
+- Core updated.
 - Bug fixes and program structure improvements.
 
 ### 2.2.0 : Adaptive Core 3.1.6 (03.11.2024)

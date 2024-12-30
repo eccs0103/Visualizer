@@ -1,35 +1,16 @@
-/** @typedef {import("../scripts/modules/storage.js").DatabaseStore} DatabaseStore */
-
 "use strict";
 
-import { DataPair } from "../scripts/modules/extensions.js";
-import { Timespan } from "../scripts/modules/measures.js";
-import { ArchiveManager, Database } from "../scripts/modules/storage.js";
-import { Settings, Visualizer } from "../scripts/structure.js";
+import { Settings, Visualizer } from "../scripts/structure.mjs";
 
-//#region Alert severity
-/**
- * @enum {number}
- */
-const AlertSeverity = {
-	/**
-	 * Ignore the response, taking no action.
-	 * @readonly
-	 */
-	ignore: 0,
-	/**
-	 * Log the response for informational purposes.
-	 * @readonly
-	 */
-	log: 1,
-	/**
-	 * Throw an error in response to a critical event.
-	 * @readonly
-	 */
-	throw: 2,
-};
-Object.freeze(AlertSeverity);
-//#endregion
+import { } from "../scripts/dom/generators.mjs";
+import { } from "../scripts/dom/extensions.mjs";
+import { } from "../scripts/dom/palette.mjs";
+import { ArchiveManager, Database } from "../scripts/dom/storage.mjs";
+import { DataPair } from "../scripts/core/extensions.mjs";
+import { Timespan } from "../scripts/core/measures.mjs";
+
+/** @typedef {import("../scripts/dom/storage.mjs").DatabaseStore} DatabaseStore */
+
 //#region Controller
 /**
  * Represents the controller for the application.
@@ -42,37 +23,23 @@ class Controller {
 	 * Starts the main application flow.
 	 * @returns {Promise<void>}
 	 */
-	static async launch() {
+	static async build() {
 		Controller.#locked = false;
 		const self = new Controller();
 		Controller.#locked = true;
 
 		try {
 			await self.#main();
-		} catch (error) {
-			await self.#catch(Error.from(error));
+		} catch (reason) {
+			const error = Error.from(reason);
+			let message = String(error);
+			message += `\n\nAn error occurred. Any further actions may result in errors. To prevent this from happening, would you like to reload?`;
+			if (await window.confirmAsync(message)) location.reload();
+			throw reason;
 		}
 	}
 	constructor() {
 		if (Controller.#locked) throw new TypeError(`Illegal constructor`);
-	}
-	/** @type {AlertSeverity} */
-	#severity = AlertSeverity.throw;
-	/**
-	 * @param {Error} error 
-	 * @returns {Promise<void>}
-	 */
-	async #catch(error) {
-		switch (this.#severity) {
-			case AlertSeverity.ignore: break;
-			case AlertSeverity.log: {
-				console.error(error);
-			} break;
-			case AlertSeverity.throw: {
-				await window.alertAsync(error);
-				location.reload();
-			} break;
-		}
 	}
 	//#endregion
 	//#region Implementation
@@ -88,8 +55,8 @@ class Controller {
 			if (audioRecent === undefined) return null;
 			if (!(audioRecent instanceof File)) throw new TypeError(`Unable to import audiolist due its ${typename(audioRecent)} type`);
 			return audioRecent;
-		} catch (error) {
-			console.error(error);
+		} catch (reason) {
+			console.error(reason);
 			return null;
 		}
 	}
@@ -103,8 +70,8 @@ class Controller {
 			if (file === null) await storeAudiolist.remove(0);
 			else await storeAudiolist.update(new DataPair(0, file));
 			return true;
-		} catch (error) {
-			console.error(error);
+		} catch (reason) {
+			console.error(reason);
 			return false;
 		}
 	}
@@ -211,12 +178,12 @@ class Controller {
 		await Promise.withSignal((signal, resolve, reject) => {
 			const scriptVisualizations = document.head.appendChild(document.createElement(`script`));
 			scriptVisualizations.type = `module`;
-			scriptVisualizations.addEventListener(`load`, (event) => resolve(null), { signal });
-			scriptVisualizations.addEventListener(`error`, (event) => reject(event.error), { signal });
-			scriptVisualizations.src = `../scripts/visualizations.js`;
+			scriptVisualizations.addEventListener(`load`, event => resolve(null), { signal });
+			scriptVisualizations.addEventListener(`error`, event => reject(event.error ?? event.message), { signal });
+			scriptVisualizations.src = `../scripts/visualizations.mjs`;
 		});
 
-		/* const storeAudiolist =  */this.#storeAudiolist = await Database.Store.open(`${navigator.dataPath}`, `Audiolist`);
+		const storeAudiolist = this.#storeAudiolist = await Database.Store.open(`${navigator.dataPath}`, `Audiolist`);
 		const settings = (await ArchiveManager.construct(`${navigator.dataPath}.Settings`, Settings)).content;
 
 		const audioPlayer = this.#audioPlayer = document.getElement(HTMLAudioElement, `audio#player`);
@@ -242,13 +209,13 @@ class Controller {
 		audioPlayer.addEventListener(`loadstart`, async (event) => {
 			try {
 				await window.load(Promise.withSignal((signal, resolve, reject) => {
-					audioPlayer.addEventListener(`canplay`, (event) => resolve(null), { signal });
-					audioPlayer.addEventListener(`error`, (event) => reject(event.error), { signal });
+					audioPlayer.addEventListener(`canplay`, event => resolve(null), { signal });
+					audioPlayer.addEventListener(`error`, event => reject(event.error), { signal });
 				}));
 				this.markAudioReady = true;
 				bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
-			} catch (error) {
-				console.error(error);
+			} catch (reason) {
+				console.error(reason);
 			}
 		});
 		audioPlayer.addEventListener(`emptied`, (event) => {
@@ -279,8 +246,7 @@ class Controller {
 
 		inputAudioLoader.addEventListener(`input`, (event) => {
 			try {
-				const files = inputAudioLoader.files;
-				if (files === null) return;
+				const files = inputAudioLoader.files ?? Error.throws(`Unable to detect files list`);
 				const file = files.item(0);
 				if (file === null) return;
 				audioRecent = file;
@@ -437,6 +403,6 @@ class Controller {
 	}
 	//#endregion
 }
-
-await Controller.launch();
 //#endregion
+
+Controller.build();

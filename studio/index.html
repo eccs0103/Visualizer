@@ -3,7 +3,6 @@
 
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="generator" content="2.2.0">
 	<meta name="title" content="Visualizer">
@@ -23,7 +22,7 @@
 	<link rel="preload" as="image" href="../resources/icons/pause.svg">
 	<link rel="preload" as="image" href="../resources/icons/eject.svg">
 	<link rel="stylesheet" href="./style.css">
-	<script type="module" src="./script.js"></script>
+	<script type="module" src="./script.mjs"></script>
 </head>
 
 <body>
@@ -33,12 +32,12 @@
 	<div id="interface">
 		<div id="audio-control" class="with-padding large-padding flex">
 			<input id="audio-loader" type="file" hidden>
-			<button id="audio-drive" class="flex secondary-centered with-gap">
+			<button id="audio-drive" type="button" class="flex secondary-centered with-gap">
 				<img src="../resources/icons/upload.svg" alt="Audio drive" class="icon">
 			</button>
 		</div>
 		<div id="audio-auxiliary" class="with-padding large-padding flex reversed">
-			<button id="open-configurator" class="flex secondary-centered with-gap">
+			<button id="open-configurator" type="button" class="flex secondary-centered with-gap">
 				<img src="../resources/icons/tune.svg" alt="Open configurator" class="icon">
 			</button>
 		</div>
@@ -48,12 +47,12 @@
 		<div id="playback-auxiliary" class="with-inline-padding large-padding flex reversed">
 			<b id="playback-time">00:00</b>
 		</div>
-		<input id="playback-time-track" type="range" min="0" max="100" step="0.1" value="0">
+		<input id="playback-time-track" type="range" min="0" max="100" step="0.1" value="0" title="Playback time track">
 	</div>
 	<!-- Configurator -->
 	<dialog id="configurator" class="layer rounded with-padding large-padding flex column with-gap">
 		<div class="flex reversed">
-			<button id="close-configurator" class="flex secondary-centered with-gap">
+			<button id="close-configurator" type="button" class="flex secondary-centered with-gap">
 				<img src="../resources/icons/close.svg" alt="Close configurator" class="icon">
 			</button>
 		</div>
