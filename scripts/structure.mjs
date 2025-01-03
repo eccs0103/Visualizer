@@ -4,10 +4,9 @@ import { DataPair } from "./core/extensions.mjs";
 import { } from "./core/generators.mjs";
 import { } from "./core/measures.mjs";
 import { } from "./core/palette.mjs";
-import { StaticEngine } from "./dom/generators.mjs";
 
 import { } from "./workers/extensions.mjs";
-import { } from "./workers/generators.mjs";
+import { StaticEngine } from "./workers/generators.mjs";
 import { } from "./workers/measures.mjs";
 
 const { sqpw, sqrt, log2, round } = Math;

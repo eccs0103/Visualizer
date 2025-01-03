@@ -17,9 +17,9 @@ div#interface {
 	height: 100%;
 	display: grid;
 	grid-template:
-		'audio-control-area			audio-auxiliary-area	' auto
-		'playback-control-area		playback-auxiliary-area	' 1fr
-		'playback-time-track-area	playback-time-track-area' auto
+		'audio-control-area		audio-auxiliary-area	' auto
+		'playback-control-area	playback-auxiliary-area	' 1fr
+		'playback-track-area	playback-track-area		' auto
 		/ 1fr auto
 	;
 	overflow: hidden;
@@ -49,12 +49,12 @@ div#interface > *#playback-auxiliary {
 	align-items: end;
 }
 
-div#interface > input#playback-time-track {
-	grid-area: playback-time-track-area;
+div#interface > input#playback-track {
+	grid-area: playback-track-area;
 }
 
-input#playback-time-track {
-	grid-area: playback-time-track-area;
+input#playback-track {
+	grid-area: playback-track-area;
 	width: 100%;
 	height: var(--size-standart);
 	position: relative;

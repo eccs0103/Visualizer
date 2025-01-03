@@ -27,11 +27,11 @@
 
 <body>
 	<audio id="player" hidden></audio>
+	<input id="audio-loader" type="file" hidden>
 	<canvas id="display"></canvas>
 	<!-- Interface -->
 	<div id="interface">
 		<div id="audio-control" class="with-padding large-padding flex">
-			<input id="audio-loader" type="file" hidden>
 			<button id="audio-drive" type="button" class="flex secondary-centered with-gap">
 				<img src="../resources/icons/upload.svg" alt="Audio drive" class="icon">
 			</button>
@@ -47,7 +47,7 @@
 		<div id="playback-auxiliary" class="with-inline-padding large-padding flex reversed">
 			<b id="playback-time">00:00</b>
 		</div>
-		<input id="playback-time-track" type="range" min="0" max="100" step="0.1" value="0" title="Playback time track">
+		<input id="playback-track" type="range" min="0" max="100" step="0.1" value="0" title="Playback time track">
 	</div>
 	<!-- Configurator -->
 	<dialog id="configurator" class="layer rounded with-padding large-padding flex column with-gap">

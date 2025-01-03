@@ -261,9 +261,8 @@ dialog {
 	}
 
 	&.pop-up div.container {
-		overflow: auto;
-		text-overflow: clip;
-		white-space: pre;
+		overflow: hidden auto;
+		white-space: break-spaces;
 	}
 }
 

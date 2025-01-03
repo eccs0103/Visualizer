@@ -2,7 +2,6 @@
 
 import { Settings, Visualizer } from "../scripts/structure.mjs";
 
-import { } from "../scripts/dom/generators.mjs";
 import { } from "../scripts/dom/extensions.mjs";
 import { } from "../scripts/dom/palette.mjs";
 import { ArchiveManager, Database } from "../scripts/dom/storage.mjs";
@@ -42,13 +41,30 @@ class Controller {
 		if (Controller.#locked) throw new TypeError(`Illegal constructor`);
 	}
 	//#endregion
-	//#region Implementation
+	//#region Model
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #buildModel() {
+		await Promise.withSignal((signal, resolve, reject) => {
+			const scriptVisualizations = document.head.appendChild(document.createElement(`script`));
+			scriptVisualizations.type = `module`;
+			scriptVisualizations.addEventListener(`load`, event => resolve(null), { signal });
+			scriptVisualizations.addEventListener(`error`, event => reject(event.error ?? event.message), { signal });
+			scriptVisualizations.src = `../scripts/visualizations.mjs`;
+		});
+
+		const settings = this.#settings = (await ArchiveManager.construct(`${navigator.dataPath}.Settings`, Settings)).content;
+		const storeAudiolist = this.#storeAudiolist = await Database.Store.open(`${navigator.dataPath}`, `Audiolist`);
+	}
+	/** @type {Settings} */
+	#settings;
 	/** @type {DatabaseStore} */
 	#storeAudiolist;
 	/**
 	 * @returns {Promise<File?>}
 	 */
-	async #loadRecentAudio() {
+	async #getRecentAudio() {
 		const storeAudiolist = this.#storeAudiolist;
 		try {
 			const [audioRecent] = Array.import(await storeAudiolist.select(0), `audiolist`);
@@ -64,7 +80,7 @@ class Controller {
 	 * @param {File?} file 
 	 * @returns {Promise<boolean>}
 	 */
-	async #saveRecentAudio(file) {
+	async #setRecentAudio(file) {
 		const storeAudiolist = this.#storeAudiolist;
 		try {
 			if (file === null) await storeAudiolist.remove(0);
@@ -74,6 +90,34 @@ class Controller {
 			console.error(reason);
 			return false;
 		}
+	}
+	//#endregion
+	//#region View
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #buildView() {
+		const { body } = document;
+
+		const audioPlayer = this.#audioPlayer = body.getElement(HTMLAudioElement, `audio#player`);
+		const inputAudioLoader = this.#inputAudioLoader = body.getElement(HTMLInputElement, `input#audio-loader`);
+		const canvas = this.#canvas = body.getElement(HTMLCanvasElement, `canvas#display`);
+		const visualizer = this.#visualizer = Visualizer.build(canvas, audioPlayer);
+
+		const divInterface = this.#divInterface = body.getElement(HTMLDivElement, `div#interface`);
+		const buttonAudioDrive = this.#buttonAudioDrive = divInterface.getElement(HTMLButtonElement, `button#audio-drive`);
+		const buttonOpenConfigurator = this.#buttonOpenConfigurator = divInterface.getElement(HTMLButtonElement, `button#open-configurator`);
+		const bPlaybackTime = this.#bPlaybackTime = divInterface.getElement(HTMLElement, `b#playback-time`);
+		const inputPlaybackTrack = this.#inputPlaybackTrack = divInterface.getElement(HTMLInputElement, `input#playback-track`);
+
+		const dialogConfigurator = this.#dialogConfigurator = document.getElement(HTMLDialogElement, `dialog#configurator`);
+		const buttonCloseConfigurator = this.#buttonCloseConfigurator = dialogConfigurator.getElement(HTMLButtonElement, `button#close-configurator`);
+		const inputVisualizerRate = this.#inputVisualizerRate = dialogConfigurator.getElement(HTMLInputElement, `input#visualizer-rate`);
+		const selectVisualizerVisualization = this.#selectVisualizerVisualization = dialogConfigurator.getElement(HTMLSelectElement, `select#visualizer-visualization`);
+		const inputVisualizationQuality = this.#inputVisualizationQuality = dialogConfigurator.getElement(HTMLInputElement, `input#visualization-quality`);
+		const inputVisualizationSmoothing = this.#inputVisualizationSmoothing = dialogConfigurator.getElement(HTMLInputElement, `input#visualization-smoothing`);
+		const inputVisualizationSpread = this.#inputVisualizationSpread = dialogConfigurator.getElement(HTMLInputElement, `input#visualization-spread`);
+		const inputVisualizationFocus = this.#inputVisualizationFocus = dialogConfigurator.getElement(HTMLInputElement, `input#visualization-focus`);
 	}
 	/** @type {HTMLAudioElement} */
 	#audioPlayer;
@@ -90,7 +134,7 @@ class Controller {
 	 */
 	set markAudioReady(value) {
 		const { dataset } = this.#audioPlayer;
-		if (value) dataset[`ready`] = ``;
+		if (value) dataset[`ready`] = String.empty;
 		else delete dataset[`ready`];
 	}
 	/**
@@ -107,7 +151,7 @@ class Controller {
 	set markAudioPlaying(value) {
 		if (!this.markAudioReady) return;
 		const { dataset } = this.#audioPlayer;
-		if (value) dataset[`playing`] = ``;
+		if (value) dataset[`playing`] = String.empty;
 		else delete dataset[`playing`];
 	}
 	/**
@@ -138,85 +182,108 @@ class Controller {
 		return `${current} • ${Controller.#toPlaytimeString(audioPlayer.duration)}`;
 	}
 	/** @type {HTMLInputElement} */
-	#inputPlaybackTime;
+	#inputAudioLoader;
+	/** @type {HTMLCanvasElement} */
+	#canvas;
+	/** @type {Visualizer} */
+	#visualizer;
+
+	/** @type {HTMLDivElement} */
+	#divInterface;
+	/** @type {HTMLButtonElement} */
+	#buttonAudioDrive;
+	/** @type {HTMLButtonElement} */
+	#buttonOpenConfigurator;
+	/** @type {HTMLElement} */
+	#bPlaybackTime;
+	/** @type {HTMLInputElement} */
+	#inputPlaybackTrack;
 	/**
-	 * @readonly
 	 * @returns {number}
 	 */
-	get #factorAudioTrack() {
-		const inputPlaybackTime = this.#inputPlaybackTime;
-		return Number(inputPlaybackTime.value).interpolate(0, Number(inputPlaybackTime.max) - Number(inputPlaybackTime.min));
+	#getPlaybackFactor() {
+		const { value, min, max } = this.#inputPlaybackTrack;
+		return Number(value).interpolate(Number(min), Number(max));
 	}
 	/** @type {HTMLDialogElement} */
 	#dialogConfigurator;
-	/** @type {Keyframe} */
-	#keyframeAppear = { opacity: `1` };
-	/** @type {Keyframe} */
-	#keyframeDisappear = { opacity: `0` };
+	/**
+	 * @param {string} opacity 
+	 * @param {string} easing 
+	 * @returns {Keyframe}
+	 */
+	static #createAppearanceKeyframe(opacity, easing) {
+		return { opacity, easing };
+	}
 	/**
 	 * @param {boolean} value 
 	 * @returns {Promise<void>}
 	 */
 	async #setConfiguratorActivity(value) {
 		const dialogConfigurator = this.#dialogConfigurator;
-		const keyframeAppear = this.#keyframeAppear, keyframeDisappear = this.#keyframeDisappear;
+		const appear = Controller.#createAppearanceKeyframe(`1`, `ease-in`), disappear = Controller.#createAppearanceKeyframe(`0`, `ease-out`);
 		const duration = 50, fill = `both`;
 
 		if (value) {
 			dialogConfigurator.show();
-			await dialogConfigurator.animate([keyframeDisappear, keyframeAppear], { duration, fill }).finished;
+			await dialogConfigurator.animate([disappear, appear], { duration, fill }).finished;
 		} else {
-			await dialogConfigurator.animate([keyframeAppear, keyframeDisappear], { duration, fill }).finished;
+			await dialogConfigurator.animate([appear, disappear], { duration, fill }).finished;
 			dialogConfigurator.close();
 		}
 	}
+	/** @type {HTMLButtonElement} */
+	#buttonCloseConfigurator;
+	/** @type {HTMLInputElement} */
+	#inputVisualizerRate;
+	/** @type {HTMLSelectElement} */
+	#selectVisualizerVisualization;
+	/** @type {HTMLInputElement} */
+	#inputVisualizationQuality;
+	/** @type {HTMLInputElement} */
+	#inputVisualizationSmoothing;
+	/** @type {HTMLInputElement} */
+	#inputVisualizationSpread;
+	/** @type {HTMLInputElement} */
+	#inputVisualizationFocus;
 	/**
 	 * @returns {Promise<void>}
 	 */
-	async #main() {
-		//#region Awake
-		await Promise.withSignal((signal, resolve, reject) => {
-			const scriptVisualizations = document.head.appendChild(document.createElement(`script`));
-			scriptVisualizations.type = `module`;
-			scriptVisualizations.addEventListener(`load`, event => resolve(null), { signal });
-			scriptVisualizations.addEventListener(`error`, event => reject(event.error ?? event.message), { signal });
-			scriptVisualizations.src = `../scripts/visualizations.mjs`;
-		});
+	async #runViewInitialization() {
+		const settings = this.#settings;
 
-		const storeAudiolist = this.#storeAudiolist = await Database.Store.open(`${navigator.dataPath}`, `Audiolist`);
-		const settings = (await ArchiveManager.construct(`${navigator.dataPath}.Settings`, Settings)).content;
+		const audioPlayer = this.#audioPlayer;
+		const inputAudioLoader = this.#inputAudioLoader;
+		const visualizer = this.#visualizer;
 
-		const audioPlayer = this.#audioPlayer = document.getElement(HTMLAudioElement, `audio#player`);
-		const canvas = document.getElement(HTMLCanvasElement, `canvas#display`);
-		const inputAudioLoader = document.getElement(HTMLInputElement, `input#audio-loader`);
+		const divInterface = this.#divInterface;
+		const buttonAudioDrive = this.#buttonAudioDrive;
+		const buttonOpenConfigurator = this.#buttonOpenConfigurator;
+		const bPlaybackTime = this.#bPlaybackTime;
+		const inputPlaybackTrack = this.#inputPlaybackTrack;
 
-		const divInterface = document.getElement(HTMLDivElement, `div#interface`);
-		const buttonAudioDrive = document.getElement(HTMLButtonElement, `button#audio-drive`);
-		const buttonOpenConfigurator = document.getElement(HTMLButtonElement, `button#open-configurator`);
-		const bPlaybackTime = document.getElement(HTMLElement, `b#playback-time`);
-		const inputPlaybackTimeTrack = this.#inputPlaybackTime = document.getElement(HTMLInputElement, `input#playback-time-track`);
+		const dialogConfigurator = this.#dialogConfigurator;
+		const buttonCloseConfigurator = this.#buttonCloseConfigurator;
+		const inputVisualizerRate = this.#inputVisualizerRate;
+		const selectVisualizerVisualization = this.#selectVisualizerVisualization;
+		const inputVisualizationQuality = this.#inputVisualizationQuality;
+		const inputVisualizationSmoothing = this.#inputVisualizationSmoothing;
+		const inputVisualizationSpread = this.#inputVisualizationSpread;
+		const inputVisualizationFocus = this.#inputVisualizationFocus;
 
-		const dialogConfigurator = this.#dialogConfigurator = document.getElement(HTMLDialogElement, `dialog#configurator`);
-		const buttonCloseConfigurator = document.getElement(HTMLButtonElement, `button#close-configurator`);
-		const inputVisualizerRate = document.getElement(HTMLInputElement, `input#visualizer-rate`);
-		const selectVisualizerVisualization = document.getElement(HTMLSelectElement, `select#visualizer-visualization`);
-		const inputVisualizationQuality = document.getElement(HTMLInputElement, `input#visualization-quality`);
-		const inputVisualizationSmoothing = document.getElement(HTMLInputElement, `input#visualization-smoothing`);
-		const inputVisualizationSpread = document.getElement(HTMLInputElement, `input#visualization-spread`);
-		const inputVisualizationFocus = document.getElement(HTMLInputElement, `input#visualization-focus`);
-		//#endregion
-		//#region Subsystem build
+		///
+
 		audioPlayer.addEventListener(`loadstart`, async (event) => {
 			try {
 				await window.load(Promise.withSignal((signal, resolve, reject) => {
 					audioPlayer.addEventListener(`canplay`, event => resolve(null), { signal });
-					audioPlayer.addEventListener(`error`, event => reject(event.error), { signal });
+					audioPlayer.addEventListener(`error`, event => reject(event.error ?? event.message), { signal });
 				}));
 				this.markAudioReady = true;
-				bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
 			} catch (reason) {
 				console.error(reason);
 			}
+			bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
 		});
 		audioPlayer.addEventListener(`emptied`, (event) => {
 			this.markAudioReady = false;
@@ -228,15 +295,26 @@ class Controller {
 			this.markAudioPlaying = false;
 		});
 
-		let audioRecent = await this.#loadRecentAudio();
+		let audioRecent = await this.#getRecentAudio();
 		if (audioRecent !== null) {
 			audioPlayer.src = URL.createObjectURL(audioRecent);
 		}
 		window.addEventListener(`beforeunload`, async (event) => {
-			if (!await this.#saveRecentAudio(audioRecent)) event.preventDefault();
+			if (!await this.#setRecentAudio(audioRecent)) event.preventDefault();
 		});
 
-		const visualizer = Visualizer.build(canvas, audioPlayer);
+		inputAudioLoader.addEventListener(`input`, (event) => {
+			try {
+				const files = Object.suppress(inputAudioLoader.files, `files list`);
+				const file = files.item(0);
+				if (file === null) return;
+				audioRecent = file;
+				audioPlayer.src = URL.createObjectURL(file);
+			} finally {
+				inputAudioLoader.value = String.empty;
+			}
+		});
+
 		visualizer.rate = settings.visualizer.rate;
 		visualizer.visualization = settings.visualizer.visualization;
 		visualizer.quality = settings.visualizer.configuration.quality;
@@ -244,19 +322,8 @@ class Controller {
 		visualizer.focus = settings.visualizer.configuration.focus;
 		visualizer.spread = settings.visualizer.configuration.spread;
 
-		inputAudioLoader.addEventListener(`input`, (event) => {
-			try {
-				const files = inputAudioLoader.files ?? Error.throws(`Unable to detect files list`);
-				const file = files.item(0);
-				if (file === null) return;
-				audioRecent = file;
-				audioPlayer.src = URL.createObjectURL(file);
-			} finally {
-				inputAudioLoader.value = ``;
-			}
-		});
-		//#endregion
-		//#region Interface build
+		///
+
 		divInterface.addEventListener(`click`, async (event) => {
 			try {
 				if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
@@ -283,41 +350,33 @@ class Controller {
 		});
 
 		audioPlayer.addEventListener(`timeupdate`, (event) => {
-			if (document.activeElement === inputPlaybackTimeTrack) return;
-			const factor = (Number.isNaN(audioPlayer.duration)
-				? 0
-				: audioPlayer.currentTime / audioPlayer.duration
-			);
-			inputPlaybackTimeTrack.value = `${factor * 100}`;
-			inputPlaybackTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			if (document.activeElement === inputPlaybackTrack) return;
+			const factor = (audioPlayer.currentTime / audioPlayer.duration).orDefault(0);
+			inputPlaybackTrack.value = `${factor * 100}`;
+			inputPlaybackTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
 			bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
 		});
-		inputPlaybackTimeTrack.addEventListener(`pointerup`, (event) => {
-			inputPlaybackTimeTrack.blur();
+		inputPlaybackTrack.addEventListener(`pointerup`, (event) => {
+			inputPlaybackTrack.blur();
 		});
-		inputPlaybackTimeTrack.addEventListener(`input`, (event) => {
+		inputPlaybackTrack.addEventListener(`input`, (event) => {
 			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
-			const factor = this.#factorAudioTrack;
-			inputPlaybackTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
-			const time = (Number.isNaN(audioPlayer.duration)
-				? 0
-				: audioPlayer.duration * factor
-			);
+			const factor = this.#getPlaybackFactor();
+			inputPlaybackTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			const time = (audioPlayer.duration * factor).orDefault(0);
 			bPlaybackTime.innerText = this.#toPlaytimeInformation(time);
 		});
-		inputPlaybackTimeTrack.addEventListener(`change`, (event) => {
+		inputPlaybackTrack.addEventListener(`change`, (event) => {
 			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
-			const factor = this.#factorAudioTrack;
-			inputPlaybackTimeTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
-			const time = (Number.isNaN(audioPlayer.duration)
-				? 0
-				: audioPlayer.duration * factor
-			);
+			const factor = this.#getPlaybackFactor();
+			inputPlaybackTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
+			const time = (audioPlayer.duration * factor).orDefault(0);
 			bPlaybackTime.innerText = this.#toPlaytimeInformation(time);
 			audioPlayer.currentTime = time;
 		});
-		//#endregion
-		//#region Configurator build
+
+		///
+
 		await this.#setConfiguratorActivity(settings.isOpenedConfigurator);
 		buttonCloseConfigurator.addEventListener(`click`, async (event) => {
 			await this.#setConfiguratorActivity(false);
@@ -386,7 +445,14 @@ class Controller {
 		inputVisualizationSpread.addEventListener(`change`, (event) => {
 			settings.visualizer.configuration.spread = visualizer.spread;
 		});
-		//#endregion
+	}
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #runViewKeybindings() {
+		const settings = this.#settings;
+		const audioPlayer = this.#audioPlayer;
+		const dialogConfigurator = this.#dialogConfigurator;
 
 		window.addEventListener(`keydown`, async (event) => {
 			if (event.code === `Space`) {
@@ -402,6 +468,17 @@ class Controller {
 		});
 	}
 	//#endregion
+
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #main() {
+		await this.#buildModel();
+
+		await this.#buildView();
+		await this.#runViewInitialization();
+		await this.#runViewKeybindings();
+	}
 }
 //#endregion
 
