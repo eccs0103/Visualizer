@@ -299,7 +299,7 @@ interface Promise<T> {
 	/**
 	 * Checks if the promise is fulfilled.
 	 */
-	readonly fulfilled: Promise<boolean>;
+	readonly isFulfilled: Promise<boolean>;
 	/**
 	 * Retrieves the value of a resolved promise.
 	 * @throws {Error} Throws an error if the promise is rejected.

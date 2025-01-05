@@ -375,6 +375,10 @@ class VersionManager {
 //#endregion
 //#region Navigator
 Object.defineProperty(Navigator.prototype, `dataPath`, {
+	/**
+	 * @this {Navigator}
+	 * @returns {string}
+	 */
 	get() {
 		const developer = document.getElement(HTMLMetaElement, `meta[name="author"]`).content;
 		const title = document.getElement(HTMLMetaElement, `meta[name="title"]`).content;
@@ -383,6 +387,10 @@ Object.defineProperty(Navigator.prototype, `dataPath`, {
 });
 
 Object.defineProperty(Navigator.prototype, `version`, {
+	/**
+	 * @this {Navigator}
+	 * @returns {VersionManager}
+	 */
 	get() {
 		const metaVersion = document.getElement(HTMLMetaElement, `meta[name="generator"]`).content;
 		return VersionManager.parse(metaVersion);
@@ -390,9 +398,18 @@ Object.defineProperty(Navigator.prototype, `version`, {
 });
 
 Object.defineProperty(Navigator.prototype, `colorScheme`, {
+	/**
+	 * @this {Navigator}
+	 * @returns {string}
+	 */
 	get() {
 		return document.getElement(HTMLMetaElement, `meta[name="color-scheme"]`).content;
 	},
+	/**
+	 * @this {Navigator}
+	 * @param {string} value 
+	 * @returns {void}
+	 */
 	set(value) {
 		document.getElement(HTMLMetaElement, `meta[name="color-scheme"]`).content = String(value);
 	}

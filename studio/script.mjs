@@ -19,6 +19,17 @@ class Controller {
 	/** @type {boolean} */
 	static #locked = true;
 	/**
+	 * @param {any} reason 
+	 * @returns {Promise<void>}
+	 */
+	static async #catch(reason) {
+		const error = Error.from(reason);
+		let message = String(error);
+		message += `\n\nAn error occurred. Any further actions may result in errors. To prevent this from happening, would you like to reload?`;
+		if (await window.confirmAsync(message)) location.reload();
+		throw reason;
+	}
+	/**
 	 * Starts the main application flow.
 	 * @returns {Promise<void>}
 	 */
@@ -30,11 +41,7 @@ class Controller {
 		try {
 			await self.#main();
 		} catch (reason) {
-			const error = Error.from(reason);
-			let message = String(error);
-			message += `\n\nAn error occurred. Any further actions may result in errors. To prevent this from happening, would you like to reload?`;
-			if (await window.confirmAsync(message)) location.reload();
-			throw reason;
+			await Controller.#catch(reason);
 		}
 	}
 	constructor() {
@@ -67,10 +74,10 @@ class Controller {
 	async #getRecentAudio() {
 		const storeAudiolist = this.#storeAudiolist;
 		try {
-			const [audioRecent] = Array.import(await storeAudiolist.select(0), `audiolist`);
-			if (audioRecent === undefined) return null;
-			if (!(audioRecent instanceof File)) throw new TypeError(`Unable to import audiolist due its ${typename(audioRecent)} type`);
-			return audioRecent;
+			const [file] = Array.import(await storeAudiolist.select(0), `audiolist`);
+			if (file === undefined) return null;
+			if (!(file instanceof File)) throw new TypeError(`Unable to import audiolist due its ${typename(file)} type`);
+			return file;
 		} catch (reason) {
 			console.error(reason);
 			return null;
@@ -101,7 +108,7 @@ class Controller {
 
 		const audioPlayer = this.#audioPlayer = body.getElement(HTMLAudioElement, `audio#player`);
 		const inputAudioLoader = this.#inputAudioLoader = body.getElement(HTMLInputElement, `input#audio-loader`);
-		const canvas = this.#canvas = body.getElement(HTMLCanvasElement, `canvas#display`);
+		const canvas = body.getElement(HTMLCanvasElement, `canvas#display`);
 		const visualizer = this.#visualizer = Visualizer.build(canvas, audioPlayer);
 
 		const divInterface = this.#divInterface = body.getElement(HTMLDivElement, `div#interface`);
@@ -181,13 +188,47 @@ class Controller {
 		if (Number.isNaN(audioPlayer.duration)) return current;
 		return `${current} • ${Controller.#toPlaytimeString(audioPlayer.duration)}`;
 	}
+	/**
+	 * @param {File} file 
+	 * @returns {Promise<void>}
+	 */
+	async #insertAudioFile(file) {
+		const audioPlayer = this.#audioPlayer;
+		await window.load(Promise.withSignal((signal, resolve, reject) => {
+			audioPlayer.addEventListener(`canplay`, event => resolve(null), { signal });
+			audioPlayer.addEventListener(`error`, event => reject(event.error ?? event.message), { signal });
+			audioPlayer.src = URL.createObjectURL(file);
+		}));
+	}
+	/**
+	 * @returns {void}
+	 */
+	#ejectAudioFile() {
+		const audioPlayer = this.#audioPlayer;
+		audioPlayer.removeAttribute(`src`);
+		audioPlayer.srcObject = null;
+	}
+	/**
+	 * @returns {Promise<void>}
+	 */
+	async #loadRecentAudio() {
+		let file = await this.#getRecentAudio();
+		if (file === null) return;
+		await this.#insertAudioFile(file);
+	}
+	/**
+	 * @param {File?} file 
+	 * @returns {Promise<void>}
+	 */
+	async #saveRecentAudio(file) {
+		if (file === null) this.#ejectAudioFile();
+		else await this.#insertAudioFile(file);
+		await this.#setRecentAudio(file);
+	}
 	/** @type {HTMLInputElement} */
 	#inputAudioLoader;
-	/** @type {HTMLCanvasElement} */
-	#canvas;
 	/** @type {Visualizer} */
 	#visualizer;
-
 	/** @type {HTMLDivElement} */
 	#divInterface;
 	/** @type {HTMLButtonElement} */
@@ -273,17 +314,8 @@ class Controller {
 
 		///
 
-		audioPlayer.addEventListener(`loadstart`, async (event) => {
-			try {
-				await window.load(Promise.withSignal((signal, resolve, reject) => {
-					audioPlayer.addEventListener(`canplay`, event => resolve(null), { signal });
-					audioPlayer.addEventListener(`error`, event => reject(event.error ?? event.message), { signal });
-				}));
-				this.markAudioReady = true;
-			} catch (reason) {
-				console.error(reason);
-			}
-			bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
+		audioPlayer.addEventListener(`canplay`, (event) => {
+			this.markAudioReady = true;
 		});
 		audioPlayer.addEventListener(`emptied`, (event) => {
 			this.markAudioReady = false;
@@ -295,22 +327,17 @@ class Controller {
 			this.markAudioPlaying = false;
 		});
 
-		let audioRecent = await this.#getRecentAudio();
-		if (audioRecent !== null) {
-			audioPlayer.src = URL.createObjectURL(audioRecent);
-		}
-		window.addEventListener(`beforeunload`, async (event) => {
-			if (!await this.#setRecentAudio(audioRecent)) event.preventDefault();
-		});
-
-		inputAudioLoader.addEventListener(`input`, (event) => {
+		await this.#loadRecentAudio();
+		inputAudioLoader.addEventListener(`input`, async (event) => {
 			try {
 				const files = Object.suppress(inputAudioLoader.files, `files list`);
 				const file = files.item(0);
 				if (file === null) return;
-				audioRecent = file;
-				audioPlayer.src = URL.createObjectURL(file);
+				await this.#saveRecentAudio(file);
+			} catch (reason) {
+				await Controller.#catch(reason);
 			} finally {
+				bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
 				inputAudioLoader.value = String.empty;
 			}
 		});
@@ -325,22 +352,15 @@ class Controller {
 		///
 
 		divInterface.addEventListener(`click`, async (event) => {
-			try {
-				if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
-				event.stopImmediatePropagation();
-				await this.#toggleAudioState(audioPlayer.paused);
-			} catch (error) {
-				console.error(error);
-			}
+			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
+			event.stopImmediatePropagation();
+			await this.#toggleAudioState(audioPlayer.paused);
 		});
 
-		buttonAudioDrive.addEventListener(`click`, (event) => {
+		buttonAudioDrive.addEventListener(`click`, async (event) => {
 			event.stopPropagation();
-			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_NOTHING) {
-				audioPlayer.removeAttribute(`src`);
-				audioPlayer.srcObject = null;
-				audioRecent = null;
-			} else inputAudioLoader.click();
+			if (audioPlayer.readyState === HTMLMediaElement.HAVE_NOTHING) inputAudioLoader.click();
+			else await this.#saveRecentAudio(null);
 		});
 
 		buttonOpenConfigurator.addEventListener(`click`, async (event) => {
@@ -356,9 +376,7 @@ class Controller {
 			inputPlaybackTrack.style.setProperty(`--track-value`, `${factor * 100}%`);
 			bPlaybackTime.innerText = this.#toPlaytimeInformation(audioPlayer.currentTime);
 		});
-		inputPlaybackTrack.addEventListener(`pointerup`, (event) => {
-			inputPlaybackTrack.blur();
-		});
+		inputPlaybackTrack.addEventListener(`pointerup`, event => inputPlaybackTrack.blur());
 		inputPlaybackTrack.addEventListener(`input`, (event) => {
 			if (audioPlayer.readyState !== HTMLMediaElement.HAVE_ENOUGH_DATA) return;
 			const factor = this.#getPlaybackFactor();
@@ -455,16 +473,16 @@ class Controller {
 		const dialogConfigurator = this.#dialogConfigurator;
 
 		window.addEventListener(`keydown`, async (event) => {
-			if (event.code === `Space`) {
-				event.preventDefault();
-				await this.#toggleAudioState(audioPlayer.paused);
-			}
+			if (event.code !== `Space`) return;
+			event.preventDefault();
+			await this.#toggleAudioState(audioPlayer.paused);
+		});
 
-			if (event.code === `Tab`) {
-				event.preventDefault();
-				await this.#setConfiguratorActivity(!dialogConfigurator.open);
-				settings.isOpenedConfigurator = dialogConfigurator.open;
-			}
+		window.addEventListener(`keydown`, async (event) => {
+			if (event.code !== `Tab`) return;
+			event.preventDefault();
+			await this.#setConfiguratorActivity(!dialogConfigurator.open);
+			settings.isOpenedConfigurator = dialogConfigurator.open;
 		});
 	}
 	//#endregion

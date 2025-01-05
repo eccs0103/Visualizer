@@ -420,18 +420,28 @@ Math.toRadians = function (degrees) {
 };
 //#endregion
 //#region Promise
-Object.defineProperty(Promise.prototype, `fulfilled`, {
+Object.defineProperty(Promise.prototype, `isFulfilled`, {
+	/**
+	 * @template T
+	 * @this {Promise<T>}
+	 * @returns {Promise<boolean>}
+	 */
 	async get() {
+		const symbol = Symbol();
 		try {
-			await this;
-			return true;
+			return (await Promise.race([this, Promise.resolve(symbol)]) !== symbol);
 		} catch (reason) {
-			return false;
+			return true;
 		}
 	}
 });
 
 Object.defineProperty(Promise.prototype, `value`, {
+	/**
+	 * @template T
+	 * @this {Promise<T>}
+	 * @returns {Promise<T>}
+	 */
 	async get() {
 		try {
 			return await this;
@@ -442,6 +452,11 @@ Object.defineProperty(Promise.prototype, `value`, {
 });
 
 Object.defineProperty(Promise.prototype, `reason`, {
+	/**
+	 * @template T
+	 * @this {Promise<T>}
+	 * @returns {Promise<any>}
+	 */
 	async get() {
 		try {
 			await this;
