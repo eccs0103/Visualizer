@@ -137,23 +137,6 @@ interface String {
 	reverse(): string;
 }
 
-interface FunctionConstructor {
-	/**
-	 * Checks if the given function is implemented by running it and seeing if it throws a specific `ReferenceError`.
-	 * @param action The function to check for implementation.
-	 * @returns A promise that resolves to `true` if the function is implemented, `false` otherwise.
-	 */
-	isImplemented(action: (...args: any) => unknown): Promise<boolean>;
-	/**
-	 * Ensures the given function is implemented by checking it and throwing an error if it is not.
-	 * @param action The function to check for implementation.
-	 * @param name The name of the function to be used in the error message if the function is not implemented.
-	 * @returns A promise that resolves if the function is implemented, otherwise it rejects with an error.
-	 * @throws {Error} Throws an error if the function is not implemented.
-	 */
-	ensureImplementation(action: (...args: any) => unknown, name: string): Promise<void>;
-}
-
 /**
  * Interface representing an instance that can be archived.
  * @template N The type of the archived data.

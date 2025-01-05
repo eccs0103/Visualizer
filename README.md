@@ -1,9 +1,48 @@
 # Visualizer
-Music Visualizer.  
-- - -
+Music visualizer.  
+
 ## Guide
 Upload any song to visualize it.  
-- - -
+This system allows users to create and attach custom visualizations for various purposes, such as audio-reactive animations, graphical effects, and more.
+
+Custom visualizations can be implemented by extending the base `Visualizer.Visualiztion` class. The visualization lifecycle includes the `resize` and `update` methods, which should be overridden to define specific behavior. After implementation, the custom visualization must be attached using the `Visualizer.attach` method.
+
+Below is an example of a custom visualization:
+
+```js
+//#region Custom visualization
+Visualizer.attach(`Custom visualization`, new class extends Visualizer.Visualiztion {
+	/**
+	 * Invoked when the visualization context is resized.
+	 * Actions for handling resizing logic should be defined here.
+	 * @returns {void}
+	 */
+	resize() {
+		const { context } = this;
+		// Actions after context resize
+	}
+
+	/**
+	 * Invoked during each frame update.
+	 * Use this method to implement frame-by-frame behavior, such as animations or audio-driven effects.
+	 * @returns {void}
+	 */
+	update() {
+		const { context, audio, delta } = this;
+		// Actions after frame update
+	}
+});
+```
+### Steps to Create Custom Visualization:
+1. Extend the `Visualizer.Visualiztion` Class
+   - Override the `resize` and `update` methods to define behavior.
+   - Utilize `this.context`, `this.audio`, and `this.delta` for drawing, audio analysis, and frame timing.
+2. Attach the Visualization
+   - Use the `Visualizer.attach(name, instance)` method to integrate your visualization into the system.
+   - Replace `name` with the name of your visualization.
+
+This modular system ensures flexibility and simplicity when building custom visualizations.
+
 ## Feed
 ### 2.2.2 : Adaptive Core 3.3.2 (05.01.2025)
 - Core updated.
