@@ -1,49 +1,59 @@
 # Visualizer
-Music visualizer.  
+A flexible framework for creating and managing custom visualizations.
+
+![Preview](https://repository-images.githubusercontent.com/605233361/ff4e6308-2b43-4ac4-9efb-b1f97760242a)
 
 ## Guide
 Upload any song to visualize it.  
-This system allows users to create and attach custom visualizations for various purposes, such as audio-reactive animations, graphical effects, and more.
 
-Custom visualizations can be implemented by extending the base `Visualizer.Visualiztion` class. The visualization lifecycle includes the `resize` and `update` methods, which should be overridden to define specific behavior. After implementation, the custom visualization must be attached using the `Visualizer.attach` method.
+The system supports custom visualizations, which can be implemented by extending the `Visualizer.Visualization` class. These visualizations allow for creative and dynamic interactions, such as audio-responsive effects or graphical animations.
 
-Below is an example of a custom visualization:
+All visualization code is located in the [`./scripts/visualizations.mjs`](./scripts/visualizations.mjs) file. This script serves both as a reference for studying the structure of built-in visualizations and as a place to define your own.
 
-```js
-//#region Custom visualization
-Visualizer.attach(`Custom visualization`, new class extends Visualizer.Visualiztion {
+Below is an example of how to create and attach a custom visualization:
+
+```javascript
+//#region Custom
+Visualizer.attach(`Custom`, new class extends Visualizer.Visualization {
 	/**
-	 * Invoked when the visualization context is resized.
-	 * Actions for handling resizing logic should be defined here.
+	 * Called during the (re)building of the visualization.
+	 * This includes actions like resizing the context or switching between visualizations.
 	 * @returns {void}
 	 */
-	resize() {
-		const { context } = this;
-		// Actions after context resize
+	rebuild() {
+		const { context, audio } = this;
+		context; /// The rendering context for drawing.
+		audio; /// The audio data for analysis.
+
+		const { width, height } = context.canvas;
+		width; /// The width of a canvas.
+		height; /// The height of a canvas.
 	}
 
 	/**
-	 * Invoked during each frame update.
-	 * Use this method to implement frame-by-frame behavior, such as animations or audio-driven effects.
+	 * Called on every frame update during the visualization's lifecycle.
 	 * @returns {void}
 	 */
 	update() {
-		const { context, audio, delta } = this;
-		// Actions after frame update
+		const { FPS, delta, isLaunched } = this;
+		FPS; /// Frames per second.
+		delta; /// Time delta since the last update.
+		isLaunched; /// True if the visualizer is active, false otherwise.
 	}
 });
+//#endregion
 ```
-### Steps to Create Custom Visualization:
-1. Extend the `Visualizer.Visualiztion` Class
-   - Override the `resize` and `update` methods to define behavior.
-   - Utilize `this.context`, `this.audio`, and `this.delta` for drawing, audio analysis, and frame timing.
-2. Attach the Visualization
-   - Use the `Visualizer.attach(name, instance)` method to integrate your visualization into the system.
-   - Replace `name` with the name of your visualization.
-
-This modular system ensures flexibility and simplicity when building custom visualizations.
 
 ## Feed
+### 2.4.0 : Adaptive Core 3.3.3 (11.01.2025)
+- The configurator is better adapted to different sizes.
+- Restoration and update of the deprecated "Spectrogram" visualization.
+- Optimization of existing visualizations. Core optimization for background operation.
+- Fixed various rendering bugs in visualizations.
+- Smooth animation for pause/resume transitions.
+- Added the ability to switch between visualizations using <kbd>Shift</kbd> + <kbd>Tab</kbd>.
+- Improved structure to support custom visualizations.
+
 ### 2.2.2 : Adaptive Core 3.3.2 (05.01.2025)
 - Core updated.
 - Bug fixes and program structure improvements.

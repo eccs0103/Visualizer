@@ -37,7 +37,7 @@
 	--color-highlight: hsl(200deg, 100%, 50%);
 	--color-warn: hsl(60deg 100% 40%);
 	--color-error: hsl(0deg, 100%, 60%);
-	--color-shadow: hsla(0deg, 0%, 0%, 75%);
+	--color-shadow: hsla(0deg, 0%, 0%, 0.75);
 }
 
 /* Global */
@@ -213,7 +213,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 dialog::backdrop {
-	background-color: rgba(0, 0, 0, 75%);
+	background-color: rgba(0, 0, 0, 0.75);
 }
 
 dl.inline {

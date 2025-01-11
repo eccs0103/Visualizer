@@ -44,19 +44,17 @@ class Color {
 		return lightness - (saturation * min(lightness, 1 - lightness)) * min(sector - 3, 9 - sector).clamp(-1, 1);
 	}
 	/**
-	 * @param {number} hue [0 - 360]
-	 * @param {number} saturation [0 - 100]
-	 * @param {number} lightness [0 - 100]
-	 * @returns {[number, number, number]} [0 - 255], [0 - 255], [0 - 255]
+	 * @param {Readonly<Uint16Array>} HSL [0 - 360], [0 - 100], [0 - 100]
+	 * @param {Uint8ClampedArray} RGB [0 - 255], [0 - 255], [0 - 255]
+	 * @returns {void}
 	 */
-	static #HSLtoRGB(hue, saturation, lightness) {
-		hue /= 30;
-		saturation /= 100;
-		lightness /= 100;
-		const red = Color.#toChannel(0, hue, saturation, lightness);
-		const green = Color.#toChannel(8, hue, saturation, lightness);
-		const blue = Color.#toChannel(4, hue, saturation, lightness);
-		return [trunc(red * 255), trunc(green * 255), trunc(blue * 255)];
+	static #HSLtoRGB(HSL, RGB) {
+		const hue = HSL[0] / 30;
+		const saturation = HSL[1] / 100;
+		const lightness = HSL[2] / 100;
+		RGB[0] = Color.#toChannel(0, hue, saturation, lightness) * 255;
+		RGB[1] = Color.#toChannel(8, hue, saturation, lightness) * 255;
+		RGB[2] = Color.#toChannel(4, hue, saturation, lightness) * 255;
 	}
 	/**
 	 * @param {number} maximum 
@@ -75,25 +73,24 @@ class Color {
 		}
 	}
 	/**
-	 * @param {number} red [0 - 255]
-	 * @param {number} green [0 - 255]
-	 * @param {number} blue [0 - 255]
-	 * @returns {[number, number, number]} [0 - 360], [0 - 100], [0 - 100]
+	 * @param {Readonly<Uint8ClampedArray>} RGB [0 - 255], [0 - 255], [0 - 255]
+	 * @param {Uint16Array} HSL [0 - 360], [0 - 100], [0 - 100]
+	 * @returns {void}
 	 */
-	static #RGBtoHSL(red, green, blue) {
-		red /= 255;
-		green /= 255;
-		blue /= 255;
+	static #RGBtoHSL(RGB, HSL) {
+		const red = RGB[0] / 255;
+		const green = RGB[1] / 255;
+		const blue = RGB[2] / 255;
 		const minimum = min(red, green, blue);
 		const maximum = max(red, green, blue);
 		const difference = maximum - minimum;
 		let hue = this.#toHue(maximum, red, green, blue, difference);
 		hue = difference && hue;
 		if (hue < 0) hue += 6;
+		HSL[0] = hue * 60;
 		const median = 1 - abs(maximum + minimum - 1);
-		const saturation = median && (difference / median);
-		const lightness = (maximum + minimum) / 2;
-		return [trunc(hue * 60), trunc(saturation * 100), trunc(lightness * 100)];
+		HSL[1] = (median && (difference / median)) * 100;
+		HSL[2] = (maximum + minimum) / 2 * 100;
 	}
 	/**
 	 * @param {number} number 
@@ -234,7 +231,7 @@ class Color {
 	 * @returns {Color}
 	 * @throws {SyntaxError} If the provided string has invalid syntax for the specified format.
 	 */
-	static parseAs(string, deep = false, format = ColorFormats.RGB) {
+	static parseAs(string, deep = true, format = ColorFormats.RGB) {
 		switch (format) {
 			case ColorFormats.RGB: {
 				const regex = (deep ? Color.#patternRGBA : Color.#patternRGB);
@@ -293,16 +290,16 @@ class Color {
 		if (!Number.isFinite(blue)) throw new TypeError(`The blue ${blue} must be a finite number`);
 		if (!Number.isFinite(alpha)) throw new TypeError(`The alpha ${alpha} must be a finite number`);
 		const result = new Color();
-		result.#red = trunc(red.clamp(0, 255));
-		result.#green = trunc(green.clamp(0, 255));
-		result.#blue = trunc(blue.clamp(0, 255));
+		result.#RGB[0] = red;
+		result.#RGB[1] = green;
+		result.#RGB[2] = blue;
 		result.#alpha = alpha.clamp(0, 1);
-		[result.#hue, result.#saturation, result.#lightness] = Color.#RGBtoHSL(result.#red, result.#green, result.#blue);
+		Color.#RGBtoHSL(result.#RGB, result.#HSL);
 		return result;
 	}
 	/**
 	 * Creates a Color object from HSL values.
-	 * @param {number} hue The hue value [0 - 360].
+	 * @param {number} hue The hue value [0 - 360).
 	 * @param {number} saturation The saturation value [0 - 100].
 	 * @param {number} lightness The lightness value [0 - 100].
 	 * @param {number} alpha The alpha value [0 - 1].
@@ -314,11 +311,13 @@ class Color {
 		if (!Number.isFinite(lightness)) throw new TypeError(`The lightness ${lightness} must be a finite number`);
 		if (!Number.isFinite(alpha)) throw new TypeError(`The alpha ${alpha} must be a finite number`);
 		const result = new Color();
-		result.#hue = trunc(hue % 360);
-		result.#saturation = trunc(saturation.clamp(0, 100));
-		result.#lightness = trunc(lightness.clamp(0, 100));
+		hue %= 360;
+		if (hue < 0) hue += 360;
+		result.#HSL[0] = hue;
+		result.#HSL[1] = saturation.clamp(0, 100);
+		result.#HSL[2] = lightness.clamp(0, 100);
 		result.#alpha = alpha.clamp(0, 1);
-		[result.#red, result.#green, result.#blue] = Color.#HSLtoRGB(result.#hue, result.#saturation, result.#lightness);
+		Color.#HSLtoRGB(result.#HSL, result.#RGB);
 		return result;
 	}
 	/**
@@ -332,22 +331,14 @@ class Color {
 	 */
 	constructor(arg1) {
 		if (arg1 instanceof Color) {
-			this.#red = arg1.red;
-			this.#green = arg1.green;
-			this.#blue = arg1.blue;
-			this.#hue = arg1.hue;
-			this.#saturation = arg1.saturation;
-			this.#lightness = arg1.lightness;
+			this.#RGB = Uint8ClampedArray.from(arg1.#RGB);
+			this.#HSL = Uint16Array.from(arg1.#HSL);
 			this.#alpha = arg1.alpha;
 			return;
 		}
 		if (typeof (arg1) === `undefined`) {
-			this.#red = 0;
-			this.#green = 0;
-			this.#blue = 0;
-			this.#hue = 0;
-			this.#saturation = 0;
-			this.#lightness = 0;
+			this.#RGB = new Uint8ClampedArray([0, 0, 0]);
+			this.#HSL = new Uint16Array([0, 0, 0]);
 			this.#alpha = 1;
 			return;
 		}
@@ -468,14 +459,14 @@ class Color {
 	}
 	//#endregion
 	//#region Properties
-	/** @type {number} */
-	#red;
+	/** @type {Uint8ClampedArray} */
+	#RGB;
 	/**
 	 * Gets the red color component.
 	 * @returns {number}
 	 */
 	get red() {
-		return this.#red;
+		return this.#RGB[0];
 	}
 	/**
 	 * Sets the red color component.
@@ -484,17 +475,15 @@ class Color {
 	 */
 	set red(value) {
 		if (!Number.isFinite(value)) return;
-		this.#red = trunc(value.clamp(0, 255));
-		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
+		this.#RGB[0] = value;
+		Color.#RGBtoHSL(this.#RGB, this.#HSL);
 	}
-	/** @type {number} */
-	#green;
 	/**
 	 * Gets the green color component.
 	 * @returns {number}
 	 */
 	get green() {
-		return this.#green;
+		return this.#RGB[1];
 	}
 	/**
 	 * Sets the green color component.
@@ -503,17 +492,15 @@ class Color {
 	 */
 	set green(value) {
 		if (!Number.isFinite(value)) return;
-		this.#green = trunc(value.clamp(0, 255));
-		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
+		this.#RGB[1] = value;
+		Color.#RGBtoHSL(this.#RGB, this.#HSL);
 	}
-	/** @type {number} */
-	#blue;
 	/**
 	 * Gets the blue color component.
 	 * @returns {number}
 	 */
 	get blue() {
-		return this.#blue;
+		return this.#RGB[2];
 	}
 	/**
 	 * Sets the blue color component.
@@ -522,17 +509,17 @@ class Color {
 	 */
 	set blue(value) {
 		if (!Number.isFinite(value)) return;
-		this.#blue = trunc(value.clamp(0, 255));
-		[this.#hue, this.#saturation, this.#lightness] = Color.#RGBtoHSL(this.#red, this.#green, this.#blue);
+		this.#RGB[2] = value;
+		Color.#RGBtoHSL(this.#RGB, this.#HSL);
 	}
-	/** @type {number} */
-	#hue;
+	/** @type {Uint16Array} */
+	#HSL;
 	/**
 	 * Gets the hue color component.
 	 * @returns {number}
 	 */
 	get hue() {
-		return this.#hue;
+		return this.#HSL[0];
 	}
 	/**
 	 * Sets the hue color component.
@@ -541,17 +528,17 @@ class Color {
 	 */
 	set hue(value) {
 		if (!Number.isFinite(value)) return;
-		this.#hue = trunc(value % 360);
-		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
+		value %= 360;
+		if (value < 0) value += 360;
+		this.#HSL[0] = value;
+		Color.#HSLtoRGB(this.#HSL, this.#RGB);
 	}
-	/** @type {number} */
-	#saturation;
 	/**
 	 * Gets the saturation color component.
 	 * @returns {number}
 	 */
 	get saturation() {
-		return this.#saturation;
+		return this.#HSL[1];
 	}
 	/**
 	 * Sets the saturation color component.
@@ -560,17 +547,15 @@ class Color {
 	 */
 	set saturation(value) {
 		if (!Number.isFinite(value)) return;
-		this.#saturation = trunc(value.clamp(0, 100));
-		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
+		this.#HSL[1] = value.clamp(0, 100);
+		Color.#HSLtoRGB(this.#HSL, this.#RGB);
 	}
-	/** @type {number} */
-	#lightness;
 	/**
 	 * Gets the lightness color component.
 	 * @returns {number}
 	 */
 	get lightness() {
-		return this.#lightness;
+		return this.#HSL[2];
 	}
 	/**
 	 * Sets the lightness color component.
@@ -579,8 +564,8 @@ class Color {
 	 */
 	set lightness(value) {
 		if (!Number.isFinite(value)) return;
-		this.#lightness = trunc(value.clamp(0, 100));
-		[this.#red, this.#green, this.#blue] = Color.#HSLtoRGB(this.#hue, this.#saturation, this.#lightness);
+		this.#HSL[2] = value.clamp(0, 100);
+		Color.#HSLtoRGB(this.#HSL, this.#RGB);
 	}
 	/** @type {number} */
 	#alpha;
@@ -608,7 +593,7 @@ class Color {
 	 * @param {ColorFormats} format The format to convert the color to.
 	 * @returns {string}
 	 */
-	toString(deep = false, format = ColorFormats.RGB) {
+	toString(deep = true, format = ColorFormats.RGB) {
 		switch (format) {
 			case ColorFormats.RGB: return `rgb${deep ? `a` : ``}(${this.red}, ${this.green}, ${this.blue}${deep ? `, ${this.alpha}` : ``})`;
 			case ColorFormats.HSL: return `hsl${deep ? `a` : ``}(${this.hue}deg, ${this.saturation}%, ${this.lightness}%${deep ? `, ${this.alpha}` : ``})`;

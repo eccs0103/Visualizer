@@ -3,7 +3,7 @@
 import { Settings, Visualizer } from "../scripts/structure.mjs";
 
 import { } from "../scripts/dom/extensions.mjs";
-import { } from "../scripts/dom/palette.mjs";
+// import { } from "../scripts/dom/palette.mjs";
 import { ArchiveManager, Database } from "../scripts/dom/storage.mjs";
 import { DataPair } from "../scripts/core/extensions.mjs";
 import { Timespan } from "../scripts/core/measures.mjs";
@@ -109,7 +109,7 @@ class Controller {
 		const audioPlayer = this.#audioPlayer = body.getElement(HTMLAudioElement, `audio#player`);
 		const inputAudioLoader = this.#inputAudioLoader = body.getElement(HTMLInputElement, `input#audio-loader`);
 		const canvas = body.getElement(HTMLCanvasElement, `canvas#display`);
-		const visualizer = this.#visualizer = Visualizer.build(canvas, audioPlayer);
+		const visualizer = this.#visualizer = new Visualizer(canvas, audioPlayer);
 
 		const divInterface = this.#divInterface = body.getElement(HTMLDivElement, `div#interface`);
 		const buttonAudioDrive = this.#buttonAudioDrive = divInterface.getElement(HTMLButtonElement, `button#audio-drive`);
@@ -279,6 +279,35 @@ class Controller {
 	#inputVisualizerRate;
 	/** @type {HTMLSelectElement} */
 	#selectVisualizerVisualization;
+	/**
+	 * @returns {void}
+	 */
+	#applyVisualizationSelection() {
+		const settings = this.#settings;
+
+		const visualizer = this.#visualizer;
+
+		const selectVisualizerVisualization = this.#selectVisualizerVisualization;
+		const inputVisualizationQuality = this.#inputVisualizationQuality;
+		const inputVisualizationSmoothing = this.#inputVisualizationSmoothing;
+		const inputVisualizationSpread = this.#inputVisualizationSpread;
+		const inputVisualizationFocus = this.#inputVisualizationFocus;
+
+		visualizer.visualization = selectVisualizerVisualization.value;
+		settings.visualizer.visualization = visualizer.visualization;
+
+		visualizer.quality = settings.visualizer.configuration.quality;
+		inputVisualizationQuality.value = String(visualizer.quality);
+
+		visualizer.smoothing = settings.visualizer.configuration.smoothing;
+		inputVisualizationSmoothing.value = String(visualizer.smoothing);
+
+		visualizer.focus = settings.visualizer.configuration.focus;
+		inputVisualizationFocus.value = String(visualizer.focus);
+
+		visualizer.spread = settings.visualizer.configuration.spread;
+		inputVisualizationSpread.value = String(visualizer.spread);
+	}
 	/** @type {HTMLInputElement} */
 	#inputVisualizationQuality;
 	/** @type {HTMLInputElement} */
@@ -327,6 +356,13 @@ class Controller {
 			this.markAudioPlaying = false;
 		});
 
+		visualizer.rate = settings.visualizer.rate;
+		visualizer.visualization = settings.visualizer.visualization;
+		visualizer.quality = settings.visualizer.configuration.quality;
+		visualizer.smoothing = settings.visualizer.configuration.smoothing;
+		visualizer.focus = settings.visualizer.configuration.focus;
+		visualizer.spread = settings.visualizer.configuration.spread;
+
 		await this.#loadRecentAudio();
 		inputAudioLoader.addEventListener(`input`, async (event) => {
 			try {
@@ -341,13 +377,6 @@ class Controller {
 				inputAudioLoader.value = String.empty;
 			}
 		});
-
-		visualizer.rate = settings.visualizer.rate;
-		visualizer.visualization = settings.visualizer.visualization;
-		visualizer.quality = settings.visualizer.configuration.quality;
-		visualizer.smoothing = settings.visualizer.configuration.smoothing;
-		visualizer.focus = settings.visualizer.configuration.focus;
-		visualizer.spread = settings.visualizer.configuration.spread;
 
 		///
 
@@ -414,22 +443,7 @@ class Controller {
 			option.innerText = visualization;
 		}
 		selectVisualizerVisualization.value = visualizer.visualization;
-		selectVisualizerVisualization.addEventListener(`change`, (event) => {
-			visualizer.visualization = selectVisualizerVisualization.value;
-			settings.visualizer.visualization = visualizer.visualization;
-
-			visualizer.quality = settings.visualizer.configuration.quality;
-			inputVisualizationQuality.value = String(visualizer.quality);
-
-			visualizer.smoothing = settings.visualizer.configuration.smoothing;
-			inputVisualizationSmoothing.value = String(visualizer.smoothing);
-
-			visualizer.focus = settings.visualizer.configuration.focus;
-			inputVisualizationFocus.value = String(visualizer.focus);
-
-			visualizer.spread = settings.visualizer.configuration.spread;
-			inputVisualizationSpread.value = String(visualizer.spread);
-		});
+		selectVisualizerVisualization.addEventListener(`change`, event => this.#applyVisualizationSelection());
 
 		inputVisualizationQuality.value = String(visualizer.quality);
 		inputVisualizationQuality.addEventListener(`change`, (event) => {
@@ -471,6 +485,7 @@ class Controller {
 		const settings = this.#settings;
 		const audioPlayer = this.#audioPlayer;
 		const dialogConfigurator = this.#dialogConfigurator;
+		const selectVisualizerVisualization = this.#selectVisualizerVisualization;
 
 		window.addEventListener(`keydown`, async (event) => {
 			if (event.code !== `Space`) return;
@@ -479,10 +494,17 @@ class Controller {
 		});
 
 		window.addEventListener(`keydown`, async (event) => {
-			if (event.code !== `Tab`) return;
+			if (event.shiftKey || event.code !== `Tab`) return;
 			event.preventDefault();
 			await this.#setConfiguratorActivity(!dialogConfigurator.open);
 			settings.isOpenedConfigurator = dialogConfigurator.open;
+		});
+
+		window.addEventListener(`keydown`, async (event) => {
+			if (!event.shiftKey || event.code !== `Tab`) return;
+			event.preventDefault();
+			selectVisualizerVisualization.selectedIndex = (selectVisualizerVisualization.selectedIndex + 1) % selectVisualizerVisualization.length;
+			this.#applyVisualizationSelection();
 		});
 	}
 	//#endregion
