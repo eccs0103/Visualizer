@@ -35,8 +35,8 @@ Visualizer.attach(`Custom`, new class extends Visualizer.Visualization {
 	 * @returns {void}
 	 */
 	update() {
-		const { FPS, delta, isLaunched } = this;
-		FPS; /// Frames per second.
+		const { fps, delta, isLaunched } = this;
+		fps; /// Frames per second.
 		delta; /// Time delta since the last update.
 		isLaunched; /// True if the visualizer is active, false otherwise.
 	}

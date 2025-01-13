@@ -2,35 +2,38 @@
 
 const { min, max, trunc, abs } = Math;
 
-//#region Color formats
-/**
- * Enumeration representing different color formats.
- * @enum {string}
- */
-const ColorFormats = {
-	/**
-	 * RGB color format.
-	 * @readonly
-	 */
-	RGB: `RGB`,
-	/**
-	 * HSL color format.
-	 * @readonly
-	 */
-	HSL: `HSL`,
-	/**
-	 * HEX color format.
-	 * @readonly
-	 */
-	HEX: `HEX`,
-};
-Object.freeze(ColorFormats);
-//#endregion
 //#region Color
 /**
  * Color class to handle color conversions and manipulations.
  */
 class Color {
+	//#region Color formats
+	/**
+	 * RGB color format.
+	 * @readonly
+	 * @returns {0}
+	 */
+	static get RGB_FORMAT() {
+		return 0;
+	}
+	/**
+	 * HSL color format.
+	 * @readonly
+	 * @returns {1}
+	 */
+	static get HSL_FORMAT() {
+		return 1;
+	}
+	/**
+	 * HEX color format.
+	 * @readonly
+	 * @returns {2}
+	 */
+	static get HEX_FORMAT() {
+		return 2;
+	}
+	//#endregion
+
 	//#region Converters
 	/**
 	 * @param {number} offset 
@@ -44,17 +47,17 @@ class Color {
 		return lightness - (saturation * min(lightness, 1 - lightness)) * min(sector - 3, 9 - sector).clamp(-1, 1);
 	}
 	/**
-	 * @param {Readonly<Uint16Array>} HSL [0 - 360], [0 - 100], [0 - 100]
-	 * @param {Uint8ClampedArray} RGB [0 - 255], [0 - 255], [0 - 255]
+	 * @param {Readonly<Uint16Array>} hsl [0 - 360], [0 - 100], [0 - 100]
+	 * @param {Uint8ClampedArray} rgb [0 - 255], [0 - 255], [0 - 255]
 	 * @returns {void}
 	 */
-	static #HSLtoRGB(HSL, RGB) {
-		const hue = HSL[0] / 30;
-		const saturation = HSL[1] / 100;
-		const lightness = HSL[2] / 100;
-		RGB[0] = Color.#toChannel(0, hue, saturation, lightness) * 255;
-		RGB[1] = Color.#toChannel(8, hue, saturation, lightness) * 255;
-		RGB[2] = Color.#toChannel(4, hue, saturation, lightness) * 255;
+	static #HSLtoRGB(hsl, rgb) {
+		const hue = hsl[0] / 30;
+		const saturation = hsl[1] / 100;
+		const lightness = hsl[2] / 100;
+		rgb[0] = Color.#toChannel(0, hue, saturation, lightness) * 255;
+		rgb[1] = Color.#toChannel(8, hue, saturation, lightness) * 255;
+		rgb[2] = Color.#toChannel(4, hue, saturation, lightness) * 255;
 	}
 	/**
 	 * @param {number} maximum 
@@ -73,24 +76,24 @@ class Color {
 		}
 	}
 	/**
-	 * @param {Readonly<Uint8ClampedArray>} RGB [0 - 255], [0 - 255], [0 - 255]
-	 * @param {Uint16Array} HSL [0 - 360], [0 - 100], [0 - 100]
+	 * @param {Readonly<Uint8ClampedArray>} rgb [0 - 255], [0 - 255], [0 - 255]
+	 * @param {Uint16Array} hsl [0 - 360], [0 - 100], [0 - 100]
 	 * @returns {void}
 	 */
-	static #RGBtoHSL(RGB, HSL) {
-		const red = RGB[0] / 255;
-		const green = RGB[1] / 255;
-		const blue = RGB[2] / 255;
+	static #RGBtoHSL(rgb, hsl) {
+		const red = rgb[0] / 255;
+		const green = rgb[1] / 255;
+		const blue = rgb[2] / 255;
 		const minimum = min(red, green, blue);
 		const maximum = max(red, green, blue);
 		const difference = maximum - minimum;
 		let hue = this.#toHue(maximum, red, green, blue, difference);
 		hue = difference && hue;
 		if (hue < 0) hue += 6;
-		HSL[0] = hue * 60;
+		hsl[0] = hue * 60;
 		const median = 1 - abs(maximum + minimum - 1);
-		HSL[1] = (median && (difference / median)) * 100;
-		HSL[2] = (maximum + minimum) / 2 * 100;
+		hsl[1] = (median && (difference / median)) * 100;
+		hsl[2] = (maximum + minimum) / 2 * 100;
 	}
 	/**
 	 * @param {number} number 
@@ -227,27 +230,27 @@ class Color {
 	 * Parses a string representation of a color into a Color object.
 	 * @param {string} string The string representation of the color.
 	 * @param {boolean} deep Indicates whether the color representation includes alpha channel.
-	 * @param {ColorFormats} format The format of the string representation.
+	 * @param {number} format The format of the string representation.
 	 * @returns {Color}
 	 * @throws {SyntaxError} If the provided string has invalid syntax for the specified format.
 	 */
-	static parseAs(string, deep = true, format = ColorFormats.RGB) {
+	static parseAs(string, deep = true, format = Color.RGB_FORMAT) {
 		switch (format) {
-			case ColorFormats.RGB: {
+			case Color.RGB_FORMAT: {
 				const regex = (deep ? Color.#patternRGBA : Color.#patternRGB);
 				const match = regex.exec(string.trim());
 				if (match === null) throw new SyntaxError(`Invalid ${format} color '${string}' syntax`);
 				const [, red, green, blue, alpha] = match.map(part => Number(part));
 				return Color.viaRGB(red, green, blue, deep ? alpha : 1);
 			};
-			case ColorFormats.HSL: {
+			case Color.HSL_FORMAT: {
 				const regex = (deep ? Color.#patternHSLA : Color.#patternHSL);
 				const match = regex.exec(string.trim());
 				if (match === null) throw new SyntaxError(`Invalid ${format} color '${string}' syntax`);
 				const [, hue, saturation, lightness, alpha] = match.map(part => Number(part));
 				return Color.viaHSL(hue, saturation, lightness, deep ? alpha : 1);
 			};
-			case ColorFormats.HEX: {
+			case Color.HEX_FORMAT: {
 				const regex = (deep ? Color.#patternHEXA : Color.#patternHEX);
 				const match = regex.exec(string.trim());
 				if (match === null) throw new SyntaxError(`Invalid ${format} color '${string}' syntax`);
@@ -257,8 +260,8 @@ class Color {
 			default: throw new TypeError(`Invalid ${format} color format`);
 		}
 	}
-	/** @type {[ColorFormats, boolean][]} */
-	static #patterns = Object.values(ColorFormats).flatMap(format => [[format, false], [format, true]]);
+	/** @type {[number, boolean][]} */
+	static #patterns = [Color.RGB_FORMAT, Color.HSL_FORMAT, Color.HEX_FORMAT].flatMap(format => [[format, false], [format, true]]);
 	/**
 	 * Parses a color string in any format and returns a Color object.
 	 * @param {string} string The string representation of the color.
@@ -289,13 +292,13 @@ class Color {
 		if (!Number.isFinite(green)) throw new TypeError(`The green ${green} must be a finite number`);
 		if (!Number.isFinite(blue)) throw new TypeError(`The blue ${blue} must be a finite number`);
 		if (!Number.isFinite(alpha)) throw new TypeError(`The alpha ${alpha} must be a finite number`);
-		const result = new Color();
-		result.#RGB[0] = red;
-		result.#RGB[1] = green;
-		result.#RGB[2] = blue;
-		result.#alpha = alpha.clamp(0, 1);
-		Color.#RGBtoHSL(result.#RGB, result.#HSL);
-		return result;
+		const color = new Color();
+		color.#rgb[0] = red;
+		color.#rgb[1] = green;
+		color.#rgb[2] = blue;
+		color.#alpha = alpha.clamp(0, 1);
+		Color.#RGBtoHSL(color.#rgb, color.#hsl);
+		return color;
 	}
 	/**
 	 * Creates a Color object from HSL values.
@@ -310,15 +313,15 @@ class Color {
 		if (!Number.isFinite(saturation)) throw new TypeError(`The saturation ${saturation} must be a finite number`);
 		if (!Number.isFinite(lightness)) throw new TypeError(`The lightness ${lightness} must be a finite number`);
 		if (!Number.isFinite(alpha)) throw new TypeError(`The alpha ${alpha} must be a finite number`);
-		const result = new Color();
+		const color = new Color();
 		hue %= 360;
 		if (hue < 0) hue += 360;
-		result.#HSL[0] = hue;
-		result.#HSL[1] = saturation.clamp(0, 100);
-		result.#HSL[2] = lightness.clamp(0, 100);
-		result.#alpha = alpha.clamp(0, 1);
-		Color.#HSLtoRGB(result.#HSL, result.#RGB);
-		return result;
+		color.#hsl[0] = hue;
+		color.#hsl[1] = saturation.clamp(0, 100);
+		color.#hsl[2] = lightness.clamp(0, 100);
+		color.#alpha = alpha.clamp(0, 1);
+		Color.#HSLtoRGB(color.#hsl, color.#rgb);
+		return color;
 	}
 	/**
 	 * @overload
@@ -331,14 +334,14 @@ class Color {
 	 */
 	constructor(arg1) {
 		if (arg1 instanceof Color) {
-			this.#RGB = Uint8ClampedArray.from(arg1.#RGB);
-			this.#HSL = Uint16Array.from(arg1.#HSL);
+			this.#rgb = Uint8ClampedArray.from(arg1.#rgb);
+			this.#hsl = Uint16Array.from(arg1.#hsl);
 			this.#alpha = arg1.alpha;
 			return;
 		}
 		if (typeof (arg1) === `undefined`) {
-			this.#RGB = new Uint8ClampedArray([0, 0, 0]);
-			this.#HSL = new Uint16Array([0, 0, 0]);
+			this.#rgb = new Uint8ClampedArray([0, 0, 0]);
+			this.#hsl = new Uint16Array([0, 0, 0]);
 			this.#alpha = 1;
 			return;
 		}
@@ -460,13 +463,13 @@ class Color {
 	//#endregion
 	//#region Properties
 	/** @type {Uint8ClampedArray} */
-	#RGB;
+	#rgb;
 	/**
 	 * Gets the red color component.
 	 * @returns {number}
 	 */
 	get red() {
-		return this.#RGB[0];
+		return this.#rgb[0];
 	}
 	/**
 	 * Sets the red color component.
@@ -475,15 +478,15 @@ class Color {
 	 */
 	set red(value) {
 		if (!Number.isFinite(value)) return;
-		this.#RGB[0] = value;
-		Color.#RGBtoHSL(this.#RGB, this.#HSL);
+		this.#rgb[0] = value;
+		Color.#RGBtoHSL(this.#rgb, this.#hsl);
 	}
 	/**
 	 * Gets the green color component.
 	 * @returns {number}
 	 */
 	get green() {
-		return this.#RGB[1];
+		return this.#rgb[1];
 	}
 	/**
 	 * Sets the green color component.
@@ -492,15 +495,15 @@ class Color {
 	 */
 	set green(value) {
 		if (!Number.isFinite(value)) return;
-		this.#RGB[1] = value;
-		Color.#RGBtoHSL(this.#RGB, this.#HSL);
+		this.#rgb[1] = value;
+		Color.#RGBtoHSL(this.#rgb, this.#hsl);
 	}
 	/**
 	 * Gets the blue color component.
 	 * @returns {number}
 	 */
 	get blue() {
-		return this.#RGB[2];
+		return this.#rgb[2];
 	}
 	/**
 	 * Sets the blue color component.
@@ -509,17 +512,17 @@ class Color {
 	 */
 	set blue(value) {
 		if (!Number.isFinite(value)) return;
-		this.#RGB[2] = value;
-		Color.#RGBtoHSL(this.#RGB, this.#HSL);
+		this.#rgb[2] = value;
+		Color.#RGBtoHSL(this.#rgb, this.#hsl);
 	}
 	/** @type {Uint16Array} */
-	#HSL;
+	#hsl;
 	/**
 	 * Gets the hue color component.
 	 * @returns {number}
 	 */
 	get hue() {
-		return this.#HSL[0];
+		return this.#hsl[0];
 	}
 	/**
 	 * Sets the hue color component.
@@ -530,15 +533,15 @@ class Color {
 		if (!Number.isFinite(value)) return;
 		value %= 360;
 		if (value < 0) value += 360;
-		this.#HSL[0] = value;
-		Color.#HSLtoRGB(this.#HSL, this.#RGB);
+		this.#hsl[0] = value;
+		Color.#HSLtoRGB(this.#hsl, this.#rgb);
 	}
 	/**
 	 * Gets the saturation color component.
 	 * @returns {number}
 	 */
 	get saturation() {
-		return this.#HSL[1];
+		return this.#hsl[1];
 	}
 	/**
 	 * Sets the saturation color component.
@@ -547,15 +550,15 @@ class Color {
 	 */
 	set saturation(value) {
 		if (!Number.isFinite(value)) return;
-		this.#HSL[1] = value.clamp(0, 100);
-		Color.#HSLtoRGB(this.#HSL, this.#RGB);
+		this.#hsl[1] = value.clamp(0, 100);
+		Color.#HSLtoRGB(this.#hsl, this.#rgb);
 	}
 	/**
 	 * Gets the lightness color component.
 	 * @returns {number}
 	 */
 	get lightness() {
-		return this.#HSL[2];
+		return this.#hsl[2];
 	}
 	/**
 	 * Sets the lightness color component.
@@ -564,8 +567,8 @@ class Color {
 	 */
 	set lightness(value) {
 		if (!Number.isFinite(value)) return;
-		this.#HSL[2] = value.clamp(0, 100);
-		Color.#HSLtoRGB(this.#HSL, this.#RGB);
+		this.#hsl[2] = value.clamp(0, 100);
+		Color.#HSLtoRGB(this.#hsl, this.#rgb);
 	}
 	/** @type {number} */
 	#alpha;
@@ -590,14 +593,14 @@ class Color {
 	/**
 	 * Converts the color to a string representation in the specified format.
 	 * @param {boolean} deep Whether to include alpha channel.
-	 * @param {ColorFormats} format The format to convert the color to.
+	 * @param {number} format The format to convert the color to.
 	 * @returns {string}
 	 */
-	toString(deep = true, format = ColorFormats.RGB) {
+	toString(deep = true, format = Color.RGB_FORMAT) {
 		switch (format) {
-			case ColorFormats.RGB: return `rgb${deep ? `a` : ``}(${this.red}, ${this.green}, ${this.blue}${deep ? `, ${this.alpha}` : ``})`;
-			case ColorFormats.HSL: return `hsl${deep ? `a` : ``}(${this.hue}deg, ${this.saturation}%, ${this.lightness}%${deep ? `, ${this.alpha}` : ``})`;
-			case ColorFormats.HEX: return `#${Color.#toHEXString(this.red)}${Color.#toHEXString(this.green)}${Color.#toHEXString(this.blue)}${deep ? Color.#toHEXString(trunc(this.alpha * 255)) : ``}`;
+			case Color.RGB_FORMAT: return `rgb${deep ? `a` : String.empty}(${this.red}, ${this.green}, ${this.blue}${deep ? `, ${this.alpha}` : String.empty})`;
+			case Color.HSL_FORMAT: return `hsl${deep ? `a` : String.empty}(${this.hue}deg, ${this.saturation}%, ${this.lightness}%${deep ? `, ${this.alpha}` : String.empty})`;
+			case Color.HEX_FORMAT: return `#${Color.#toHEXString(this.red)}${Color.#toHEXString(this.green)}${Color.#toHEXString(this.blue)}${deep ? Color.#toHEXString(trunc(this.alpha * 255)) : String.empty}`;
 			default: throw new TypeError(`Invalid '${format}' color format`);
 		}
 	}
@@ -755,4 +758,4 @@ class Color {
 }
 //#endregion
 
-export { ColorFormats, Color };
+export { Color };

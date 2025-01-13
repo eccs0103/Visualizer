@@ -172,11 +172,11 @@ String.prototype.toLocalTitleCase = function (locales) {
  * @returns {string} The reversed string.
  */
 String.prototype.reverse = function () {
-	let result = String.empty;
+	let string = String.empty;
 	for (let index = this.length - 1; index >= 0; index--) {
-		result += this[index];
+		string += this[index];
 	}
-	return result;
+	return string;
 };
 //#endregion
 //#region Object

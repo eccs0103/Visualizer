@@ -379,8 +379,8 @@ class Visualizer extends EventTarget {
 		 * @readonly
 		 * @returns {number}
 		 */
-		get FPS() {
-			return this.#visualizer.#engine.FPS;
+		get fps() {
+			return this.#visualizer.#engine.fps;
 		}
 		/**
 		 * Called during the (re)building of the visualization.

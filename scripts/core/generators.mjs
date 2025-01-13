@@ -65,9 +65,9 @@ class Random {
 	 * @returns {number[]} An array of random numbers.
 	 */
 	range(min, max) {
-		const result = Array.range(min, max);
-		this.shuffle(result);
-		return result;
+		const array = Array.range(min, max);
+		this.shuffle(array);
+		return array;
 	};
 	/**
 	 * Returns a random subarray of elements from an array.
@@ -82,11 +82,11 @@ class Random {
 		if (!Number.isInteger(count)) throw new TypeError(`The count ${count} must be a finite integer number`);
 		if (0 > count || count > array.length) throw new RangeError(`The count ${count} is out of range [0 - ${array.length}]`);
 		const clone = Array.from(array);
-		const result = [];
+		const subarray = [];
 		for (let index = 0; index < count; index++) {
-			result.push(...clone.splice(this.integer(0, clone.length), 1));
+			subarray.push(...clone.splice(this.integer(0, clone.length), 1));
 		}
-		return result;
+		return subarray;
 	}
 	/**
 	 * Shuffles the elements of an array in place using the Fisher-Yates algorithm.

@@ -215,76 +215,79 @@ Document.prototype.loadImages = async function (urls) {
 };
 //#endregion
 //#region Window
+let isAlertComposed = false;
 dialogAlert.addEventListener(`click`, (event) => {
-	if (event.target === dialogAlert) dialogAlert.close(JSON.stringify(true));
+	if (event.target !== dialogAlert) return;
+	isAlertComposed = true;
+	dialogAlert.close();
 });
-
 /**
  * Asynchronously displays an alert message.
  * @param {any} message The message to display.
  * @returns {Promise<void>} A promise that resolves when the alert is closed.
  */
-Window.prototype.alertAsync = async function (message = ``) {
+Window.prototype.alertAsync = async function (message = String.empty) {
 	dialogAlert.showModal();
-
 	divAlertCoontainer.innerText = String(message);
-
 	try {
 		return await Promise.withSignal((signal, resolve) => {
-			dialogAlert.addEventListener(`close`, (event) => { if (JSON.parse(dialogAlert.returnValue)) resolve(); }, { signal });
+			dialogAlert.addEventListener(`close`, event => (isAlertComposed ? resolve() : null), { signal });
 		});
 	} finally {
-		dialogAlert.close(JSON.stringify(false));
+		isAlertComposed = false;
+		dialogAlert.close();
 	}
 };
 
+let isConfirmComposed = false;
 dialogConfirm.addEventListener(`click`, (event) => {
-	if (event.target === dialogConfirm) dialogConfirm.close(JSON.stringify(true));
+	if (event.target !== dialogConfirm) return;
+	isConfirmComposed = true;
+	dialogConfirm.close();
 });
-
 /**
  * Asynchronously displays a confirmation dialog.
  * @param {string} message The message to display.
  * @returns {Promise<boolean>} A promise that resolves to true if the user confirms, and false otherwise.
  */
-Window.prototype.confirmAsync = async function (message = ``) {
+Window.prototype.confirmAsync = async function (message = String.empty) {
 	dialogConfirm.showModal();
-
 	divConfirmContainer.innerText = message;
-
 	try {
 		return await Promise.withSignal((signal, resolve) => {
-			buttonConfirmAccept.addEventListener(`click`, (event) => resolve(true), { signal });
-			buttonConfirmDecline.addEventListener(`click`, (event) => resolve(false), { signal });
-			dialogConfirm.addEventListener(`close`, (event) => { if (JSON.parse(dialogConfirm.returnValue)) resolve(false); }, { signal });
+			buttonConfirmAccept.addEventListener(`click`, event => resolve(true), { signal });
+			buttonConfirmDecline.addEventListener(`click`, event => resolve(false), { signal });
+			dialogConfirm.addEventListener(`close`, event => (isConfirmComposed ? resolve(false) : null), { signal });
 		});
 	} finally {
-		dialogConfirm.close(JSON.stringify(false));
+		isConfirmComposed = false;
+		dialogConfirm.close();
 	}
 };
 
+let isPromptComposed = false;
 dialogPrompt.addEventListener(`click`, (event) => {
-	if (event.target === dialogPrompt) dialogPrompt.close(JSON.stringify(true));
+	if (event.target !== dialogPrompt) return;
+	isPromptComposed = true;
+	dialogPrompt.close();
 });
-
 /**
  * Asynchronously displays a prompt dialog.
  * @param {string} message The message to display.
  * @returns {Promise<string?>} A promise that resolves to the user's input value if accepted, or null if canceled.
  */
-Window.prototype.promptAsync = async function (message = ``, _default = ``) {
+Window.prototype.promptAsync = async function (message = String.empty, _default = String.empty) {
 	dialogPrompt.showModal();
-
 	divPromptContainer.innerText = message;
-
 	inputPrompt.value = _default;
 	try {
 		return await Promise.withSignal((signal, resolve) => {
-			dialogPrompt.addEventListener(`close`, (event) => resolve(null), { signal });
-			buttonPromptAccept.addEventListener(`click`, (event) => { if (JSON.parse(dialogPrompt.returnValue)) resolve(inputPrompt.value); }, { signal });
+			buttonPromptAccept.addEventListener(`click`, event => resolve(inputPrompt.value), { signal });
+			dialogPrompt.addEventListener(`close`, event => (isPromptComposed ? resolve(null) : null), { signal });
 		});
 	} finally {
-		dialogPrompt.close(JSON.stringify(false));
+		isPromptComposed = false;
+		dialogPrompt.close();
 	}
 };
 

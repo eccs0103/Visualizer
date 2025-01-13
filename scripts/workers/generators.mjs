@@ -105,11 +105,11 @@ class Engine extends EventTarget {
 		throw new ImplementationError();
 	}
 	/**
-	 * Gets the Frames Per Second (FPS) of the engine.
+	 * Gets the Frames Per Second  of the engine.
 	 * @abstract
 	 * @returns {number}
 	 */
-	get FPS() {
+	get fps() {
 		throw new ImplementationError();
 	}
 	/**
@@ -222,10 +222,10 @@ class FastEngine extends Engine {
 		const difference = current - this.#previous;
 		if (difference > this.#gap) {
 			if (this.launched) {
-				this.#FPS = (1000 / difference);
+				this.#fps = (1000 / difference);
 				this.dispatchEvent(new Event(`trigger`));
 			} else {
-				this.#FPS = 0;
+				this.#fps = 0;
 			}
 			this.#previous = current;
 		}
@@ -251,14 +251,14 @@ class FastEngine extends Engine {
 		this.#gap = 1000 / value;
 	}
 	/** @type {number} */
-	#FPS = 0;
+	#fps = 0;
 	/**
 	 * Gets the current FPS of the engine.
 	 * @readonly
 	 * @returns {number}
 	 */
-	get FPS() {
-		return this.#FPS;
+	get fps() {
+		return this.#fps;
 	}
 	/**
 	 * Gets the time delta between frames.
@@ -266,7 +266,7 @@ class FastEngine extends Engine {
 	 * @returns {number}
 	 */
 	get delta() {
-		return 1 / this.#FPS;
+		return 1 / this.#fps;
 	}
 }
 //#endregion
@@ -368,10 +368,10 @@ class PreciseEngine extends Engine {
 	#callback(current) {
 		const difference = current - this.#previous;
 		if (this.launched) {
-			this.#FPS = (1000 / difference);
+			this.#fps = (1000 / difference);
 			this.dispatchEvent(new Event(`trigger`));
 		} else {
-			this.#FPS = 0;
+			this.#fps = 0;
 		}
 		this.#previous = current;
 		setTimeout(this.#callback.bind(this), this.#gap, performance.now());
@@ -396,14 +396,14 @@ class PreciseEngine extends Engine {
 		this.#gap = 1000 / value;
 	}
 	/** @type {number} */
-	#FPS = 0;
+	#fps = 0;
 	/**
 	 * Gets the current FPS of the engine.
 	 * @readonly
 	 * @returns {number}
 	 */
-	get FPS() {
-		return this.#FPS;
+	get fps() {
+		return this.#fps;
 	}
 	/**
 	 * Gets the time delta between frames.
@@ -411,7 +411,7 @@ class PreciseEngine extends Engine {
 	 * @returns {number}
 	 */
 	get delta() {
-		return 1 / this.#FPS;
+		return 1 / this.#fps;
 	}
 }
 //#endregion
@@ -547,7 +547,7 @@ class StaticEngine extends Engine {
 	 * @readonly
 	 * @returns {number}
 	 */
-	get FPS() {
+	get fps() {
 		return 1000 / this.#delta;
 	}
 	/**

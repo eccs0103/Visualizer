@@ -1374,10 +1374,10 @@ class Timespan {
 	 */
 	static viaDuration(duration = 0) {
 		if (!Number.isFinite(duration)) throw new TypeError(`The duration ${duration} must be a finite number`);
-		const result = new Timespan();
-		result.#duration = trunc(duration);
-		[result.#negativity, result.#hours, result.#minutes, result.#seconds, result.#milliseconds] = Timespan.#toTime(result.#duration);
-		return result;
+		const timespan = new Timespan();
+		timespan.#duration = trunc(duration);
+		[timespan.#negativity, timespan.#hours, timespan.#minutes, timespan.#seconds, timespan.#milliseconds] = Timespan.#toTime(timespan.#duration);
+		return timespan;
 	}
 	/**
 	 * Creates a Timespan object from individual time components.
@@ -1394,11 +1394,11 @@ class Timespan {
 		if (!Number.isFinite(minutes)) throw new TypeError(`The minutes ${minutes} must be a finite number`);
 		if (!Number.isFinite(seconds)) throw new TypeError(`The seconds ${seconds} must be a finite number`);
 		if (!Number.isFinite(milliseconds)) throw new TypeError(`The milliseconds ${milliseconds} must be a finite number`);
-		const result = new Timespan();
-		result.#negativity = negativity;
-		[result.#hours, result.#minutes, result.#seconds, result.#milliseconds] = Timespan.#fixTimeOffset(trunc(hours), trunc(minutes), trunc(seconds), trunc(milliseconds));
-		result.#duration = Timespan.#toDuration(result.#negativity, result.#hours, result.#minutes, result.#seconds, result.#milliseconds);
-		return result;
+		const timespan = new Timespan();
+		timespan.#negativity = negativity;
+		[timespan.#hours, timespan.#minutes, timespan.#seconds, timespan.#milliseconds] = Timespan.#fixTimeOffset(trunc(hours), trunc(minutes), trunc(seconds), trunc(milliseconds));
+		timespan.#duration = Timespan.#toDuration(timespan.#negativity, timespan.#hours, timespan.#minutes, timespan.#seconds, timespan.#milliseconds);
+		return timespan;
 	}
 	/**
 	 * @overload
@@ -1548,20 +1548,20 @@ class Timespan {
 	 */
 	toString(full = true) {
 		const { negativity, hours, minutes, seconds, milliseconds } = this;
-		let result = seconds.toFixed().padStart(2, `0`);
+		let string = seconds.toFixed().padStart(2, `0`);
 		if (full || milliseconds > 0) {
-			result = `${result}.${milliseconds.toFixed().padStart(3, `0`)}`;
+			string = `${string}.${milliseconds.toFixed().padStart(3, `0`)}`;
 		}
 		if (full || hours > 0) {
-			result = `${minutes.toFixed().padStart(2, `0`)}:${result}`;
-			result = `${hours.toFixed().padStart(2, `0`)}:${result}`;
+			string = `${minutes.toFixed().padStart(2, `0`)}:${string}`;
+			string = `${hours.toFixed().padStart(2, `0`)}:${string}`;
 		} else if (minutes > 0) {
-			result = `${minutes.toFixed().padStart(2, `0`)}:${result}`;
+			string = `${minutes.toFixed().padStart(2, `0`)}:${string}`;
 		}
 		if (negativity) {
-			result = `-${result}`;
+			string = `-${string}`;
 		}
-		return result;
+		return string;
 	}
 	/**
 	 * Converts the timespan to a primitive type based on the provided hint.

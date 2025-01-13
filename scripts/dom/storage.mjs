@@ -209,14 +209,14 @@ class Database {
 		}
 		/**
 		 * @template T
-		 * @param {(IDBOS: IDBObjectStore) => T | PromiseLike<T>} action 
+		 * @param {(idbos: IDBObjectStore) => T | PromiseLike<T>} action 
 		 * @returns {Promise<T>}
 		 */
 		#openStoreWith(action) {
-			return this.#database.#openDatabaseWith(async (IDB) => {
-				const IDBOS = IDB.transaction([this.#name], `readwrite`).objectStore(this.#name);
-				const result = await action(IDBOS);
-				IDBOS.transaction.commit();
+			return this.#database.#openDatabaseWith(async (idb) => {
+				const idbos = idb.transaction([this.#name], `readwrite`).objectStore(this.#name);
+				const result = await action(idbos);
+				idbos.transaction.commit();
 				return result;
 			});
 		}
@@ -226,10 +226,10 @@ class Database {
 		 * @returns {Promise<number[]>} The keys of the inserted values.
 		 */
 		insert(...values) {
-			return this.#openStoreWith(async (IDBOS) => {
+			return this.#openStoreWith(async (idbos) => {
 				const keys = (/** @type {number[]} */ ([]));
 				for (const value of values) {
-					keys.push(Number(await Database.#resolve(IDBOS.add(value))));
+					keys.push(Number(await Database.#resolve(idbos.add(value))));
 				}
 				return keys;
 			});
@@ -240,10 +240,10 @@ class Database {
 		 * @returns {Promise<any[]>} The selected values.
 		 */
 		select(...keys) {
-			return this.#openStoreWith(async (IDBOS) => {
+			return this.#openStoreWith(async (idbos) => {
 				const values = (/** @type {any[]} */ ([]));
 				for (const key of keys) {
-					values.push(await Database.#resolve(IDBOS.get(Number(key))));
+					values.push(await Database.#resolve(idbos.get(Number(key))));
 				}
 				return values;
 			});
@@ -254,9 +254,9 @@ class Database {
 		 * @returns {Promise<void>}
 		 */
 		update(...pairs) {
-			return this.#openStoreWith(async (IDBOS) => {
+			return this.#openStoreWith(async (idbos) => {
 				for (const { value, key } of pairs) {
-					await Database.#resolve(IDBOS.put(value, key));
+					await Database.#resolve(idbos.put(value, key));
 				}
 			});
 		}
@@ -266,9 +266,9 @@ class Database {
 		 * @returns {Promise<void>}
 		 */
 		remove(...keys) {
-			return this.#openStoreWith(async (IDBOS) => {
+			return this.#openStoreWith(async (idbos) => {
 				for (const key of keys) {
-					await Database.#resolve(IDBOS.delete(key));
+					await Database.#resolve(idbos.delete(key));
 				}
 			});
 		}
@@ -374,16 +374,16 @@ class Database {
 	#version;
 	/**
 	 * @template T
-	 * @param {(IDB: IDBDatabase) => T} action 
+	 * @param {(idb: IDBDatabase) => T} action 
 	 * @returns {Promise<T>}
 	 */
 	#upgradeDatabaseWith(action) {
 		return Promise.withSignal(async (signal, resolve, reject) => {
 			const requestIDBOpen = indexedDB.open(this.#name, ++this.#version);
 			requestIDBOpen.addEventListener(`upgradeneeded`, (event) => {
-				const IDB = requestIDBOpen.result;
-				const result = action(IDB);
-				IDB.close();
+				const idb = requestIDBOpen.result;
+				const result = action(idb);
+				idb.close();
 				resolve(result);
 			}, { signal });
 			requestIDBOpen.addEventListener(`blocked`, (event) => reject(requestIDBOpen.error), { signal });
@@ -391,17 +391,17 @@ class Database {
 	}
 	/**
 	 * @template T
-	 * @param {(IDB: IDBDatabase) => T | PromiseLike<T>} action 
+	 * @param {(idb: IDBDatabase) => T | PromiseLike<T>} action 
 	 * @returns {Promise<T>}
 	 */
 	#openDatabaseWith(action) {
-		if (this.#version < 1) this.#upgradeDatabaseWith((IDB) => IDB);
+		if (this.#version < 1) this.#upgradeDatabaseWith((idb) => idb);
 		return Promise.withSignal((signal, resolve, reject) => {
 			const requestIDBOpen = indexedDB.open(this.#name);
 			requestIDBOpen.addEventListener(`success`, async (event) => {
-				const IDB = requestIDBOpen.result;
-				const result = await action(IDB);
-				IDB.close();
+				const idb = requestIDBOpen.result;
+				const result = await action(idb);
+				idb.close();
 				resolve(result);
 			}, { signal });
 			requestIDBOpen.addEventListener(`error`, (event) => reject(requestIDBOpen.error), { signal });
