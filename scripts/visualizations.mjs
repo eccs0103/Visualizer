@@ -3,7 +3,7 @@
 import { } from "./dom/extensions.mjs";
 import { Vector2D } from "./core/measures.mjs";
 import { Color } from "./core/palette.mjs";
-import { DataTypes, Visualizer } from "./structure.mjs";
+import { AudioTypes, Visualizer } from "./structure.mjs";
 
 const { min, max, split, sin, cos, PI, hypot, abs, trunc, sqrt, SQRT1_2, sqpw } = Math;
 
@@ -50,7 +50,7 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	/** @type {Uint8Array} */
 	#dataFrequency;
 	/** @type {Uint8Array} */
-	#dataTimeDomain;
+	#dataTime;
 	/** @type {number} */
 	#factorVolume;
 	/** @type {number} */
@@ -63,11 +63,11 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	#runMetadataUpdate() {
 		const { audio } = this;
 
-		const dataFrequency = this.#dataFrequency = audio.getData(DataTypes.frequency);
-		const dataTimeDomain = this.#dataTimeDomain = audio.getData(DataTypes.timeDomain);
+		const dataFrequency = this.#dataFrequency = audio.getData(AudioTypes.FREQUENCY_TYPE);
+		const dataTime = this.#dataTime = audio.getData(AudioTypes.TIME_TYPE);
 
-		const factorVolume = this.#factorVolume = audio.getVolume(DataTypes.frequency).interpolate(0, 255);
-		const factorAmplitude = this.#factorAmplitude = audio.getAmplitude(DataTypes.timeDomain).interpolate(0, 255);
+		const factorVolume = this.#factorVolume = audio.getVolume(AudioTypes.FREQUENCY_TYPE).interpolate(0, 255);
+		const factorAmplitude = this.#factorAmplitude = audio.getAmplitude(AudioTypes.TIME_TYPE).interpolate(0, 255);
 		const factorAudio = this.#factorAudio = factorAmplitude * factorVolume;
 	}
 	/**
@@ -157,7 +157,7 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 		const { context, audio } = this;
 		const { width } = context.canvas;
 		const tapeLength = audio.tapeLength;
-		const dataTimeDomain = this.#dataTimeDomain;
+		const dataTime = this.#dataTime;
 		const factorAmplitude = this.#factorAmplitude;
 
 		const position = Vector2D.newNaN;
@@ -165,7 +165,7 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 		context.moveTo(-width / 2, 0);
 		for (let index = 0; index < tapeLength; index++) {
 			const coefficent = index.interpolate(0, tapeLength);
-			const datum = dataTimeDomain[trunc(coefficent * tapeLength)].interpolate(0, 255, -1, 1);
+			const datum = dataTime[trunc(coefficent * tapeLength)].interpolate(0, 255, -1, 1);
 			const value = datum * factorAmplitude;
 			position.x = width * (coefficent - 0.5);
 			position.y = (radius) * value;
@@ -296,30 +296,30 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	/** @type {number} */
 	#factorFrequencyAmplitude;
 	/** @type {number} */
-	#factorTimeDomainAmplitude;
+	#factorTimeAmplitude;
 	/**
 	 * @returns {void}
 	 */
 	#runMetadataUpdate() {
 		const { audio } = this;
 
-		const dataFrequency = this.#dataFrequency = audio.getData(DataTypes.frequency);
-		const factorVolumeFrequency = this.#factorVolumeFrequency = audio.getVolume(DataTypes.frequency).interpolate(0, 255);
-		const factorFrequencyAmplitude = this.#factorFrequencyAmplitude = audio.getAmplitude(DataTypes.frequency).interpolate(0, 255);
-		const factorTimeDomainAmplitude = this.#factorTimeDomainAmplitude = audio.getAmplitude(DataTypes.timeDomain).interpolate(0, 255);
+		const dataFrequency = this.#dataFrequency = audio.getData(AudioTypes.FREQUENCY_TYPE);
+		const factorVolumeFrequency = this.#factorVolumeFrequency = audio.getVolume(AudioTypes.FREQUENCY_TYPE).interpolate(0, 255);
+		const factorFrequencyAmplitude = this.#factorFrequencyAmplitude = audio.getAmplitude(AudioTypes.FREQUENCY_TYPE).interpolate(0, 255);
+		const factorTimeAmplitude = this.#factorTimeAmplitude = audio.getAmplitude(AudioTypes.TIME_TYPE).interpolate(0, 255);
 	}
 	/**
 	 * @returns {void}
 	 */
 	#runContextUpdate() {
 		const factorFrequencyAmplitude = this.#factorFrequencyAmplitude;
-		const factorTimeDomainAmplitude = this.#factorTimeDomainAmplitude;
+		const factorTimeAmplitude = this.#factorTimeAmplitude;
 		const { context } = this;
 		const { width, height } = context.canvas;
 
 		const transform = context.getTransform();
 		transform.a = 1 + 0.2 * factorFrequencyAmplitude;
-		transform.d = 1 + 0.4 * factorTimeDomainAmplitude;
+		transform.d = 1 + 0.4 * factorTimeAmplitude;
 		context.clearRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
 		context.setTransform(transform);
 	}
@@ -364,7 +364,7 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 		const colorSpectrumSeed = this.#colorSpectrumSeed;
 		const angular = this.#angular;
 		const factorVolumeFrequency = this.#factorVolumeFrequency;
-		const factorTimeDomainAmplitude = this.#factorTimeDomainAmplitude;
+		const factorTimeAmplitude = this.#factorTimeAmplitude;
 		const { context, audio } = this;
 		const { width, height } = context.canvas;
 
@@ -380,7 +380,7 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 			position.x = width * (factor - 0.5);
 			position.y = height * ((1 - value) * anchor - 0.5 + Number(index < 0) * value);
 			gradientSpectrum.addColorStop(factor, new Color(colorSpectrumSeed)
-				.rotate(120 * factor + angular * (factorTimeDomainAmplitude * 2 - 1))
+				.rotate(120 * factor + angular * (factorTimeAmplitude * 2 - 1))
 				.illuminate(0.2 + 0.5 * factorVolumeFrequency)
 				.toString()
 			);
@@ -400,11 +400,11 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	#runSpectrumRotation() {
 		const colorSpectrumSeed = this.#colorSpectrumSeed;
 		const angular = this.#angular;
-		const factorTimeDomainAmplitude = this.#factorTimeDomainAmplitude;
+		const factorTimeAmplitude = this.#factorTimeAmplitude;
 		const { delta } = this;
 
 		if (!Number.isFinite(delta)) return;
-		const [integer, fractional] = split(this.#offsetSpectrumRotation + angular * delta * factorTimeDomainAmplitude);
+		const [integer, fractional] = split(this.#offsetSpectrumRotation + angular * delta * factorTimeAmplitude);
 		colorSpectrumSeed.rotate(-integer);
 		this.#offsetSpectrumRotation = fractional;
 	}

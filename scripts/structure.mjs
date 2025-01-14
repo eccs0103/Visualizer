@@ -9,26 +9,27 @@ import { } from "./workers/extensions.mjs";
 import { Engine, FastEngine } from "./workers/generators.mjs";
 // import { } from "./workers/measures.mjs";
 
-const { sqpw, sqrt, log2, round } = Math;
+const { sqrt, log2, round } = Math;
 
-//#region Data types
+//#region Audio types
 /**
- * Enum representing data types for audio analysis.
  * @enum {number}
  */
-const DataTypes = {
+const AudioTypes = {
 	/**
-	 * Frequency spectrum data.
+	 * Frequency spectrum type.
 	 * @readonly
+	 * @returns {0}
 	 */
-	frequency: 0,
+	FREQUENCY_TYPE: 0,
 	/**
-	 * Time domain data.
+	 * Time domain type.
 	 * @readonly
+	 * @returns {1}
 	 */
-	timeDomain: 1,
+	TIME_TYPE: 1,
 };
-Object.freeze(DataTypes);
+Object.freeze(AudioTypes);
 //#endregion
 //#region Audio package
 /**
@@ -93,6 +94,9 @@ class AudioPackage {
 
 			const source = context.createMediaElementSource(media);
 			const analyser = this.#analyser = context.createAnalyser();
+			const mapDataGetters = this.#mapDataGetters = new Map();
+			mapDataGetters.set(AudioTypes.FREQUENCY_TYPE, analyser.getByteFrequencyData.bind(analyser));
+			mapDataGetters.set(AudioTypes.TIME_TYPE, analyser.getByteTimeDomainData.bind(analyser));
 
 			source.connect(analyser);
 			analyser.connect(context.destination);
@@ -101,6 +105,18 @@ class AudioPackage {
 		}
 		/** @type {AnalyserNode} */
 		#analyser;
+		/** @type {Map<number, (array: Uint8Array) => void>} */
+		#mapDataGetters;
+		/**
+		 * @param {number} type 
+		 * @param {Uint8Array} data 
+		 * @returns {void}
+		 */
+		#getData(type, data) {
+			const getByteData = this.#mapDataGetters.get(type);
+			if (getByteData === undefined) throw new ReferenceError(`Datalist for frequency data not initialized`);
+			getByteData(data);
+		}
 		/**
 		 * Gets the quality level of the audio analysis, influencing analysis detail.
 		 * Higher values provide more detailed audio analysis.
@@ -193,34 +209,58 @@ class AudioPackage {
 		get package() {
 			return this.#package;
 		}
+		/** @type {boolean} */
+		#autofix = true;
+		/**
+		 * @returns {void}
+		 */
+		#fix() {
+			const audioPackage = this.#package;
+			const analyser = this.#analyser;
+			const { minDecibels } = analyser;
+			const range = analyser.maxDecibels - minDecibels;
+
+			let minimum = Infinity, maximum = -Infinity;
+			audioPackage.getData(AudioTypes.FREQUENCY_TYPE).forEach((datum) => {
+				const decibel = (datum / 255) * range + minDecibels;
+				if (decibel < minimum) minimum = decibel;
+				if (decibel > maximum) maximum = decibel;
+			});
+
+			try {
+				analyser.minDecibels = minimum;
+				analyser.maxDecibels = maximum + 1;
+			} catch {
+				console.warn(`[${minimum} - ${maximum}]`);
+				return;
+			}
+		}
 		/**
 		 * Updates the audio analysis data for the current media element state.
 		 * Retrieves updated values for volume and amplitude.
 		 * @returns {void}
 		 */
 		update() {
-			const analyser = this.#analyser;
 			const audioPackage = this.#package;
 			const { tapeLength } = audioPackage;
 			const types = audioPackage.#types;
+			const datalist = audioPackage.#datalist;
 
-			for (const [type, data] of audioPackage.#datalist) {
-				if (!types.has(type)) continue;
+			datalist.forEach((data, type) => {
+				if (!types.has(type)) return;
 
-				switch (type) {
-					case DataTypes.frequency: analyser.getByteFrequencyData(data); break;
-					case DataTypes.timeDomain: analyser.getByteTimeDomainData(data); break;
-				}
+				this.#getData(type, data);
 
 				let linear = 0, quadratic = 0;
 				for (let index = 0; index < tapeLength; index++) {
 					const datum = data[index];
 					linear += datum;
-					quadratic += sqpw(datum);
+					quadratic += datum * datum;
 				}
+
 				audioPackage.#volumes.set(type, linear / tapeLength);
 				audioPackage.#amplitudes.set(type, sqrt(quadratic / tapeLength));
-			}
+			});
 		}
 	};
 	//#endregion
@@ -232,17 +272,15 @@ class AudioPackage {
 	 * @returns {AudioPackage}
 	 */
 	static #construct(length) {
-		const types = Object.values(DataTypes);
-
 		AudioPackage.#locked = false;
-		const self = new AudioPackage(length, types);
+		const self = new AudioPackage(length, [AudioTypes.FREQUENCY_TYPE, AudioTypes.TIME_TYPE]);
 		AudioPackage.#locked = true;
 
 		return self;
 	}
 	/**
 	 * @param {number} length The number of measurements in the audio data.
-	 * @param {DataTypes[]} types The types of audio data to analyze.
+	 * @param {number[]} types The types of audio data to analyze.
 	 * @throws {TypeError} If the constructor is called directly.
 	 */
 	constructor(length, types) {
@@ -263,13 +301,13 @@ class AudioPackage {
 	get tapeLength() {
 		return this.#tapeLength;
 	}
-	/** @type {Set<DataTypes>} */
+	/** @type {Set<number>} */
 	#types;
-	/** @type {Map<DataTypes, Uint8Array>} */
+	/** @type {Map<number, Uint8Array>} */
 	#datalist;
 	/**
 	 * Retrieves audio data for the specified type.
-	 * @param {DataTypes} type The data type (e.g., frequency or time domain).
+	 * @param {number} type The data type (e.g., frequency or time domain).
 	 * @returns {Uint8Array} The data array for analysis.
 	 * @throws {TypeError} If an invalid data type is specified.
 	 */
@@ -278,11 +316,11 @@ class AudioPackage {
 		if (data === undefined) throw new TypeError(`Invalid data '${type}' type`);
 		return data;
 	}
-	/** @type {Map<DataTypes, number>} */
+	/** @type {Map<number, number>} */
 	#volumes;
 	/**
 	 * Gets the current volume level for the specified data type.
-	 * @param {DataTypes} type The data type.
+	 * @param {number} type The data type.
 	 * @returns {number} The volume level.
 	 * @throws {TypeError} If an invalid data type is specified.
 	 */
@@ -291,11 +329,11 @@ class AudioPackage {
 		if (volume === undefined) throw new TypeError(`Invalid data '${type}' type`);
 		return volume;
 	}
-	/** @type {Map<DataTypes, number>} */
+	/** @type {Map<number, number>} */
 	#amplitudes;
 	/**
 	 * Gets the current amplitude level for the specified data type.
-	 * @param {DataTypes} type The data type.
+	 * @param {number} type The data type.
 	 * @returns {number} The amplitude level.
 	 * @throws {TypeError} If an invalid data type is specified.
 	 */
@@ -466,8 +504,6 @@ class Visualizer extends EventTarget {
 		this.#rebuild();
 		window.addEventListener(`resize`, event => this.#rebuild());
 		engine.addEventListener(`trigger`, event => this.#update());
-		// media.addEventListener(`canplay`, event => this.#triggerVisualizationUpdate());
-		// media.addEventListener(`emptied`, event => this.#triggerVisualizationUpdate());
 	}
 	/**
 	 * @template {keyof VisualizerEventMap} K
@@ -1006,4 +1042,4 @@ class Settings {
 }
 //#endregion
 
-export { DataTypes, Visualizer, Settings };
+export { AudioTypes, Visualizer, Settings };
