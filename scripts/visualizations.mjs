@@ -29,10 +29,7 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 		const { width, height } = context.canvas;
 		const radius = this.#radius;
 
-		const transform = context.getTransform();
-		transform.e = width / 2;
-		transform.f = height / 2;
-		context.setTransform(transform);
+		context.setTransform(1, 0, 0, 1, width / 2, height / 2);
 
 		context.lineWidth = radius / 256;
 	}
@@ -47,28 +44,25 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	}
 
 	//#region Update preparation
-	/** @type {Uint8Array} */
-	#dataFrequency;
-	/** @type {Uint8Array} */
-	#dataTime;
+	/** @type {Float32Array} */
+	#normsDataFrequency;
+	/** @type {Float32Array} */
+	#normsDataTemporal;
 	/** @type {number} */
-	#factorVolume;
+	#normVolumeFrequency;
 	/** @type {number} */
-	#factorAmplitude;
-	/** @type {number} */
-	#factorAudio;
+	#normAmplitudeTemporal;
 	/**
 	 * @returns {void}
 	 */
 	#runMetadataUpdate() {
-		const { audio } = this;
+		const { audioset } = this;
 
-		const dataFrequency = this.#dataFrequency = audio.getData(AudioTypes.FREQUENCY_TYPE);
-		const dataTime = this.#dataTime = audio.getData(AudioTypes.TIME_TYPE);
+		const normsDataFrequency = this.#normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
+		const normsDataTemporal = this.#normsDataTemporal = audioset.getData(AudioTypes.TEMPORAL_TYPE);
 
-		const factorVolume = this.#factorVolume = audio.getVolume(AudioTypes.FREQUENCY_TYPE).interpolate(0, 255);
-		const factorAmplitude = this.#factorAmplitude = audio.getAmplitude(AudioTypes.TIME_TYPE).interpolate(0, 255);
-		const factorAudio = this.#factorAudio = factorAmplitude * factorVolume;
+		const normVolumeFrequency = this.#normVolumeFrequency = audioset.getVolume(AudioTypes.FREQUENCY_TYPE);
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal = audioset.getAmplitude(AudioTypes.TEMPORAL_TYPE);
 	}
 	/**
 	 * @returns {void}
@@ -76,12 +70,10 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	#runContextUpdate() {
 		const { context } = this;
 		const { width, height } = context.canvas;
-		const factorAudio = this.#factorAudio;
 
-		const transform = context.getTransform();
-		transform.a = 0.5 + 0.5 * factorAudio;
-		transform.d = 0.5 + 0.5 * factorAudio;
-		context.clearRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
+		let { a, b, c, d, e, f } = context.getTransform();
+		context.setTransform(a, b, c, d, e, f);
+		context.clearRect(-e / a, -f / d, width / a, height / d);
 	}
 	//#endregion
 	//#region Halo
@@ -98,28 +90,29 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 		const radius = this.#radius;
 		const colorHaloOuter = this.#colorHaloOuter;
 		const colorHaloInner = this.#colorHaloInner;
-		const { context, audio } = this;
-		const { tapeLength } = audio;
-		const tapeSemiLength = tapeLength / 2;
-		const dataFrequency = this.#dataFrequency;
-		const factorVolume = this.#factorVolume;
-		const factorAudio = this.#factorAudio;
+		const { context, audioset } = this;
+		const { length } = audioset;
+		const semiLength = length / 2;
+		const normsDataFrequency = this.#normsDataFrequency;
+		const normVolumeFrequency = this.#normVolumeFrequency;
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
+		const normAudio = normAmplitudeTemporal * normVolumeFrequency;
 
 		const gradientHalo = this.#gradientHalo = context.createConicGradient(PI / 2, 0, 0);
-		const position = Vector2D.newNaN;
 		context.beginPath();
-		for (let index = 0; index < tapeLength; index++) {
-			const progress = index.interpolate(0, tapeLength);
-			const offset = abs(index - tapeSemiLength).interpolate(0, tapeSemiLength + 1);
-			gradientHalo.addColorStop(progress, new Color(colorHaloOuter)
-				.rotate(180 * offset)
-				.illuminate(0.1 + 0.9 * sqrt(factorVolume))
+		const position = Vector2D.newNaN;
+		for (let index = 0; index < length; index++) {
+			const normProgress = index.interpolate(0, length);
+			const normOffset = abs(index - semiLength).interpolate(0, semiLength + 1);
+			gradientHalo.addColorStop(normProgress, new Color(colorHaloOuter)
+				.rotate(180 * normOffset)
+				.illuminate(0.1 + 0.9 * sqrt(normVolumeFrequency))
 				.toString()
 			);
-			const datum = dataFrequency[trunc(offset * tapeSemiLength)].interpolate(0, 255);
-			const distance = (0.6 + 0.4 * hypot(datum, factorAudio)) * radius;
-			position.x = distance * sin(progress * 2 * PI);
-			position.y = distance * cos(progress * 2 * PI);
+			const normDatumFrequency = normsDataFrequency[trunc(normOffset * semiLength)];
+			const distance = (0.6 + 0.4 * hypot(normDatumFrequency, normAudio)) * radius;
+			position.x = distance * sin(normProgress * 2 * PI);
+			position.y = distance * cos(normProgress * 2 * PI);
 			context.lineTo(position.x, position.y);
 		}
 		context.closePath();
@@ -139,10 +132,10 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 		const colorHalo = this.#colorHaloOuter;
 		const duration = 6;
 		const { delta } = this;
-		const factorVolume = this.#factorVolume;
+		const normVolumeFrequency = this.#normVolumeFrequency;
 
 		if (!Number.isFinite(delta)) return;
-		const [integer, fractional] = split(this.#offsetHaloRotation + (360 / duration) * delta * factorVolume);
+		const [integer, fractional] = split(this.#offsetHaloRotation + (360 / duration) * delta * normVolumeFrequency);
 		colorHalo.rotate(integer);
 		this.#offsetHaloRotation = fractional;
 	}
@@ -154,21 +147,21 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	#runWaveDrawing() {
 		const radius = this.#radius;
 		const gradientHalo = this.#gradientHalo;
-		const { context, audio } = this;
+		const { context, audioset } = this;
 		const { width } = context.canvas;
-		const tapeLength = audio.tapeLength;
-		const dataTime = this.#dataTime;
-		const factorAmplitude = this.#factorAmplitude;
+		const { length } = audioset;
+		const normsDataTemporal = this.#normsDataTemporal;
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
 
-		const position = Vector2D.newNaN;
 		context.beginPath();
 		context.moveTo(-width / 2, 0);
-		for (let index = 0; index < tapeLength; index++) {
-			const coefficent = index.interpolate(0, tapeLength);
-			const datum = dataTime[trunc(coefficent * tapeLength)].interpolate(0, 255, -1, 1);
-			const value = datum * factorAmplitude;
-			position.x = width * (coefficent - 0.5);
-			position.y = (radius) * value;
+		const position = Vector2D.newNaN;
+		for (let index = 0; index < length; index++) {
+			const normProgress = index.interpolate(0, length);
+			const normDatumTemporal = normsDataTemporal[trunc(normProgress * length)] * 2 - 1;
+			const normScale = normDatumTemporal * normAmplitudeTemporal;
+			position.x = width * (normProgress - 0.5);
+			position.y = (radius) * normScale;
 			context.lineTo(position.x, position.y);
 		}
 		context.lineTo(width / 2, 0);
@@ -182,7 +175,7 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	//#endregion
 	//#region Shadow
 	/** @type {Color} */
-	#colorShadow = Color.newTransparent;
+	#colorShadow = Color.newBlack;
 	/**
 	 * @returns {void}
 	 */
@@ -210,12 +203,12 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 	#runBackgroundDrawing() {
 		const colorBackground = this.#colorBackground;
 		const { context } = this;
-		const transform = context.getTransform();
+		const { a, d, e, f } = context.getTransform();
 		const { width, height } = context.canvas;
 
 		context.globalCompositeOperation = `destination-atop`;
 		context.fillStyle = colorBackground.toString();
-		context.fillRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
+		context.fillRect(-e / a, -f / d, width / a, height / d);
 	}
 	//#endregion
 
@@ -242,9 +235,9 @@ Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
 Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	//#region Rebuild preparation
 	/** @type {number} */
-	#anchor = 0.8;
+	#normShadowAnchor = 0.8;
 	/** @type {number} */
-	#angular;
+	#deltaRotation;
 	/** @type {Color} */
 	#colorGrid;
 	/**
@@ -259,7 +252,7 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	 * @returns {void}
 	 */
 	#runMetadataRebuild() {
-		this.#angular = 360 / 6;
+		this.#deltaRotation = 360 / 6;
 
 		const colorGrid = this.#colorGrid = Color.parse(getComputedStyle(document.documentElement).getPropertyValue(`--color-background`));
 		colorGrid.lightness = this.#interpolate(colorGrid.lightness / 100) * 100;
@@ -271,10 +264,7 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 		const { context } = this;
 		const { width, height } = context.canvas;
 
-		const transform = context.getTransform();
-		transform.e = width / 2;
-		transform.f = height / 2;
-		context.setTransform(transform);
+		context.setTransform(1, 0, 0, 1, width / 2, height / 2);
 
 		context.lineWidth = min(width, height) >> 8;
 	}
@@ -289,39 +279,39 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	}
 
 	//#region Update preparation
-	/** @type {Uint8Array} */
-	#dataFrequency;
+	/** @type {Float32Array} */
+	#normsDataFrequency;
 	/** @type {number} */
-	#factorVolumeFrequency;
+	#normVolumeFrequency;
 	/** @type {number} */
-	#factorFrequencyAmplitude;
+	#normFrequencyAmplitude;
 	/** @type {number} */
-	#factorTimeAmplitude;
+	#normTimeAmplitude;
 	/**
 	 * @returns {void}
 	 */
 	#runMetadataUpdate() {
-		const { audio } = this;
+		const { audioset } = this;
 
-		const dataFrequency = this.#dataFrequency = audio.getData(AudioTypes.FREQUENCY_TYPE);
-		const factorVolumeFrequency = this.#factorVolumeFrequency = audio.getVolume(AudioTypes.FREQUENCY_TYPE).interpolate(0, 255);
-		const factorFrequencyAmplitude = this.#factorFrequencyAmplitude = audio.getAmplitude(AudioTypes.FREQUENCY_TYPE).interpolate(0, 255);
-		const factorTimeAmplitude = this.#factorTimeAmplitude = audio.getAmplitude(AudioTypes.TIME_TYPE).interpolate(0, 255);
+		const normsDataFrequency = this.#normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
+		const normVolumeFrequency = this.#normVolumeFrequency = audioset.getVolume(AudioTypes.FREQUENCY_TYPE);
+		const normFrequencyAmplitude = this.#normFrequencyAmplitude = audioset.getAmplitude(AudioTypes.FREQUENCY_TYPE);
+		const normTimeAmplitude = this.#normTimeAmplitude = audioset.getAmplitude(AudioTypes.TEMPORAL_TYPE);
 	}
 	/**
 	 * @returns {void}
 	 */
 	#runContextUpdate() {
-		const factorFrequencyAmplitude = this.#factorFrequencyAmplitude;
-		const factorTimeAmplitude = this.#factorTimeAmplitude;
+		const normFrequencyAmplitude = this.#normFrequencyAmplitude;
+		const normTimeAmplitude = this.#normTimeAmplitude;
 		const { context } = this;
 		const { width, height } = context.canvas;
 
-		const transform = context.getTransform();
-		transform.a = 1 + 0.2 * factorFrequencyAmplitude;
-		transform.d = 1 + 0.4 * factorTimeAmplitude;
-		context.clearRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
-		context.setTransform(transform);
+		let { a, b, c, d, e, f } = context.getTransform();
+		a = 1 + 0.2 * normFrequencyAmplitude;
+		d = 1 + 0.4 * normTimeAmplitude;
+		context.clearRect(-e / a, -f / d, width / a, height / d);
+		context.setTransform(a, b, c, d, e, f);
 	}
 	//#endregion
 	//#region Grid
@@ -359,29 +349,29 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	 * @returns {void}
 	 */
 	#runSpectrumDrawing() {
-		const dataFrequency = this.#dataFrequency;
-		const anchor = this.#anchor;
+		const normsDataFrequency = this.#normsDataFrequency;
+		const normShadowAnchor = this.#normShadowAnchor;
 		const colorSpectrumSeed = this.#colorSpectrumSeed;
-		const angular = this.#angular;
-		const factorVolumeFrequency = this.#factorVolumeFrequency;
-		const factorTimeAmplitude = this.#factorTimeAmplitude;
-		const { context, audio } = this;
+		const deltaRotation = this.#deltaRotation;
+		const normVolumeFrequency = this.#normVolumeFrequency;
+		const normTimeAmplitude = this.#normTimeAmplitude;
+		const { context, audioset } = this;
 		const { width, height } = context.canvas;
 
-		const position = Vector2D.newNaN;
-		const tapeLength = trunc(width / max(width, height) * audio.tapeLength);
 		const gradientSpectrum = context.createLinearGradient(-width / 2, height / 2, width / 2, height / 2);
 		context.beginPath();
-		for (let index = 0.5 - tapeLength; index < tapeLength; index++) {
-			const progress = trunc(abs(index));
-			const factor = progress.interpolate(0, tapeLength);
-			const datum = dataFrequency[trunc(progress * 0.7)].interpolate(0, 255);
-			const value = sqrt(sqpw(datum) * factorVolumeFrequency);
-			position.x = width * (factor - 0.5);
-			position.y = height * ((1 - value) * anchor - 0.5 + Number(index < 0) * value);
-			gradientSpectrum.addColorStop(factor, new Color(colorSpectrumSeed)
-				.rotate(120 * factor + angular * (factorTimeAmplitude * 2 - 1))
-				.illuminate(0.2 + 0.5 * factorVolumeFrequency)
+		const position = Vector2D.newNaN;
+		const length = trunc(width / max(width, height) * audioset.length);
+		for (let offset = 0.5 - length; offset < length; offset++) {
+			const index = trunc(abs(offset));
+			const normProgress = index.interpolate(0, length);
+			const normDatumFrequency = normsDataFrequency[trunc(index * 0.7)];
+			const normScale = sqrt(sqpw(normDatumFrequency) * normVolumeFrequency);
+			position.x = width * (normProgress - 0.5);
+			position.y = height * ((1 - normScale) * normShadowAnchor - 0.5 + Number(offset < 0) * normScale);
+			gradientSpectrum.addColorStop(normProgress, new Color(colorSpectrumSeed)
+				.rotate(120 * normProgress + deltaRotation * (normTimeAmplitude * 2 - 1))
+				.illuminate(0.2 + 0.5 * normVolumeFrequency)
 				.toString()
 			);
 			context.lineTo(position.x, position.y);
@@ -399,12 +389,12 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	 */
 	#runSpectrumRotation() {
 		const colorSpectrumSeed = this.#colorSpectrumSeed;
-		const angular = this.#angular;
-		const factorTimeAmplitude = this.#factorTimeAmplitude;
+		const deltaRotation = this.#deltaRotation;
+		const normTimeAmplitude = this.#normTimeAmplitude;
 		const { delta } = this;
 
 		if (!Number.isFinite(delta)) return;
-		const [integer, fractional] = split(this.#offsetSpectrumRotation + angular * delta * factorTimeAmplitude);
+		const [integer, fractional] = split(this.#offsetSpectrumRotation + deltaRotation * delta * normTimeAmplitude);
 		colorSpectrumSeed.rotate(-integer);
 		this.#offsetSpectrumRotation = fractional;
 	}
@@ -416,24 +406,24 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	 * @returns {void}
 	 */
 	#runShadowDrawing() {
-		const anchor = this.#anchor;
-		const anchorTop = anchor * 2 / 3;
-		const anchorBottom = anchorTop + 1 / 3;
+		const normShadowAnchor = this.#normShadowAnchor;
+		const normTopAnchor = normShadowAnchor * 2 / 3;
+		const normBottomAnchor = normTopAnchor + 1 / 3;
 		const colorShadow = this.#colorShadow;
 		const { context } = this;
 		const { width, height } = context.canvas;
 
-		const transform = context.getTransform();
-		const gradientShadow = context.createLinearGradient(transform.e, -transform.f, transform.e, transform.f);
+		const { a, d, e, f } = context.getTransform();
+		const gradientShadow = context.createLinearGradient(e, -f, e, f);
 		gradientShadow.addColorStop(0, colorShadow.pass(0).toString());
-		gradientShadow.addColorStop(anchorTop, colorShadow.pass(0.2).toString());
-		gradientShadow.addColorStop(anchor, colorShadow.pass(0.8).toString());
-		gradientShadow.addColorStop(anchorBottom, colorShadow.pass(0.4).toString());
+		gradientShadow.addColorStop(normTopAnchor, colorShadow.pass(0.2).toString());
+		gradientShadow.addColorStop(normShadowAnchor, colorShadow.pass(0.8).toString());
+		gradientShadow.addColorStop(normBottomAnchor, colorShadow.pass(0.4).toString());
 		gradientShadow.addColorStop(1, colorShadow.pass(0).toString());
 
 		context.globalCompositeOperation = "multiply";
 		context.fillStyle = gradientShadow;
-		context.fillRect(-transform.e / transform.a, -transform.f / transform.d, width / transform.a, height / transform.d);
+		context.fillRect(-e / a, -f / d, width / a, height / d);
 	}
 	//#endregion
 

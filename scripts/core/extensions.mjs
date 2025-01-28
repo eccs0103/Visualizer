@@ -2,7 +2,7 @@
 
 "use strict";
 
-const { PI, trunc } = Math;
+const { PI, trunc, pow } = Math;
 
 //#region Number
 /**
@@ -391,6 +391,40 @@ const toRadianFactor = PI / 180;
 Math.toRadians = function (degrees) {
 	return degrees * toRadianFactor;
 };
+
+/**
+ * @param  {number[]} values 
+ * @returns {number}
+ */
+Math.meanArithmetic = function (...values) {
+	if (values.length === 0) return NaN;
+	const summary = values.reduce((accumulator, value) => accumulator + value, 0);
+	return summary / values.length;
+};
+
+/**
+ * @param  {number[]} values 
+ * @returns {number}
+ */
+Math.meanGeometric = function (...values) {
+	if (values.length === 0) return NaN;
+	const product = values.reduce((accumulator, value) => accumulator * value, 1);
+	return pow(product, 1 / values.length);
+};
+
+/**
+ * @param  {number[]} values 
+ * @returns {number}
+ */
+Math.meanHarmonic = function (...values) {
+	if (values.length === 0) return NaN;
+	const summary = values.reduce((accumulator, value) => {
+		if (value === 0) return NaN;
+		return accumulator + 1 / value;
+	}, 0);
+	return values.length / summary;
+};
+
 //#endregion
 //#region Promise
 Object.defineProperty(Promise.prototype, `isFulfilled`, {

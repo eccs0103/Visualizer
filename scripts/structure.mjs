@@ -9,7 +9,7 @@ import { } from "./workers/extensions.mjs";
 import { Engine, FastEngine } from "./workers/generators.mjs";
 // import { } from "./workers/measures.mjs";
 
-const { sqrt, log2, round } = Math;
+const { sqrt, sqpw, log2, round } = Math;
 
 //#region Audio types
 /**
@@ -27,25 +27,21 @@ const AudioTypes = {
 	 * @readonly
 	 * @returns {1}
 	 */
-	TIME_TYPE: 1,
+	TEMPORAL_TYPE: 1,
 };
 Object.freeze(AudioTypes);
 //#endregion
-//#region Audio package
+//#region Audioset
 /**
- * @typedef {InstanceType<typeof AudioPackage.Manager>} AudioPackageManager
+ * @typedef {InstanceType<typeof Audioset.Manager>} AudiosetManager
  */
 
 /**
- * Class representing audio analysis data.
- * Used to store and retrieve audio metrics, such as volume and amplitude.
+ * @template T
  */
-class AudioPackage {
+class Audioset {
 	//#region Manager
-	/**
-	 * Manager for controlling and configuring audio analysis parameters.
-	 */
-	static Manager = class AudioPackageManager {
+	static Manager = class AudiosetManager {
 		/**
 		 * Checks if the given quality value is within the acceptable range.
 		 * @param {number} value The quality level to validate.
@@ -94,28 +90,29 @@ class AudioPackage {
 
 			const source = context.createMediaElementSource(media);
 			const analyser = this.#analyser = context.createAnalyser();
-			const mapDataGetters = this.#mapDataGetters = new Map();
-			mapDataGetters.set(AudioTypes.FREQUENCY_TYPE, analyser.getByteFrequencyData.bind(analyser));
-			mapDataGetters.set(AudioTypes.TIME_TYPE, analyser.getByteTimeDomainData.bind(analyser));
+			const mapDataReaders = this.#mapDataReaders = new Map();
+			mapDataReaders.set(AudioTypes.FREQUENCY_TYPE, analyser.getByteFrequencyData.bind(analyser));
+			mapDataReaders.set(AudioTypes.TEMPORAL_TYPE, analyser.getByteTimeDomainData.bind(analyser));
 
 			source.connect(analyser);
 			analyser.connect(context.destination);
 
-			this.#package = AudioPackage.#construct(analyser.frequencyBinCount);
+			this.#audioset = Audioset.#construct(analyser.frequencyBinCount, [AudioTypes.FREQUENCY_TYPE, AudioTypes.TEMPORAL_TYPE]);
+			this.#dataTemporary = new Uint8Array(analyser.frequencyBinCount);
 		}
 		/** @type {AnalyserNode} */
 		#analyser;
-		/** @type {Map<number, (array: Uint8Array) => void>} */
-		#mapDataGetters;
+		/** @type {Map<AudioTypes, (array: Uint8Array) => void>} */
+		#mapDataReaders;
 		/**
-		 * @param {number} type 
+		 * @param {AudioTypes} type 
 		 * @param {Uint8Array} data 
 		 * @returns {void}
 		 */
-		#getData(type, data) {
-			const getByteData = this.#mapDataGetters.get(type);
-			if (getByteData === undefined) throw new ReferenceError(`Datalist for frequency data not initialized`);
-			getByteData(data);
+		#readByteData(type, data) {
+			const readByteData = this.#mapDataReaders.get(type);
+			if (readByteData === undefined) throw new ReferenceError(`Data reader for '${type}' data not initialized`);
+			readByteData(data);
 		}
 		/**
 		 * Gets the quality level of the audio analysis, influencing analysis detail.
@@ -132,13 +129,14 @@ class AudioPackage {
 		 * @returns {void}
 		 */
 		set quality(value) {
-			if (!AudioPackageManager.checkQuality(value)) return;
+			if (!AudiosetManager.checkQuality(value)) return;
 			const analyser = this.#analyser;
-			const audioPackage = this.#package;
-			const types = audioPackage.#types;
+			const audioset = this.#audioset;
+			const types = audioset.#types;
 			analyser.fftSize = (1 << value);
-			audioPackage.#tapeLength = analyser.frequencyBinCount;
-			audioPackage.#datalist = new Map(Array.from(types, type => [type, new Uint8Array(analyser.frequencyBinCount)]));
+			audioset.#length = analyser.frequencyBinCount;
+			audioset.#datalist = new Map(Array.from(types, type => [type, new Float32Array(analyser.frequencyBinCount)]));
+			this.#dataTemporary = new Uint8Array(analyser.frequencyBinCount);
 		}
 		/**
 		 * Gets the smoothing level applied to the analysis for a smoother transition between values.
@@ -154,7 +152,7 @@ class AudioPackage {
 		 * @returns {void}
 		 */
 		set smoothing(value) {
-			if (!AudioPackage.Manager.checkSmoothing(value)) return;
+			if (!Audioset.Manager.checkSmoothing(value)) return;
 			this.#analyser.smoothingTimeConstant = value;
 		}
 		/**
@@ -172,7 +170,7 @@ class AudioPackage {
 		 * @returns {void}
 		 */
 		set focus(value) {
-			if (!AudioPackageManager.checkFocus(value)) return;
+			if (!AudiosetManager.checkFocus(value)) return;
 			const { spread } = this;
 			const analyser = this.#analyser;
 			analyser.minDecibels = value - spread;
@@ -194,20 +192,20 @@ class AudioPackage {
 		 * @returns {void}
 		 */
 		set spread(value) {
-			if (!AudioPackageManager.checkSpread(value)) return;
+			if (!AudiosetManager.checkSpread(value)) return;
 			const analyser = this.#analyser, { focus } = this;
 			analyser.minDecibels = focus - value;
 			analyser.maxDecibels = focus + value;
 		}
-		/** @type {AudioPackage} */
-		#package;
+		/** @type {Audioset<AudioTypes>} */
+		#audioset;
 		/**
-		 * Package serviced by manager.
+		 * Audioset serviced by manager.
 		 * @readonly
-		 * @returns {AudioPackage}
+		 * @returns {Audioset<AudioTypes>}
 		 */
-		get package() {
-			return this.#package;
+		get audioset() {
+			return this.#audioset;
 		}
 		/** @type {boolean} */
 		#autofix = true;
@@ -215,13 +213,13 @@ class AudioPackage {
 		 * @returns {void}
 		 */
 		#fix() {
-			const audioPackage = this.#package;
+			const audioset = this.#audioset;
 			const analyser = this.#analyser;
 			const { minDecibels } = analyser;
 			const range = analyser.maxDecibels - minDecibels;
 
 			let minimum = Infinity, maximum = -Infinity;
-			audioPackage.getData(AudioTypes.FREQUENCY_TYPE).forEach((datum) => {
+			audioset.getData(AudioTypes.FREQUENCY_TYPE).forEach((datum) => {
 				const decibel = (datum / 255) * range + minDecibels;
 				if (decibel < minimum) minimum = decibel;
 				if (decibel > maximum) maximum = decibel;
@@ -235,32 +233,34 @@ class AudioPackage {
 				return;
 			}
 		}
+		/** @type {Uint8Array} */
+		#dataTemporary;
 		/**
-		 * Updates the audio analysis data for the current media element state.
+		 * Refreshes the audio analysis data for the current media element state.
 		 * Retrieves updated values for volume and amplitude.
 		 * @returns {void}
 		 */
-		update() {
-			const audioPackage = this.#package;
-			const { tapeLength } = audioPackage;
-			const types = audioPackage.#types;
-			const datalist = audioPackage.#datalist;
+		refresh() {
+			const audioset = this.#audioset;
+			const { length } = audioset;
+			const types = audioset.#types;
+			const dataTemporary = this.#dataTemporary;
 
-			datalist.forEach((data, type) => {
+			for (const [type, data] of audioset.#datalist) {
 				if (!types.has(type)) return;
 
-				this.#getData(type, data);
-
+				this.#readByteData(type, dataTemporary);
 				let linear = 0, quadratic = 0;
-				for (let index = 0; index < tapeLength; index++) {
-					const datum = data[index];
-					linear += datum;
-					quadratic += datum * datum;
+				for (let index = 0; index < length; index++) {
+					const unit = dataTemporary[index] / 255;
+					data[index] = unit;
+					linear += unit;
+					quadratic += sqpw(unit);
 				}
 
-				audioPackage.#volumes.set(type, linear / tapeLength);
-				audioPackage.#amplitudes.set(type, sqrt(quadratic / tapeLength));
-			});
+				audioset.#volumes.set(type, linear / length);
+				audioset.#amplitudes.set(type, sqrt(quadratic / length));
+			}
 		}
 	};
 	//#endregion
@@ -268,47 +268,48 @@ class AudioPackage {
 	/** @type {boolean} */
 	static #locked = true;
 	/**
+	 * @template T
 	 * @param {number} length 
-	 * @returns {AudioPackage}
+	 * @param {T[]} types 
+	 * @returns {Audioset<T>}
 	 */
-	static #construct(length) {
-		AudioPackage.#locked = false;
-		const self = new AudioPackage(length, [AudioTypes.FREQUENCY_TYPE, AudioTypes.TIME_TYPE]);
-		AudioPackage.#locked = true;
-
+	static #construct(length, types) {
+		Audioset.#locked = false;
+		const self = new Audioset(length, types);
+		Audioset.#locked = true;
 		return self;
 	}
 	/**
-	 * @param {number} length The number of measurements in the audio data.
-	 * @param {number[]} types The types of audio data to analyze.
+	 *  @param {number} length The number of measurements in the audio data.
+	 * @param {T[]} types The types of audio data to analyze.
 	 * @throws {TypeError} If the constructor is called directly.
 	 */
 	constructor(length, types) {
-		if (AudioPackage.#locked) throw new TypeError(`Illegal constructor`);
-		this.#tapeLength = length;
+		if (Audioset.#locked) throw new TypeError(`Illegal constructor`);
+		this.#length = length;
 		this.#types = new Set(types);
-		this.#datalist = new Map(types.map(type => [type, new Uint8Array(length)]));
+		this.#datalist = new Map(types.map(type => [type, new Float32Array(length)]));
 		this.#volumes = new Map(types.map(type => [type, 0]));
 		this.#amplitudes = new Map(types.map(type => [type, 0.5]));
 	}
 	/** @type {number} */
-	#tapeLength;
+	#length;
 	/**
 	 * Gets the total number of measurements in audio data.
 	 * @readonly
 	 * @returns {number}
 	 */
-	get tapeLength() {
-		return this.#tapeLength;
+	get length() {
+		return this.#length;
 	}
-	/** @type {Set<number>} */
+	/** @type {Set<T>} */
 	#types;
-	/** @type {Map<number, Uint8Array>} */
+	/** @type {Map<T, Float32Array>} */
 	#datalist;
 	/**
 	 * Retrieves audio data for the specified type.
-	 * @param {number} type The data type (e.g., frequency or time domain).
-	 * @returns {Uint8Array} The data array for analysis.
+	 * @param {T} type The data type (e.g., frequency or time domain).
+	 * @returns {Float32Array} The data array for analysis.
 	 * @throws {TypeError} If an invalid data type is specified.
 	 */
 	getData(type) {
@@ -316,11 +317,11 @@ class AudioPackage {
 		if (data === undefined) throw new TypeError(`Invalid data '${type}' type`);
 		return data;
 	}
-	/** @type {Map<number, number>} */
+	/** @type {Map<T, number>} */
 	#volumes;
 	/**
 	 * Gets the current volume level for the specified data type.
-	 * @param {number} type The data type.
+	 * @param {T} type The data type.
 	 * @returns {number} The volume level.
 	 * @throws {TypeError} If an invalid data type is specified.
 	 */
@@ -329,11 +330,11 @@ class AudioPackage {
 		if (volume === undefined) throw new TypeError(`Invalid data '${type}' type`);
 		return volume;
 	}
-	/** @type {Map<number, number>} */
+	/** @type {Map<T, number>} */
 	#amplitudes;
 	/**
 	 * Gets the current amplitude level for the specified data type.
-	 * @param {number} type The data type.
+	 * @param {T} type The data type.
 	 * @returns {number} The amplitude level.
 	 * @throws {TypeError} If an invalid data type is specified.
 	 */
@@ -389,12 +390,12 @@ class Visualizer extends EventTarget {
 			return this.#visualizer.#context;
 		}
 		/**
-		 * The audio data for analysis.
+		 * The audioset for analysis.
 		 * @readonly
-		 * @returns {AudioPackage}
+		 * @returns {Audioset<AudioTypes>}
 		 */
-		get audio() {
-			return this.#visualizer.#manager.package;
+		get audioset() {
+			return this.#visualizer.#manager.audioset;
 		}
 		/**
 		 * True if the visualizer is active, false otherwise.
@@ -497,8 +498,8 @@ class Visualizer extends EventTarget {
 		this.#context = Object.suppress(canvas.getContext(`2d`));
 
 		Visualizer.#self = this;
-		const manager = this.#manager = new AudioPackage.Manager(media);
-		engine.addEventListener(`trigger`, event => manager.update());
+		const manager = this.#manager = new Audioset.Manager(media);
+		engine.addEventListener(`trigger`, event => manager.refresh());
 
 		this.#attachment = DataPair.fromArray(Array.from(Visualizer.#attachments).at(0) ?? Error.throws(`No visualization is attached to the visualizer.`));
 		this.#rebuild();
@@ -631,7 +632,7 @@ class Visualizer extends EventTarget {
 	}
 	/** @type {CanvasRenderingContext2D} */
 	#context;
-	/** @type {AudioPackageManager} */
+	/** @type {AudiosetManager} */
 	#manager;
 	/**
 	 * Quality level of the visualization.
@@ -760,7 +761,7 @@ class VisualizationConfiguration {
 	 * @returns {void}
 	 */
 	set quality(value) {
-		if (!AudioPackage.Manager.checkQuality(value)) throw new Error(`Invalid value '${value}' for quality`);
+		if (!Audioset.Manager.checkQuality(value)) throw new Error(`Invalid value '${value}' for quality`);
 		this.#quality = value;
 	}
 	/** @type {number} */
@@ -776,7 +777,7 @@ class VisualizationConfiguration {
 	 * @returns {void}
 	 */
 	set smoothing(value) {
-		if (!AudioPackage.Manager.checkSmoothing(value)) throw new Error(`Invalid value '${value}' for smoothing`);
+		if (!Audioset.Manager.checkSmoothing(value)) throw new Error(`Invalid value '${value}' for smoothing`);
 		this.#smoothing = value;
 	}
 	/** @type {number} */
@@ -792,7 +793,7 @@ class VisualizationConfiguration {
 	 * @returns {void}
 	 */
 	set focus(value) {
-		if (!AudioPackage.Manager.checkFocus(value)) throw new Error(`Invalid value '${value}' for focus`);
+		if (!Audioset.Manager.checkFocus(value)) throw new Error(`Invalid value '${value}' for focus`);
 		this.#focus = value;
 	}
 	/** @type {number} */
@@ -808,7 +809,7 @@ class VisualizationConfiguration {
 	 * @returns {void}
 	 */
 	set spread(value) {
-		if (!AudioPackage.Manager.checkSpread(value)) throw new Error(`Invalid value '${value}' for spread`);
+		if (!Audioset.Manager.checkSpread(value)) throw new Error(`Invalid value '${value}' for spread`);
 		this.#spread = value;
 	}
 }

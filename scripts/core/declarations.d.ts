@@ -276,7 +276,12 @@ interface Math {
 	 * @returns The angle in radians.
 	 */
 	toRadians(degrees: number): number;
+	meanArithmetic(...values: number[]): number;
+	meanGeometric(...values: number[]): number;
+	meanHarmonic(...values: number[]): number;
 }
+
+Math.hy;
 
 interface Promise<T> {
 	/**
