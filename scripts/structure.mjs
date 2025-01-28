@@ -217,13 +217,15 @@ class Audioset {
 			const analyser = this.#analyser;
 			const { minDecibels } = analyser;
 			const range = analyser.maxDecibels - minDecibels;
+			const normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
 
 			let minimum = Infinity, maximum = -Infinity;
-			audioset.getData(AudioTypes.FREQUENCY_TYPE).forEach((datum) => {
-				const decibel = (datum / 255) * range + minDecibels;
+			for (let index = 0; index < normsDataFrequency.length; index++) {
+				const normDatumFrequency = normsDataFrequency[index];
+				const decibel = normDatumFrequency * range + minDecibels;
 				if (decibel < minimum) minimum = decibel;
 				if (decibel > maximum) maximum = decibel;
-			});
+			}
 
 			try {
 				analyser.minDecibels = minimum;

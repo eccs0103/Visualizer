@@ -42,15 +42,29 @@ Number.prototype.clamp = function (min, max) {
  * Interpolates the number from one range to another.
  * @param {number} min1 The minimum value of the original range.
  * @param {number} max1 The maximum value of the original range.
- * @param {number} min2 The minimum value of the target range.
- * @param {number} max2 The maximum value of the target range.
+ * @param {number} min2 The minimum value of the target range. Defaults to 0.
+ * @param {number} max2 The maximum value of the target range. Defaults to 1.
  * @returns {number} The interpolated value within the target range.
- * @throws {Error} If the minimum and maximum values of either range are equal.
+ * @throws {Error} If the minimum and maximum of either range are equal.
  */
 Number.prototype.interpolate = function (min1, max1, min2 = 0, max2 = 1) {
 	if (min1 === max1) throw new Error(`Minimum and maximum of the original range cant be equal`);
 	if (min2 === max2) throw new Error(`Minimum and maximum of the target range cant be equal`);
 	return min2 + (max2 - min2) * ((this.valueOf() - min1) / (max1 - min1));
+};
+
+/**
+ * Modulates the current number within a specified range.
+ * @param {number} length The range length.
+ * @param {number} start The start of the range. Defaults to 0.
+ * @returns {number} The number constrained within the range.
+ * @throws {Error} If the range is zero.
+ */
+Number.prototype.modulate = function (length, start = 0) {
+	if (length === 0) throw new Error(`Range can't be zero`);
+	let value = (this.valueOf() - start) % length;
+	if (value < 0) value += length;
+	return value + start;
 };
 
 /**
@@ -288,6 +302,21 @@ Array.prototype.swap = function (index1, index2) {
 	const temporary = this[index1];
 	this[index1] = this[index2];
 	this[index2] = temporary;
+};
+
+/**
+ * Resizes an array to the specified length. 
+ * If the new length is greater than the current length, fills the extra slots with the default value.
+ * If the new length is smaller, truncates the array.
+ * @template T
+ * @param {number} length The new length for the array.
+ * @param {T} _default The default value to fill new slots if the array is extended.
+ * @returns {T[]} The resized array.
+ */
+Array.prototype.resize = function (length, _default) {
+	while (length > this.length) this.push(_default);
+	this.length = length;
+	return this;
 };
 //#endregion
 //#region Data pair

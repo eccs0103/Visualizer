@@ -21,9 +21,9 @@ Visualizer.attach(`Custom`, new class extends Visualizer.Visualization {
 	 * @returns {void}
 	 */
 	rebuild() {
-		const { context, audio } = this;
+		const { context, audioset } = this;
 		context; /// The rendering context for drawing.
-		audio; /// The audio data for analysis.
+		audioset; /// The audioset for analysis.
 
 		const { width, height } = context.canvas;
 		width; /// The width of a canvas.
@@ -45,7 +45,7 @@ Visualizer.attach(`Custom`, new class extends Visualizer.Visualization {
 ```
 
 ## Feed
-### 2.4.0 : Adaptive Core 3.3.3 (11.01.2025)
+### 2.4.0 : Adaptive Core 3.3.5 (28.01.2025)
 - The configurator is better adapted to different sizes.
 - Restoration and update of the deprecated "Spectrogram" visualization.
 - Optimization of existing visualizations. Core optimization for background operation.
