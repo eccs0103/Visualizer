@@ -282,27 +282,34 @@ interface Math {
 	/**
 	 * Calculates the square of a number.
 	 * @param x The number to square.
-	 * @returns The square of the input number.
 	 */
 	sqpw(x: number): number;
 	/**
 	 * Converts radians to degrees.
 	 * @param radians The angle in radians.
-	 * @returns The angle in degrees.
 	 */
 	toDegrees(radians: number): number;
 	/**
 	 * Converts degrees to radians.
 	 * @param degrees The angle in degrees.
-	 * @returns The angle in radians.
 	 */
 	toRadians(degrees: number): number;
+	/**
+	 * Calculates the arithmetic mean of the given numbers.
+	 * @param values The numbers to calculate the mean from.
+	 */
 	meanArithmetic(...values: number[]): number;
+	/**
+	 * Calculates the geometric mean of the given numbers.
+	 * @param values The numbers to calculate the mean from.
+	 */
 	meanGeometric(...values: number[]): number;
+	/**
+	 * Calculates the harmonic mean of the given numbers.
+	 * @param values The numbers to calculate the mean from.
+	 */
 	meanHarmonic(...values: number[]): number;
 }
-
-Math.hy;
 
 interface Promise<T> {
 	/**

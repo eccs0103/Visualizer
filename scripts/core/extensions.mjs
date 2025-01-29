@@ -386,6 +386,9 @@ class DataPair {
  * Splits a number into its integer and fractional parts.
  * @param {number} x The number to be split.
  * @returns {[number, number]} A tuple where the first element is the integer part and the second element is the fractional part.
+ * ```ts
+ * const [integer, fractional] = Math.split(x);
+ * ```
  */
 Math.split = function (x) {
 	const integer = trunc(x);
@@ -395,7 +398,7 @@ Math.split = function (x) {
 /**
  * Calculates the square of a number.
  * @param {number} x The number to square.
- * @returns {number} The square of the input number.
+ * @returns {number}
  */
 Math.sqpw = function (x) {
 	return x * x;
@@ -405,7 +408,7 @@ const toDegreeFactor = 180 / PI;
 /**
  * Converts radians to degrees.
  * @param {number} radians The angle in radians.
- * @returns {number} The angle in degrees.
+ * @returns {number}
  */
 Math.toDegrees = function (radians) {
 	return radians * toDegreeFactor;
@@ -415,45 +418,52 @@ const toRadianFactor = PI / 180;
 /**
  * Converts degrees to radians.
  * @param {number} degrees The angle in degrees.
- * @returns {number} The angle in radians.
+ * @returns {number}
  */
 Math.toRadians = function (degrees) {
 	return degrees * toRadianFactor;
 };
 
 /**
- * @param  {number[]} values 
+ * Calculates the arithmetic mean of the given numbers.
+ * @param {number[]} values The numbers to calculate the mean from.
  * @returns {number}
  */
 Math.meanArithmetic = function (...values) {
-	if (values.length === 0) return NaN;
-	const summary = values.reduce((accumulator, value) => accumulator + value, 0);
+	let summary = 0;
+	for (let index = 0; index < values.length; index++) {
+		summary += values[index];
+	}
 	return summary / values.length;
 };
 
 /**
- * @param  {number[]} values 
+ * Calculates the geometric mean of the given numbers.
+ * @param {number[]} values The numbers to calculate the mean from.
  * @returns {number}
  */
 Math.meanGeometric = function (...values) {
-	if (values.length === 0) return NaN;
-	const product = values.reduce((accumulator, value) => accumulator * value, 1);
+	let product = 1;
+	for (let index = 0; index < values.length; index++) {
+		product *= values[index];
+	}
 	return pow(product, 1 / values.length);
 };
 
 /**
- * @param  {number[]} values 
+ * Calculates the harmonic mean of the given numbers.
+ * @param {number[]} values The numbers to calculate the mean from.
  * @returns {number}
  */
 Math.meanHarmonic = function (...values) {
-	if (values.length === 0) return NaN;
-	const summary = values.reduce((accumulator, value) => {
+	let summary = 0;
+	for (let index = 0; index < values.length; index++) {
+		const value = values[index];
 		if (value === 0) return NaN;
-		return accumulator + 1 / value;
-	}, 0);
+		summary += 1 / value;
+	}
 	return values.length / summary;
 };
-
 //#endregion
 //#region Promise
 Object.defineProperty(Promise.prototype, `isFulfilled`, {

@@ -5,231 +5,7 @@ import { Vector2D } from "./core/measures.mjs";
 import { Color } from "./core/palette.mjs";
 import { AudioTypes, Visualizer } from "./structure.mjs";
 
-const { min, max, split, sin, cos, PI, hypot, abs, trunc, sqrt, SQRT1_2, sqpw } = Math;
-
-//#region Pulsar
-Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
-	//#region Rebuild preparation
-	/** @type {number} */
-	#radius;
-	/**
-	 * @returns {void}
-	 */
-	#runMetadataRebuild() {
-		const { context } = this;
-		const { width, height } = context.canvas;
-
-		const radius = this.#radius = min(width, height) / 2;
-	}
-	/**
-	 * @returns {void}
-	 */
-	#runContextRebuild() {
-		const { context } = this;
-		const { width, height } = context.canvas;
-		const radius = this.#radius;
-
-		context.setTransform(1, 0, 0, 1, width / 2, height / 2);
-
-		context.lineWidth = radius / 256;
-	}
-	//#endregion
-
-	/**
-	 * @returns {void}
-	 */
-	rebuild() {
-		this.#runMetadataRebuild();
-		this.#runContextRebuild();
-	}
-
-	//#region Update preparation
-	/** @type {Float32Array} */
-	#normsDataFrequency;
-	/** @type {Float32Array} */
-	#normsDataTemporal;
-	/** @type {number} */
-	#normVolumeFrequency;
-	/** @type {number} */
-	#normAmplitudeTemporal;
-	/**
-	 * @returns {void}
-	 */
-	#runMetadataUpdate() {
-		const { audioset } = this;
-
-		const normsDataFrequency = this.#normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
-		const normsDataTemporal = this.#normsDataTemporal = audioset.getData(AudioTypes.TEMPORAL_TYPE);
-
-		const normVolumeFrequency = this.#normVolumeFrequency = audioset.getVolume(AudioTypes.FREQUENCY_TYPE);
-		const normAmplitudeTemporal = this.#normAmplitudeTemporal = audioset.getAmplitude(AudioTypes.TEMPORAL_TYPE);
-	}
-	/**
-	 * @returns {void}
-	 */
-	#runContextUpdate() {
-		const { context } = this;
-		const { width, height } = context.canvas;
-
-		let { a, b, c, d, e, f } = context.getTransform();
-		context.setTransform(a, b, c, d, e, f);
-		context.clearRect(-e / a, -f / d, width / a, height / d);
-	}
-	//#endregion
-	//#region Halo
-	/** @type {Color} */
-	#colorHaloOuter = Color.viaHSL(0, 100, 50);
-	/** @type {Color} */
-	#colorHaloInner = Color.newBlack;
-	/** @type {CanvasGradient} */
-	#gradientHalo;
-	/**
-	 * @returns {void}
-	 */
-	#runHaloDrawing() {
-		const radius = this.#radius;
-		const colorHaloOuter = this.#colorHaloOuter;
-		const colorHaloInner = this.#colorHaloInner;
-		const { context, audioset } = this;
-		const { length } = audioset;
-		const semiLength = length / 2;
-		const normsDataFrequency = this.#normsDataFrequency;
-		const normVolumeFrequency = this.#normVolumeFrequency;
-		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
-		const normAudio = normAmplitudeTemporal * normVolumeFrequency;
-
-		const gradientHalo = this.#gradientHalo = context.createConicGradient(PI / 2, 0, 0);
-		context.beginPath();
-		const position = Vector2D.newNaN;
-		for (let index = 0; index < length; index++) {
-			const normProgress = index.interpolate(0, length);
-			const normOffset = abs(index - semiLength).interpolate(0, semiLength + 1);
-			gradientHalo.addColorStop(normProgress, new Color(colorHaloOuter)
-				.rotate(180 * normOffset)
-				.illuminate(0.1 + 0.9 * sqrt(normVolumeFrequency))
-				.toString()
-			);
-			const normDatumFrequency = normsDataFrequency[trunc(normOffset * semiLength)];
-			const distance = (0.6 + 0.4 * hypot(normDatumFrequency, normAudio)) * radius;
-			position.x = distance * sin(normProgress * 2 * PI);
-			position.y = distance * cos(normProgress * 2 * PI);
-			context.lineTo(position.x, position.y);
-		}
-		context.closePath();
-
-		context.globalCompositeOperation = `source-over`;
-		context.fillStyle = colorHaloInner.toString();
-		context.fill();
-		context.strokeStyle = gradientHalo;
-		context.stroke();
-	}
-	/** @type {number} */
-	#offsetHaloRotation = 0;
-	/**
-	 * @returns {void}
-	 */
-	#runHaloRotation() {
-		const colorHalo = this.#colorHaloOuter;
-		const duration = 6;
-		const { delta } = this;
-		const normVolumeFrequency = this.#normVolumeFrequency;
-
-		if (!Number.isFinite(delta)) return;
-		const [integer, fractional] = split(this.#offsetHaloRotation + (360 / duration) * delta * normVolumeFrequency);
-		colorHalo.rotate(integer);
-		this.#offsetHaloRotation = fractional;
-	}
-	//#endregion
-	//#region Wave
-	/**
-	 * @returns {void}
-	 */
-	#runWaveDrawing() {
-		const radius = this.#radius;
-		const gradientHalo = this.#gradientHalo;
-		const { context, audioset } = this;
-		const { width } = context.canvas;
-		const { length } = audioset;
-		const normsDataTemporal = this.#normsDataTemporal;
-		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
-
-		context.beginPath();
-		context.moveTo(-width / 2, 0);
-		const position = Vector2D.newNaN;
-		for (let index = 0; index < length; index++) {
-			const normProgress = index.interpolate(0, length);
-			const normDatumTemporal = normsDataTemporal[trunc(normProgress * length)] * 2 - 1;
-			const normScale = normDatumTemporal * normAmplitudeTemporal;
-			position.x = width * (normProgress - 0.5);
-			position.y = (radius) * normScale;
-			context.lineTo(position.x, position.y);
-		}
-		context.lineTo(width / 2, 0);
-
-		context.globalCompositeOperation = `source-atop`;
-		context.fillStyle = gradientHalo;
-		context.fill();
-		context.strokeStyle = gradientHalo;
-		context.stroke();
-	}
-	//#endregion
-	//#region Shadow
-	/** @type {Color} */
-	#colorShadow = Color.newBlack;
-	/**
-	 * @returns {void}
-	 */
-	#runShadowDrawing() {
-		const radius = this.#radius;
-		const colorShadow = this.#colorShadow;
-		const { context } = this;
-
-		const gradientShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
-		gradientShadow.addColorStop(0, colorShadow.pass(1).toString());
-		gradientShadow.addColorStop(0.5, colorShadow.pass(SQRT1_2).toString());
-		gradientShadow.addColorStop(1, colorShadow.pass(0).toString());
-
-		context.globalCompositeOperation = `source-over`;
-		context.fillStyle = gradientShadow;
-		context.fill();
-	}
-	//#endregion
-	//#region Background
-	/** @type {Color} */
-	#colorBackground = Color.viaRGB(25, 25, 25);
-	/**
-	 * @returns {void}
-	 */
-	#runBackgroundDrawing() {
-		const colorBackground = this.#colorBackground;
-		const { context } = this;
-		const { a, d, e, f } = context.getTransform();
-		const { width, height } = context.canvas;
-
-		context.globalCompositeOperation = `destination-atop`;
-		context.fillStyle = colorBackground.toString();
-		context.fillRect(-e / a, -f / d, width / a, height / d);
-	}
-	//#endregion
-
-	/**
-	 * @returns {void}
-	 */
-	update() {
-		this.#runMetadataUpdate();
-		this.#runContextUpdate();
-
-		this.#runHaloDrawing();
-		this.#runHaloRotation();
-
-		this.#runWaveDrawing();
-
-		this.#runShadowDrawing();
-
-		this.#runBackgroundDrawing();
-	}
-});
-//#endregion
+const { min, max, split, sin, cos, PI, exp, abs, trunc, sqrt, SQRT1_2, asin, meanGeometric, meanHarmonic, sqpw, log2, random } = Math;
 
 //#region Spectrogram
 Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
@@ -284,9 +60,9 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	/** @type {number} */
 	#normVolumeFrequency;
 	/** @type {number} */
-	#normFrequencyAmplitude;
+	#normAmplitudeFrequency;
 	/** @type {number} */
-	#normTimeAmplitude;
+	#normAmplitudeTemporal;
 	/**
 	 * @returns {void}
 	 */
@@ -295,23 +71,23 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 
 		const normsDataFrequency = this.#normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
 		const normVolumeFrequency = this.#normVolumeFrequency = audioset.getVolume(AudioTypes.FREQUENCY_TYPE);
-		const normFrequencyAmplitude = this.#normFrequencyAmplitude = audioset.getAmplitude(AudioTypes.FREQUENCY_TYPE);
-		const normTimeAmplitude = this.#normTimeAmplitude = audioset.getAmplitude(AudioTypes.TEMPORAL_TYPE);
+		const normAmplitudeFrequency = this.#normAmplitudeFrequency = audioset.getAmplitude(AudioTypes.FREQUENCY_TYPE);
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal = audioset.getAmplitude(AudioTypes.TEMPORAL_TYPE);
 	}
 	/**
 	 * @returns {void}
 	 */
 	#runContextUpdate() {
-		const normFrequencyAmplitude = this.#normFrequencyAmplitude;
-		const normTimeAmplitude = this.#normTimeAmplitude;
+		const normAmplitudeFrequency = this.#normAmplitudeFrequency;
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
 		const { context } = this;
 		const { width, height } = context.canvas;
 
 		let { a, b, c, d, e, f } = context.getTransform();
-		a = 1 + 0.2 * normFrequencyAmplitude;
-		d = 1 + 0.4 * normTimeAmplitude;
-		context.clearRect(-e / a, -f / d, width / a, height / d);
+		a = 1 + 0.2 * normAmplitudeFrequency;
+		d = 1 + 0.4 * normAmplitudeTemporal;
 		context.setTransform(a, b, c, d, e, f);
+		context.clearRect(-e / a, -f / d, width / a, height / d);
 	}
 	//#endregion
 	//#region Grid
@@ -336,7 +112,6 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 			context.moveTo(position.x, position.y);
 			context.lineTo(position.x + width, position.y);
 		}
-
 		context.globalCompositeOperation = `source-over`;
 		context.strokeStyle = colorGrid.toString();
 		context.stroke();
@@ -354,7 +129,7 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 		const colorSpectrumSeed = this.#colorSpectrumSeed;
 		const deltaRotation = this.#deltaRotation;
 		const normVolumeFrequency = this.#normVolumeFrequency;
-		const normTimeAmplitude = this.#normTimeAmplitude;
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
 		const { context, audioset } = this;
 		const { width, height } = context.canvas;
 
@@ -366,18 +141,17 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 			const index = trunc(abs(offset));
 			const normProgress = index.interpolate(0, length);
 			const normDatumFrequency = normsDataFrequency[trunc(index * 0.7)];
-			const normScale = sqrt(sqpw(normDatumFrequency) * normVolumeFrequency);
+			const normScale = meanGeometric(normDatumFrequency, normDatumFrequency, normVolumeFrequency);
 			position.x = width * (normProgress - 0.5);
 			position.y = height * ((1 - normScale) * normShadowAnchor - 0.5 + Number(offset < 0) * normScale);
 			gradientSpectrum.addColorStop(normProgress, new Color(colorSpectrumSeed)
-				.rotate(120 * normProgress + deltaRotation * (normTimeAmplitude * 2 - 1))
+				.rotate(120 * normProgress + deltaRotation * (normAmplitudeTemporal * 2 - 1))
 				.illuminate(0.2 + 0.5 * normVolumeFrequency)
 				.toString()
 			);
 			context.lineTo(position.x, position.y);
 		}
 		context.closePath();
-
 		context.globalCompositeOperation = `source-in`;
 		context.fillStyle = gradientSpectrum;
 		context.fill();
@@ -390,11 +164,11 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 	#runSpectrumRotation() {
 		const colorSpectrumSeed = this.#colorSpectrumSeed;
 		const deltaRotation = this.#deltaRotation;
-		const normTimeAmplitude = this.#normTimeAmplitude;
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
 		const { delta } = this;
 
 		if (!Number.isFinite(delta)) return;
-		const [integer, fractional] = split(this.#offsetSpectrumRotation + deltaRotation * delta * normTimeAmplitude);
+		const [integer, fractional] = split(this.#offsetSpectrumRotation + deltaRotation * delta * normAmplitudeTemporal);
 		colorSpectrumSeed.rotate(-integer);
 		this.#offsetSpectrumRotation = fractional;
 	}
@@ -420,7 +194,6 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 		gradientShadow.addColorStop(normShadowAnchor, colorShadow.pass(0.8).toString());
 		gradientShadow.addColorStop(normBottomAnchor, colorShadow.pass(0.4).toString());
 		gradientShadow.addColorStop(1, colorShadow.pass(0).toString());
-
 		context.globalCompositeOperation = "multiply";
 		context.fillStyle = gradientShadow;
 		context.fillRect(-e / a, -f / d, width / a, height / d);
@@ -440,6 +213,231 @@ Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
 		this.#runSpectrumRotation();
 
 		this.#runShadowDrawing();
+	}
+});
+//#endregion
+
+//#region Pulsar
+Visualizer.attach(`Pulsar`, new class extends Visualizer.Visualization {
+	//#region Rebuild preparation
+	/** @type {number} */
+	#radius;
+	/** @type {Color} */
+	#colorBackground;
+	/**
+	 * @returns {void}
+	 */
+	#runMetadataRebuild() {
+		const { context } = this;
+		const { width, height } = context.canvas;
+
+		const radius = this.#radius = min(width, height) / 2;
+
+		const colorBackground = this.#colorBackground = Color.parse(getComputedStyle(document.documentElement).getPropertyValue(`--color-background`));
+	}
+	/**
+	 * @returns {void}
+	 */
+	#runContextRebuild() {
+		const { context } = this;
+		const { width, height } = context.canvas;
+		const radius = this.#radius;
+
+		context.setTransform(1, 0, 0, 1, width / 2, height / 2);
+
+		context.lineWidth = radius / 256;
+	}
+	//#endregion
+
+	/**
+	 * @returns {void}
+	 */
+	rebuild() {
+		this.#runMetadataRebuild();
+		this.#runContextRebuild();
+	}
+
+	//#region Update preparation
+	/** @type {Float32Array} */
+	#normsDataFrequency;
+	/** @type {Float32Array} */
+	#normsDataTemporal;
+	/** @type {number} */
+	#normVolumeFrequency;
+	/** @type {number} */
+	#normAmplitudeTemporal;
+	/**
+	 * @returns {void}
+	 */
+	#runMetadataUpdate() {
+		const { audioset } = this;
+
+		const normsDataFrequency = this.#normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
+		const normsDataTemporal = this.#normsDataTemporal = audioset.getData(AudioTypes.TEMPORAL_TYPE);
+
+		const normVolumeFrequency = this.#normVolumeFrequency = audioset.getVolume(AudioTypes.FREQUENCY_TYPE);
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal = audioset.getAmplitude(AudioTypes.TEMPORAL_TYPE);
+	}
+	/**
+	 * @returns {void}
+	 */
+	#runContextUpdate() {
+		const { context } = this;
+		const { width, height } = context.canvas;
+
+		let { a, b, c, d, e, f } = context.getTransform();
+		/** @todo Any actions? */
+		context.setTransform(a, b, c, d, e, f);
+		context.clearRect(-e / a, -f / d, width / a, height / d);
+	}
+	//#endregion
+	//#region Halo
+	/** @type {Color} */
+	#colorHaloOuter = Color.viaHSL(0, 100, 50);
+	/** @type {Color} */
+	#colorHaloInner = Color.newBlack;
+	/** @type {CanvasGradient} */
+	#gradientHalo;
+	/**
+	 * @returns {void}
+	 */
+	#runHaloDrawing() {
+		const radius = this.#radius;
+		const colorHaloOuter = this.#colorHaloOuter;
+		const colorHaloInner = this.#colorHaloInner;
+		const { context, audioset } = this;
+		const { length } = audioset;
+		const semiLength = length / 2;
+		const normsDataFrequency = this.#normsDataFrequency;
+		const normVolumeFrequency = this.#normVolumeFrequency;
+
+		const gradientHalo = this.#gradientHalo = context.createConicGradient(PI / 2, 0, 0);
+		context.beginPath();
+		const position = Vector2D.newNaN;
+		for (let index = 0; index < length; index++) {
+			const normProgress = index.interpolate(0, length);
+			const normOffset = abs(index - semiLength).interpolate(0, semiLength + 1);
+			gradientHalo.addColorStop(normProgress, new Color(colorHaloOuter)
+				.rotate(180 * normOffset)
+				.illuminate(0.1 + 0.9 * sqrt(normVolumeFrequency))
+				.toString()
+			);
+			const normDatumFrequency = normsDataFrequency[trunc(normOffset * semiLength)];
+			let normScale = normDatumFrequency;
+			normScale = 1 / (1 + exp(-((normScale - 0.5) * 12))); /** @todo smoothSigmoid */
+			normScale = asin(sqrt(normScale)) * 2 / PI; /** @todo saturateArcsin */
+			const distance = (0.6 + 0.4 * normScale) * radius;
+			position.x = distance * sin(normProgress * 2 * PI);
+			position.y = distance * cos(normProgress * 2 * PI);
+			context.lineTo(position.x, position.y);
+		}
+		context.closePath();
+		context.globalCompositeOperation = `source-over`;
+		context.fillStyle = colorHaloInner.toString();
+		context.fill();
+		context.strokeStyle = gradientHalo;
+		context.stroke();
+	}
+	/** @type {number} */
+	#offsetHaloRotation = 0;
+	/**
+	 * @returns {void}
+	 */
+	#runHaloRotation() {
+		const colorHalo = this.#colorHaloOuter;
+		const duration = 6;
+		const { delta } = this;
+		const normVolumeFrequency = this.#normVolumeFrequency;
+
+		if (!Number.isFinite(delta)) return;
+		const [integer, fractional] = split(this.#offsetHaloRotation + (360 / duration) * delta * normVolumeFrequency);
+		colorHalo.rotate(integer);
+		this.#offsetHaloRotation = fractional;
+	}
+	//#endregion
+	//#region Wave
+	/**
+	 * @returns {void}
+	 */
+	#runWaveDrawing() {
+		const radius = this.#radius;
+		const gradientHalo = this.#gradientHalo;
+		const { context, audioset } = this;
+		const { width } = context.canvas;
+		const { length } = audioset;
+		const normsDataTemporal = this.#normsDataTemporal;
+		const normAmplitudeTemporal = this.#normAmplitudeTemporal;
+
+		context.beginPath();
+		context.moveTo(-width / 2, 0);
+		const position = Vector2D.newNaN;
+		for (let index = 0; index < length; index++) {
+			const normProgress = index.interpolate(0, length);
+			const normDatumTemporal = normsDataTemporal[trunc(normProgress * length)] * 2 - 1;
+			const normScale = normDatumTemporal * normAmplitudeTemporal;
+			position.x = width * (normProgress - 0.5);
+			position.y = radius * normScale;
+			context.lineTo(position.x, position.y);
+		}
+		context.lineTo(width / 2, 0);
+		context.globalCompositeOperation = `source-atop`;
+		context.fillStyle = gradientHalo;
+		context.fill();
+		context.strokeStyle = gradientHalo;
+		context.stroke();
+	}
+	//#endregion
+	//#region Shadow
+	/** @type {Color} */
+	#colorShadow = Color.newBlack;
+	/**
+	 * @returns {void}
+	 */
+	#runShadowDrawing() {
+		const radius = this.#radius;
+		const colorShadow = this.#colorShadow;
+		const { context } = this;
+
+		const gradientShadow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
+		gradientShadow.addColorStop(0, colorShadow.pass(1).toString());
+		gradientShadow.addColorStop(0.5, colorShadow.pass(SQRT1_2).toString());
+		gradientShadow.addColorStop(1, colorShadow.pass(0).toString());
+		context.globalCompositeOperation = `source-over`;
+		context.fillStyle = gradientShadow;
+		context.fill();
+	}
+	//#endregion
+	//#region Background
+	/**
+	 * @returns {void}
+	 */
+	#runBackgroundDrawing() {
+		const colorBackground = this.#colorBackground;
+		const { context } = this;
+		const { a, d, e, f } = context.getTransform();
+		const { width, height } = context.canvas;
+
+		context.globalCompositeOperation = `destination-atop`;
+		context.fillStyle = colorBackground.toString();
+		context.fillRect(-e / a, -f / d, width / a, height / d);
+	}
+	//#endregion
+
+	/**
+	 * @returns {void}
+	 */
+	update() {
+		this.#runMetadataUpdate();
+		this.#runContextUpdate();
+
+		this.#runHaloDrawing();
+		this.#runHaloRotation();
+
+		this.#runWaveDrawing();
+
+		this.#runShadowDrawing();
+
+		this.#runBackgroundDrawing();
 	}
 });
 //#endregion
