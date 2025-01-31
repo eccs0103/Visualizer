@@ -207,34 +207,6 @@ class Audioset {
 		get audioset() {
 			return this.#audioset;
 		}
-		/** @type {boolean} */
-		#autofix = true;
-		/**
-		 * @returns {void}
-		 */
-		#fix() {
-			const audioset = this.#audioset;
-			const analyser = this.#analyser;
-			const { minDecibels } = analyser;
-			const range = analyser.maxDecibels - minDecibels;
-			const normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
-
-			let minimum = Infinity, maximum = -Infinity;
-			for (let index = 0; index < normsDataFrequency.length; index++) {
-				const normDatumFrequency = normsDataFrequency[index];
-				const decibel = normDatumFrequency * range + minDecibels;
-				if (decibel < minimum) minimum = decibel;
-				if (decibel > maximum) maximum = decibel;
-			}
-
-			try {
-				analyser.minDecibels = minimum;
-				analyser.maxDecibels = maximum + 1;
-			} catch {
-				console.warn(`[${minimum} - ${maximum}]`);
-				return;
-			}
-		}
 		/** @type {Uint8Array} */
 		#dataTemporary;
 		/**
@@ -502,6 +474,7 @@ class Visualizer extends EventTarget {
 		Visualizer.#self = this;
 		const manager = this.#manager = new Audioset.Manager(media);
 		engine.addEventListener(`trigger`, event => manager.refresh());
+		engine.addEventListener(`trigger`, event => this.#autofix());
 
 		this.#attachment = DataPair.fromArray(Array.from(Visualizer.#attachments).at(0) ?? Error.throws(`No visualization is attached to the visualizer.`));
 		this.#rebuild();
@@ -573,6 +546,49 @@ class Visualizer extends EventTarget {
 	set rate(value) {
 		if (!Visualizer.checkRate(value)) return;
 		this.#engine.limit = round(value);
+	}
+	/** @type {boolean} */
+	#autocorrect = false;
+	/**
+	 * Determines whether the visualizer should automatically adjust audio parameters.
+	 * When enabled, it recalibrates focus and spread based on the detected frequency range.
+	 * @returns {boolean}
+	 */
+	get autocorrect() {
+		return this.#autocorrect;
+	}
+	/**
+	 * Enables or disables automatic correction of audio parameters.
+	 * When set to true, the visualizer will adjust focus and spread dynamically.
+	 * @param {boolean} value
+	 * @returns {void}
+	 */
+	set autocorrect(value) {
+		this.#autocorrect = value;
+	}
+	/**
+	 * @returns {void}
+	 */
+	#autofix() {
+		if (!this.#autocorrect) return;
+		const manager = this.#manager;
+		const { audioset } = manager;
+
+		const minDecibels = manager.focus - manager.spread;
+		const range = 2 * manager.spread;
+		const normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
+
+		let minimum = Infinity, maximum = -Infinity;
+		for (let index = 0; index < normsDataFrequency.length; index++) {
+			const normDatumFrequency = normsDataFrequency[index];
+			const decibel = minDecibels + normDatumFrequency * range;
+			if (decibel < minimum) minimum = decibel;
+			if (decibel > maximum) maximum = decibel;
+		}
+		maximum += 5;
+
+		manager.focus = (maximum + minimum) / 2;
+		manager.spread = (maximum - minimum) / 2;
 	}
 	/** @type {DataPair<string, VisualizerVisualization>} */
 	#attachment;
@@ -892,6 +908,7 @@ class VisualizationAttachment {
 /**
  * @typedef {Object} VisualizerConfigurationNotation
  * @property {number} [rate]
+ * @property {boolean} [autocorrect]
  * @property {string} [visualization]
  * @property {VisualizationAttachmentNotation[]} [attachments]
  */
@@ -909,6 +926,10 @@ class VisualizerConfiguration {
 			const rate = Reflect.get(shell, `rate`);
 			if (rate !== undefined) {
 				result.rate = Number.import(rate, `property rate`);
+			}
+			const autocorrect = Reflect.get(shell, `autocorrect`);
+			if (autocorrect !== undefined) {
+				result.autocorrect = Boolean.import(autocorrect, `property autocorrect`);
 			}
 			const visualization = Reflect.get(shell, `visualization`);
 			if (visualization !== undefined) {
@@ -930,6 +951,7 @@ class VisualizerConfiguration {
 	export() {
 		return {
 			rate: this.#rate,
+			autocorrect: this.#autocorrect,
 			visualization: this.#visualization,
 			attachments: Array.from(this.#mapping).map(attachment => VisualizationAttachment.fromArray(attachment).export())
 		};
@@ -949,6 +971,21 @@ class VisualizerConfiguration {
 	set rate(value) {
 		if (!Visualizer.checkRate(value)) throw new Error(`Invalid value '${value}' for rate`);
 		this.#rate = value;
+	}
+	/** @type {boolean} */
+	#autocorrect = false;
+	/**
+	 * @returns {boolean}
+	 */
+	get autocorrect() {
+		return this.#autocorrect;
+	}
+	/**
+	 * @param {boolean} value 
+	 * @returns {void}
+	 */
+	set autocorrect(value) {
+		this.#autocorrect = value;
 	}
 	/** @type {string} */
 	#visualization = Visualizer.defaultVisualization;

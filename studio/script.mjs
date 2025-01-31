@@ -120,6 +120,7 @@ class Controller {
 		const dialogConfigurator = this.#dialogConfigurator = document.getElement(HTMLDialogElement, `dialog#configurator`);
 		const buttonCloseConfigurator = this.#buttonCloseConfigurator = dialogConfigurator.getElement(HTMLButtonElement, `button#close-configurator`);
 		const inputVisualizerRate = this.#inputVisualizerRate = dialogConfigurator.getElement(HTMLInputElement, `input#visualizer-rate`);
+		const inputAutocorrect = this.#inputAutocorrect = dialogConfigurator.getElement(HTMLInputElement, `input#autocorrect`);
 		const selectVisualizerVisualization = this.#selectVisualizerVisualization = dialogConfigurator.getElement(HTMLSelectElement, `select#visualizer-visualization`);
 		const inputVisualizationQuality = this.#inputVisualizationQuality = dialogConfigurator.getElement(HTMLInputElement, `input#visualization-quality`);
 		const inputVisualizationSmoothing = this.#inputVisualizationSmoothing = dialogConfigurator.getElement(HTMLInputElement, `input#visualization-smoothing`);
@@ -277,6 +278,8 @@ class Controller {
 	#buttonCloseConfigurator;
 	/** @type {HTMLInputElement} */
 	#inputVisualizerRate;
+	/** @type {HTMLInputElement} */
+	#inputAutocorrect;
 	/** @type {HTMLSelectElement} */
 	#selectVisualizerVisualization;
 	/**
@@ -335,6 +338,7 @@ class Controller {
 		const dialogConfigurator = this.#dialogConfigurator;
 		const buttonCloseConfigurator = this.#buttonCloseConfigurator;
 		const inputVisualizerRate = this.#inputVisualizerRate;
+		const inputAutocorrect = this.#inputAutocorrect;
 		const selectVisualizerVisualization = this.#selectVisualizerVisualization;
 		const inputVisualizationQuality = this.#inputVisualizationQuality;
 		const inputVisualizationSmoothing = this.#inputVisualizationSmoothing;
@@ -357,6 +361,7 @@ class Controller {
 		});
 
 		visualizer.rate = settings.visualizer.rate;
+		visualizer.autocorrect = settings.visualizer.autocorrect;
 		visualizer.visualization = settings.visualizer.visualization;
 		visualizer.quality = settings.visualizer.configuration.quality;
 		visualizer.smoothing = settings.visualizer.configuration.smoothing;
@@ -463,19 +468,41 @@ class Controller {
 		});
 
 		inputVisualizationFocus.value = String(visualizer.focus);
+		inputVisualizationFocus.disabled = visualizer.autocorrect;
 		inputVisualizationFocus.addEventListener(`input`, (event) => {
 			visualizer.focus = Number(inputVisualizationFocus.value);
 		});
 		inputVisualizationFocus.addEventListener(`change`, (event) => {
 			settings.visualizer.configuration.focus = visualizer.focus;
 		});
+		visualizer.addEventListener(`update`, (event) => {
+			if (!visualizer.autocorrect) return;
+			inputVisualizationFocus.value = String(visualizer.focus);
+			settings.visualizer.configuration.focus = visualizer.focus;
+		});
 
 		inputVisualizationSpread.value = String(visualizer.spread);
+		inputVisualizationSpread.disabled = visualizer.autocorrect;
 		inputVisualizationSpread.addEventListener(`input`, (event) => {
 			visualizer.spread = Number(inputVisualizationSpread.value);
 		});
 		inputVisualizationSpread.addEventListener(`change`, (event) => {
 			settings.visualizer.configuration.spread = visualizer.spread;
+		});
+		visualizer.addEventListener(`update`, (event) => {
+			if (!visualizer.autocorrect) return;
+			inputVisualizationSpread.value = String(visualizer.spread);
+			settings.visualizer.configuration.spread = visualizer.spread;
+		});
+
+		inputAutocorrect.checked = visualizer.autocorrect;
+		inputAutocorrect.addEventListener(`input`, (event) => {
+			visualizer.autocorrect = inputAutocorrect.checked;
+			inputVisualizationFocus.disabled = visualizer.autocorrect;
+			inputVisualizationSpread.disabled = visualizer.autocorrect;
+		});
+		inputAutocorrect.addEventListener(`change`, (event) => {
+			settings.visualizer.autocorrect = visualizer.autocorrect;
 		});
 	}
 	/**

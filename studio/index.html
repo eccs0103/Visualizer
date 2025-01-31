@@ -63,6 +63,14 @@
 			<input id="visualizer-rate" type="number" min="30" max="300" step="30" class="value rounded depth with-padding">
 		</section>
 		<section class="option">
+			<h4 class="title">Autocorrect <span class="invalid">[Experimental]</span></h4>
+			<span class="definition">Automatically adjusts focus and spread for optimal visualization<!--  using AI -->.</span>
+			<input id="autocorrect" type="checkbox" hidden>
+			<label for="autocorrect" role="checkbox" class="value depth toggle">
+				<span class="layer knob"></span>
+			</label>
+		</section>
+		<section class="option">
 			<h4 class="title">Visualization</h4>
 			<span class="definition">The method of displaying audio analysis in the visualizer. The chosen method affects how sound data is transformed into visual elements.</span>
 			<select id="visualizer-visualization" class="value rounded depth with-padding"></select>

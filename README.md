@@ -45,6 +45,12 @@ Visualizer.attach(`Custom`, new class extends Visualizer.Visualization {
 ```
 
 ## Feed
+### 2.4.5 : Adaptive Core 3.3.6 (31.01.2025)
+- Added an experimental auto-correction feature that adjusts focus and spread for better visualization.
+- Code optimized by approximately 5%.
+- Fixed visualization errors. Improved the "Pulsar" method.
+- Core updated.
+
 ### 2.4.0 : Adaptive Core 3.3.5 (28.01.2025)
 - The configurator is better adapted to different sizes.
 - Restoration and update of the deprecated "Spectrogram" visualization.

@@ -5,7 +5,7 @@ import { Vector2D } from "./core/measures.mjs";
 import { Color } from "./core/palette.mjs";
 import { AudioTypes, Visualizer } from "./structure.mjs";
 
-const { min, max, split, sin, cos, PI, exp, abs, trunc, sqrt, SQRT1_2, asin, meanGeometric, meanHarmonic, sqpw, log2, random } = Math;
+const { min, max, split, sin, cos, PI, exp, abs, trunc, sqrt, SQRT1_2, asin, meanGeometric } = Math;
 
 //#region Spectrogram
 Visualizer.attach(`Spectrogram`, new class extends Visualizer.Visualization {
