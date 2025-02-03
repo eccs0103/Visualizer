@@ -9,36 +9,15 @@ import { } from "./workers/extensions.mjs";
 import { Engine, FastEngine } from "./workers/generators.mjs";
 // import { } from "./workers/measures.mjs";
 
-const { sqrt, sqpw, log2, round } = Math;
+import { } from "./dom/debugger.mjs";
 
-//#region Audio types
-/**
- * @enum {number}
- */
-const AudioTypes = {
-	/**
-	 * Frequency spectrum type.
-	 * @readonly
-	 * @returns {0}
-	 */
-	FREQUENCY_TYPE: 0,
-	/**
-	 * Time domain type.
-	 * @readonly
-	 * @returns {1}
-	 */
-	TEMPORAL_TYPE: 1,
-};
-Object.freeze(AudioTypes);
-//#endregion
+const { sqrt, sqpw, pow, abs, log2, round } = Math;
+
 //#region Audioset
 /**
  * @typedef {InstanceType<typeof Audioset.Manager>} AudiosetManager
  */
 
-/**
- * @template T
- */
 class Audioset {
 	//#region Manager
 	static Manager = class AudiosetManager {
@@ -85,35 +64,22 @@ class Audioset {
 		 * @param {HTMLMediaElement} media The media element for audio analysis.
 		 */
 		constructor(media) {
-			const context = new AudioContext();
+			const context = this.#context = new AudioContext();
 			media.addEventListener(`play`, async event => await context.resume());
-
 			const source = context.createMediaElementSource(media);
 			const analyser = this.#analyser = context.createAnalyser();
-			const mapDataReaders = this.#mapDataReaders = new Map();
-			mapDataReaders.set(AudioTypes.FREQUENCY_TYPE, analyser.getByteFrequencyData.bind(analyser));
-			mapDataReaders.set(AudioTypes.TEMPORAL_TYPE, analyser.getByteTimeDomainData.bind(analyser));
 
 			source.connect(analyser);
 			analyser.connect(context.destination);
 
-			this.#audioset = Audioset.#construct(analyser.frequencyBinCount, [AudioTypes.FREQUENCY_TYPE, AudioTypes.TEMPORAL_TYPE]);
-			this.#dataTemporary = new Uint8Array(analyser.frequencyBinCount);
+			const length = analyser.frequencyBinCount;
+			this.#audioset = Audioset.#construct(length);
+			this.#dataTemporary = new Uint8Array(length);
 		}
+		/** @type {AudioContext} */
+		#context;
 		/** @type {AnalyserNode} */
 		#analyser;
-		/** @type {Map<AudioTypes, (array: Uint8Array) => void>} */
-		#mapDataReaders;
-		/**
-		 * @param {AudioTypes} type 
-		 * @param {Uint8Array} data 
-		 * @returns {void}
-		 */
-		#readByteData(type, data) {
-			const readByteData = this.#mapDataReaders.get(type);
-			if (readByteData === undefined) throw new ReferenceError(`Data reader for '${type}' data not initialized`);
-			readByteData(data);
-		}
 		/**
 		 * Gets the quality level of the audio analysis, influencing analysis detail.
 		 * Higher values provide more detailed audio analysis.
@@ -132,11 +98,12 @@ class Audioset {
 			if (!AudiosetManager.checkQuality(value)) return;
 			const analyser = this.#analyser;
 			const audioset = this.#audioset;
-			const types = audioset.#types;
 			analyser.fftSize = (1 << value);
-			audioset.#length = analyser.frequencyBinCount;
-			audioset.#datalist = new Map(Array.from(types, type => [type, new Float32Array(analyser.frequencyBinCount)]));
-			this.#dataTemporary = new Uint8Array(analyser.frequencyBinCount);
+			const length = analyser.frequencyBinCount;
+			audioset.#length = length;
+			audioset.#normsDataFrequency = new Float32Array(length);
+			audioset.#normsDataTemporal = new Float32Array(length);
+			this.#dataTemporary = new Uint8Array(length);
 		}
 		/**
 		 * Gets the smoothing level applied to the analysis for a smoother transition between values.
@@ -197,12 +164,31 @@ class Audioset {
 			analyser.minDecibels = focus - value;
 			analyser.maxDecibels = focus + value;
 		}
-		/** @type {Audioset<AudioTypes>} */
+		/** @type {boolean} */
+		#autocorrect = false;
+		/**
+		 * Enables or disables automatic adjustment of focus and spread based on real-time audio data.
+		 * When enabled, it dynamically shifts the analyzed volume range.
+		 * @returns {boolean}
+		 */
+		get autocorrect() {
+			return this.#autocorrect;
+		}
+		/**
+		 * Sets the automatic correction mode for audio analysis.
+		 * If enabled, it adjusts focus and spread dynamically.
+		 * @param {boolean} value 
+		 * @returns {void}
+		 */
+		set autocorrect(value) {
+			this.#autocorrect = value;
+		}
+		/** @type {Audioset} */
 		#audioset;
 		/**
 		 * Audioset serviced by manager.
 		 * @readonly
-		 * @returns {Audioset<AudioTypes>}
+		 * @returns {Audioset}
 		 */
 		get audioset() {
 			return this.#audioset;
@@ -215,26 +201,44 @@ class Audioset {
 		 * @returns {void}
 		 */
 		refresh() {
+			const analyser = this.#analyser;
+			const { minDecibels } = analyser;
+			const range = analyser.maxDecibels - minDecibels;
 			const audioset = this.#audioset;
 			const { length } = audioset;
-			const types = audioset.#types;
 			const dataTemporary = this.#dataTemporary;
+			const normsDataFrequency = audioset.#normsDataFrequency;
+			const normsDataTemporal = audioset.#normsDataTemporal;
 
-			for (const [type, data] of audioset.#datalist) {
-				if (!types.has(type)) return;
+			let summaryVolume = 0, summaryAmplitude = 0;
+			let minDecibel = Infinity, maxDecibel = -Infinity;
 
-				this.#readByteData(type, dataTemporary);
-				let linear = 0, quadratic = 0;
-				for (let index = 0; index < length; index++) {
-					const unit = dataTemporary[index] / 255;
-					data[index] = unit;
-					linear += unit;
-					quadratic += sqpw(unit);
-				}
-
-				audioset.#volumes.set(type, linear / length);
-				audioset.#amplitudes.set(type, sqrt(quadratic / length));
+			analyser.getByteFrequencyData(dataTemporary);
+			for (let index = 0; index < length; index++) {
+				const normDatumFrequency = dataTemporary[index] / 255;
+				normsDataFrequency[index] = normDatumFrequency;
+				const decibel = minDecibels + normDatumFrequency * range;
+				if (decibel < minDecibel) minDecibel = decibel;
+				if (decibel > maxDecibel) maxDecibel = decibel;
 			}
+
+			analyser.getByteTimeDomainData(dataTemporary);
+			for (let index = 0; index < length; index++) {
+				const normDatumTemporal = dataTemporary[index] / 255;
+				normsDataTemporal[index] = normDatumTemporal;
+				const bipolarDatumTemporal = normDatumTemporal * 2 - 1;
+				const normAmplitude = abs(bipolarDatumTemporal);
+				summaryVolume += sqpw(bipolarDatumTemporal);
+				summaryAmplitude += sqpw(normAmplitude);
+			}
+
+			audioset.#normVolume = sqrt(summaryVolume / length);
+			audioset.#normAmplitude = sqrt(summaryAmplitude / length);
+
+			if (!this.#autocorrect) return;
+
+			analyser.minDecibels = minDecibel;
+			analyser.maxDecibels = maxDecibel + 5;
 		}
 	};
 	//#endregion
@@ -242,29 +246,26 @@ class Audioset {
 	/** @type {boolean} */
 	static #locked = true;
 	/**
-	 * @template T
 	 * @param {number} length 
-	 * @param {T[]} types 
-	 * @returns {Audioset<T>}
+	 * @returns {Audioset}
 	 */
-	static #construct(length, types) {
+	static #construct(length) {
 		Audioset.#locked = false;
-		const self = new Audioset(length, types);
+		const self = new Audioset(length);
 		Audioset.#locked = true;
 		return self;
 	}
 	/**
 	 *  @param {number} length The number of measurements in the audio data.
-	 * @param {T[]} types The types of audio data to analyze.
 	 * @throws {TypeError} If the constructor is called directly.
 	 */
-	constructor(length, types) {
+	constructor(length) {
 		if (Audioset.#locked) throw new TypeError(`Illegal constructor`);
 		this.#length = length;
-		this.#types = new Set(types);
-		this.#datalist = new Map(types.map(type => [type, new Float32Array(length)]));
-		this.#volumes = new Map(types.map(type => [type, 0]));
-		this.#amplitudes = new Map(types.map(type => [type, 0.5]));
+		this.#normsDataFrequency = new Float32Array(length);
+		this.#normsDataTemporal = new Float32Array(length);
+		this.#normVolume = 0;
+		this.#normAmplitude = 0;
 	}
 	/** @type {number} */
 	#length;
@@ -276,46 +277,41 @@ class Audioset {
 	get length() {
 		return this.#length;
 	}
-	/** @type {Set<T>} */
-	#types;
-	/** @type {Map<T, Float32Array>} */
-	#datalist;
+	/** @type {Float32Array} */
+	#normsDataFrequency;
 	/**
-	 * Retrieves audio data for the specified type.
-	 * @param {T} type The data type (e.g., frequency or time domain).
-	 * @returns {Float32Array} The data array for analysis.
-	 * @throws {TypeError} If an invalid data type is specified.
+	 * @readonly
+	 * @returns {Float32Array}
 	 */
-	getData(type) {
-		const data = this.#datalist.get(type);
-		if (data === undefined) throw new TypeError(`Invalid data '${type}' type`);
-		return data;
+	get normsDataFrequency() {
+		return this.#normsDataFrequency;
 	}
-	/** @type {Map<T, number>} */
-	#volumes;
+	/** @type {Float32Array} */
+	#normsDataTemporal;
 	/**
-	 * Gets the current volume level for the specified data type.
-	 * @param {T} type The data type.
-	 * @returns {number} The volume level.
-	 * @throws {TypeError} If an invalid data type is specified.
+	 * @readonly
+	 * @returns {Float32Array}
 	 */
-	getVolume(type) {
-		const volume = this.#volumes.get(type);
-		if (volume === undefined) throw new TypeError(`Invalid data '${type}' type`);
-		return volume;
+	get normsDataTemporal() {
+		return this.#normsDataTemporal;
 	}
-	/** @type {Map<T, number>} */
-	#amplitudes;
+	/** @type {number} */
+	#normVolume;
 	/**
-	 * Gets the current amplitude level for the specified data type.
-	 * @param {T} type The data type.
-	 * @returns {number} The amplitude level.
-	 * @throws {TypeError} If an invalid data type is specified.
+	 * @readonly
+	 * @returns {number}
 	 */
-	getAmplitude(type) {
-		const amplitude = this.#amplitudes.get(type);
-		if (amplitude === undefined) throw new TypeError(`Invalid data '${type}' type`);
-		return amplitude;
+	get normVolume() {
+		return this.#normVolume;
+	}
+	/** @type {number} */
+	#normAmplitude;
+	/**
+	 * @readonly
+	 * @returns {number}
+	 */
+	get normAmplitude() {
+		return this.#normAmplitude;
 	}
 }
 //#endregion
@@ -366,7 +362,7 @@ class Visualizer extends EventTarget {
 		/**
 		 * The audioset for analysis.
 		 * @readonly
-		 * @returns {Audioset<AudioTypes>}
+		 * @returns {Audioset}
 		 */
 		get audioset() {
 			return this.#visualizer.#manager.audioset;
@@ -474,7 +470,6 @@ class Visualizer extends EventTarget {
 		Visualizer.#self = this;
 		const manager = this.#manager = new Audioset.Manager(media);
 		engine.addEventListener(`trigger`, event => manager.refresh());
-		engine.addEventListener(`trigger`, event => this.#autofix());
 
 		this.#attachment = DataPair.fromArray(Array.from(Visualizer.#attachments).at(0) ?? Error.throws(`No visualization is attached to the visualizer.`));
 		this.#rebuild();
@@ -547,15 +542,13 @@ class Visualizer extends EventTarget {
 		if (!Visualizer.checkRate(value)) return;
 		this.#engine.limit = round(value);
 	}
-	/** @type {boolean} */
-	#autocorrect = false;
 	/**
 	 * Determines whether the visualizer should automatically adjust audio parameters.
 	 * When enabled, it recalibrates focus and spread based on the detected frequency range.
 	 * @returns {boolean}
 	 */
 	get autocorrect() {
-		return this.#autocorrect;
+		return this.#manager.autocorrect;
 	}
 	/**
 	 * Enables or disables automatic correction of audio parameters.
@@ -564,31 +557,7 @@ class Visualizer extends EventTarget {
 	 * @returns {void}
 	 */
 	set autocorrect(value) {
-		this.#autocorrect = value;
-	}
-	/**
-	 * @returns {void}
-	 */
-	#autofix() {
-		if (!this.#autocorrect) return;
-		const manager = this.#manager;
-		const { audioset } = manager;
-
-		const minDecibels = manager.focus - manager.spread;
-		const range = 2 * manager.spread;
-		const normsDataFrequency = audioset.getData(AudioTypes.FREQUENCY_TYPE);
-
-		let minimum = Infinity, maximum = -Infinity;
-		for (let index = 0; index < normsDataFrequency.length; index++) {
-			const normDatumFrequency = normsDataFrequency[index];
-			const decibel = minDecibels + normDatumFrequency * range;
-			if (decibel < minimum) minimum = decibel;
-			if (decibel > maximum) maximum = decibel;
-		}
-		maximum += 5;
-
-		manager.focus = (maximum + minimum) / 2;
-		manager.spread = (maximum - minimum) / 2;
+		this.#manager.autocorrect = value;
 	}
 	/** @type {DataPair<string, VisualizerVisualization>} */
 	#attachment;
@@ -1082,4 +1051,4 @@ class Settings {
 }
 //#endregion
 
-export { AudioTypes, Visualizer, Settings };
+export { Visualizer, Settings };
