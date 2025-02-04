@@ -9,8 +9,6 @@ import { } from "./workers/extensions.mjs";
 import { Engine, FastEngine } from "./workers/generators.mjs";
 // import { } from "./workers/measures.mjs";
 
-import { } from "./dom/debugger.mjs";
-
 const { sqrt, sqpw, pow, abs, log2, round } = Math;
 
 //#region Audioset
