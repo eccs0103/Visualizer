@@ -41,11 +41,31 @@ export interface VisualizationEnvironment {
 	get colorBackground(): Color;
 }
 //#endregion
+//#region Lyrics view
+export interface LyricsView {
+	get previous(): string | null;
+	get current(): string | null;
+	get next(): string | null;
+}
+
+export class LyricsWindow implements LyricsView {
+	previous: string | null;
+	current: string | null;
+	next: string | null;
+
+	constructor(previous: string | null, current: string | null, next: string | null) {
+		this.previous = previous;
+		this.current = current;
+		this.next = next;
+	}
+}
+//#endregion
 //#region Visualization host
 export interface VisualizationHost {
 	get context(): OffscreenCanvasRenderingContext2D;
 	get audioset(): AudiosetView;
 	get environment(): VisualizationEnvironment;
+	get lyrics(): LyricsView | null;
 }
 //#endregion
 //#region Visualization

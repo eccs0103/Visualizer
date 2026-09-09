@@ -57,11 +57,6 @@
 			<b id="playback-time">00:00</b>
 			<b id="playback-title"></b>
 		</div>
-		<div id="lyrics" class="flex column center with-gap" hidden>
-			<b id="lyrics-previous" class="description"></b>
-			<b id="lyrics-current" class="font-larger-3"></b>
-			<b id="lyrics-next" class="description"></b>
-		</div>
 		<input id="playback-track" type="range" min="0" max="100" step="0.1" value="0" title="Playback time track">
 	</div>
 	<!-- Playlist -->
@@ -108,7 +103,7 @@
 			</section>
 			<section class="option">
 				<h4 class="title">Lyrics</h4>
-				<span class="definition">Shows synced lyrics over the visualization when the current track has an attached .lrc file.</span>
+				<span class="definition">Sends synced lyrics to the active visualization when the current track has an attached .lrc file. Each visualization decides how to display them.</span>
 				<input id="lyrics-toggle" type="checkbox" hidden>
 				<label for="lyrics-toggle" role="checkbox" class="value depth toggle">
 					<span class="layer knob"></span>

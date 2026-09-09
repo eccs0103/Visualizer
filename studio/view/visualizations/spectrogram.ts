@@ -4,7 +4,7 @@ import "adaptive-extender/core";
 import { Color, Random, Vector2D } from "adaptive-extender/core";
 import { type VisualizationHost } from "../../models/visualization.js";
 import { Registry, Visualization } from "../../services/visualization-registry.js";
-import { ColorDriver, Shaper } from "../../services/visualization-tools.js";
+import { ColorDriver, LyricsRenderer, Shaper } from "../../services/visualization-tools.js";
 
 const { min, sign, PI, abs, trunc, exp, meanGeometric } = Math;
 const random = Random.global;
@@ -195,6 +195,13 @@ Registry.attach("Spectrogram", class extends Visualization {
 		context.fillRect(-e / a, -f / d, width / a, height / d);
 	}
 
+	#runLyricsDrawing(host: VisualizationHost): void {
+		const { context, lyrics } = host;
+		const { width, height } = context.canvas;
+
+		LyricsRenderer.draw(context, lyrics, width, height);
+	}
+
 	update(host: VisualizationHost): void {
 		this.#runContextUpdate(host);
 		this.#runRidgeDrawing(host);
@@ -202,6 +209,7 @@ Registry.attach("Spectrogram", class extends Visualization {
 		this.#runBloomDrawing(host);
 		this.#runThreadDrawing(host);
 		this.#runVignetteDrawing(host);
+		this.#runLyricsDrawing(host);
 		this.#runBackgroundDrawing(host);
 	}
 	//#endregion

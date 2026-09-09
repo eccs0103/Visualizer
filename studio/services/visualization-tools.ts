@@ -2,6 +2,7 @@
 
 import "adaptive-extender/core";
 import { Color } from "adaptive-extender/core";
+import { type LyricsView } from "../models/visualization.js";
 
 const { split, PI, exp, sqrt, asin } = Math;
 
@@ -75,6 +76,36 @@ export class ColorDriver {
 		const [integer, fractional] = split(this.#offset + ratePerMs * delta * factor);
 		this.#callback(color, integer);
 		this.#offset = fractional;
+	}
+}
+//#endregion
+//#region Lyrics renderer
+export class LyricsRenderer {
+	static draw(context: OffscreenCanvasRenderingContext2D, lyrics: LyricsView | null, width: number, height: number): void {
+		if (lyrics === null) return;
+		const { previous, current, next } = lyrics;
+
+		const sizeCurrent = height * 0.045;
+		const sizeSide = height * 0.03;
+		const y = height * 0.3;
+
+		context.save();
+		context.globalCompositeOperation = "source-over";
+		context.textAlign = "center";
+		context.textBaseline = "middle";
+		context.shadowColor = "black";
+		context.shadowBlur = sizeCurrent * 0.3;
+
+		context.font = `${sizeSide}px sans-serif`;
+		context.fillStyle = "rgba(255, 255, 255, 0.6)";
+		if (previous !== null) context.fillText(previous, 0, y - sizeCurrent);
+		if (next !== null) context.fillText(next, 0, y + sizeCurrent);
+
+		context.font = `bold ${sizeCurrent}px sans-serif`;
+		context.fillStyle = "white";
+		if (current !== null) context.fillText(current, 0, y);
+
+		context.restore();
 	}
 }
 //#endregion

@@ -4,44 +4,39 @@ import "adaptive-extender/web";
 import { BufferedCell, Controller } from "adaptive-extender/web";
 import { PlaylistPlayer } from "../services/playlist-player.js";
 import { LyricsFinder } from "../services/lyrics-finder.js";
+import { Visualizer } from "../services/visualizer.js";
 import { Lyrics } from "../models/lyrics.js";
+import { LyricsWindow } from "../models/visualization.js";
 import { type Track } from "../models/playlist.js";
 import { type Settings } from "../models/settings.js";
 
 //#region Lyrics controller
-export class LyricsController extends Controller<[BufferedCell<typeof Settings>, PlaylistPlayer, HTMLAudioElement, HTMLElement, HTMLElement, HTMLElement, HTMLElement, HTMLInputElement, HTMLInputElement]> {
+export class LyricsController extends Controller<[BufferedCell<typeof Settings>, PlaylistPlayer, HTMLAudioElement, Visualizer, HTMLInputElement, HTMLInputElement]> {
 	#player: PlaylistPlayer;
 	#audioPlayer: HTMLAudioElement;
 	#settings: Settings;
-	#divLyrics: HTMLElement;
-	#bLyricsPrevious: HTMLElement;
-	#bLyricsCurrent: HTMLElement;
-	#bLyricsNext: HTMLElement;
+	#visualizer: Visualizer;
 	#enabled: boolean = true;
 	#lyrics: Lyrics | null = null;
 	#index: number = -1;
 	#frame: number | null = null;
 	#trackId: string | null = null;
 
-	#renderLine(item: HTMLElement, text: string): void {
-		item.innerText = text;
-		item.hidden = String.isEmpty(text);
+	#lineAt(lyrics: Lyrics, index: number): string | null {
+		const line = lyrics.lines[index];
+		if (line === undefined) return null;
+		return line.text;
 	}
 
 	#render(): void {
+		if (!this.#enabled) { this.#visualizer.updateLyrics(null); return; }
 		const lyrics = this.#lyrics;
+		if (lyrics === null || lyrics.isEmpty) { this.#visualizer.updateLyrics(null); return; }
 		const index = this.#index;
-		const previous = lyrics?.lines[index - 1]?.text ?? String.empty;
-		const current = lyrics?.lines[index]?.text ?? String.empty;
-		const next = lyrics?.lines[index + 1]?.text ?? String.empty;
-		this.#renderLine(this.#bLyricsPrevious, previous);
-		this.#renderLine(this.#bLyricsCurrent, current);
-		this.#renderLine(this.#bLyricsNext, next);
-	}
-
-	#updateVisibility(): void {
-		const lyrics = this.#lyrics;
-		this.#divLyrics.hidden = !this.#enabled || lyrics === null || lyrics.isEmpty;
+		const previous = this.#lineAt(lyrics, index - 1);
+		const current = this.#lineAt(lyrics, index);
+		const next = this.#lineAt(lyrics, index + 1);
+		this.#visualizer.updateLyrics(new LyricsWindow(previous, current, next));
 	}
 
 	#sync(): void {
@@ -75,38 +70,40 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		if (stored !== null) return stored;
 		if (!this.#settings.lookup) return null;
 
-		const found = await LyricsFinder.find(track.signature, track.duration) ?? String.empty;
+		const found = await LyricsFinder.find(track.signature, track.duration);
+		let text = found;
+		if (text === null) text = String.empty;
 		if (this.#trackId !== track.id) return null;
-		await player.setLyrics(track, found);
-		return found;
+		await player.setLyrics(track, text);
+		return text;
 	}
 
 	async #onTrack(track: Track | null): Promise<void> {
-		this.#trackId = track?.id ?? null;
+		let trackId: string | null = null;
+		if (track !== null) trackId = track.id;
+		this.#trackId = trackId;
 		this.#lyrics = null;
 		this.#index = -1;
 		this.#stopLoop();
 		this.#render();
-		this.#updateVisibility();
 
 		if (track === null) return;
 
-		const text = await this.#resolveLyrics(track);
+		const resolved = await this.#resolveLyrics(track);
 		if (this.#trackId !== track.id) return;
 
-		this.#lyrics = Lyrics.parse(text ?? String.empty);
-		this.#updateVisibility();
+		let content = resolved;
+		if (content === null) content = String.empty;
+		this.#lyrics = Lyrics.parse(content);
+		this.#render();
 		if (!this.#audioPlayer.paused && !this.#lyrics.isEmpty) this.#startLoop();
 	}
 
-	async run(cell: BufferedCell<typeof Settings>, player: PlaylistPlayer, audioPlayer: HTMLAudioElement, divLyrics: HTMLElement, bLyricsPrevious: HTMLElement, bLyricsCurrent: HTMLElement, bLyricsNext: HTMLElement, inputLyricsToggle: HTMLInputElement, inputLyricsLookupToggle: HTMLInputElement): Promise<void> {
+	async run(cell: BufferedCell<typeof Settings>, player: PlaylistPlayer, audioPlayer: HTMLAudioElement, visualizer: Visualizer, inputLyricsToggle: HTMLInputElement, inputLyricsLookupToggle: HTMLInputElement): Promise<void> {
 		this.#player = player;
 		this.#audioPlayer = audioPlayer;
 		this.#settings = cell.content;
-		this.#divLyrics = divLyrics;
-		this.#bLyricsPrevious = bLyricsPrevious;
-		this.#bLyricsCurrent = bLyricsCurrent;
-		this.#bLyricsNext = bLyricsNext;
+		this.#visualizer = visualizer;
 		this.#enabled = this.#settings.lyrics;
 
 		player.addEventListener("track", event => void this.#onTrack(event.detail));
@@ -118,7 +115,7 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		inputLyricsToggle.checked = this.#settings.lyrics;
 		inputLyricsToggle.addEventListener("input", (event) => {
 			this.#enabled = inputLyricsToggle.checked;
-			this.#updateVisibility();
+			this.#render();
 		});
 		inputLyricsToggle.addEventListener("change", async (event) => {
 			this.#settings.lyrics = inputLyricsToggle.checked;

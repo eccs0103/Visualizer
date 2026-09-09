@@ -4,10 +4,10 @@ import "adaptive-extender/web";
 import { FastEngine, Color, WebEngine } from "adaptive-extender/web";
 import { Audioset, type AudiosetManager } from "../models/audioset.js";
 import { AudioAnalyzer } from "./audio-analyzer.js";
-import { type VisualizationEnvironment } from "../models/visualization.js";
+import { type VisualizationEnvironment, type LyricsView } from "../models/visualization.js";
 import { Registry } from "./visualization-registry.js";
 import { RenderBridge } from "./render-bridge.js";
-import { RenderCommand, InitializeRenderCommand, TickCommand, RebuildRenderCommand } from "../models/render-commands.js";
+import { RenderCommand, InitializeRenderCommand, TickCommand, RebuildRenderCommand, LyricsRenderCommand } from "../models/render-commands.js";
 
 const { round } = Math;
 const { baseURI } = document;
@@ -195,6 +195,15 @@ export class Visualizer extends EventTarget {
 		this.#publish();
 		this.#worker.postMessage(RenderCommand.export(new TickCommand()));
 		this.dispatchEvent(new Event("update"));
+	}
+
+	updateLyrics(lyrics: LyricsView | null): void {
+		if (lyrics === null) {
+			this.#worker.postMessage(RenderCommand.export(new LyricsRenderCommand(null, null, null)));
+			return;
+		}
+		const { previous, current, next } = lyrics;
+		this.#worker.postMessage(RenderCommand.export(new LyricsRenderCommand(previous, current, next)));
 	}
 }
 //#endregion

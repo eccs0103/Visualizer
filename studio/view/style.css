@@ -85,13 +85,6 @@ b#playback-title {
 	overflow: hidden;
 }
 
-div#interface > *#lyrics {
-	position: absolute;
-	inset: auto 0 25% 0;
-	text-align: center;
-	pointer-events: none;
-}
-
 div#interface > input#playback-track {
 	grid-area: playback-track-area;
 }

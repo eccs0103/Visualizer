@@ -4,7 +4,7 @@ import "adaptive-extender/core";
 import { Color, Random, Vector2D } from "adaptive-extender/core";
 import { type VisualizationHost } from "../../models/visualization.js";
 import { Registry, Visualization } from "../../services/visualization-registry.js";
-import { ColorDriver, Shaper } from "../../services/visualization-tools.js";
+import { ColorDriver, LyricsRenderer, Shaper } from "../../services/visualization-tools.js";
 
 const { min, sin, cos, PI, abs, trunc, SQRT1_2, meanGeometric } = Math;
 const random = Random.global;
@@ -158,12 +158,20 @@ Registry.attach("Pulsar", class extends Visualization {
 		context.fillRect(-e / a, -f / d, width / a, height / d);
 	}
 
+	#runLyricsDrawing(host: VisualizationHost): void {
+		const { context, lyrics } = host;
+		const { width, height } = context.canvas;
+
+		LyricsRenderer.draw(context, lyrics, width, height);
+	}
+
 	update(host: VisualizationHost): void {
 		this.#runContextUpdate(host);
 		this.#runHaloDrawing(host);
 		this.#runHaloRotation(host);
 		this.#runWaveDrawing(host);
 		this.#runShadowDrawing(host);
+		this.#runLyricsDrawing(host);
 		this.#runBackgroundDrawing(host);
 	}
 	//#endregion

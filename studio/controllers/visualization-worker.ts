@@ -2,9 +2,9 @@
 
 import "adaptive-extender/worker";
 import { Controller } from "adaptive-extender/worker";
-import { type VisualizationBundle } from "../models/visualization.js";
+import { type VisualizationBundle, type LyricsView, LyricsWindow } from "../models/visualization.js";
 import { Registry } from "../services/visualization-registry.js";
-import { RenderCommand, InitializeRenderCommand, TickCommand, RebuildRenderCommand } from "../models/render-commands.js";
+import { RenderCommand, InitializeRenderCommand, TickCommand, RebuildRenderCommand, LyricsRenderCommand } from "../models/render-commands.js";
 import { WorkerAudioset, WorkerEnvironment } from "../services/worker-visualization.js";
 import "../view/visualizations.js";
 
@@ -14,6 +14,7 @@ class VisualizationWorker extends Controller {
 	#context: OffscreenCanvasRenderingContext2D;
 	#audioset: WorkerAudioset;
 	#environment: WorkerEnvironment;
+	#lyrics: LyricsView | null = null;
 	#selection: string;
 	#width: number = 0;
 	#height: number = 0;
@@ -26,6 +27,7 @@ class VisualizationWorker extends Controller {
 		const context = this.#context;
 		const audioset = this.#audioset;
 		const environment = this.#environment;
+		const lyrics = this.#lyrics;
 		audioset.sync();
 		environment.reset();
 		const { canvas } = context;
@@ -35,8 +37,8 @@ class VisualizationWorker extends Controller {
 		context.resetTransform();
 		const selection = this.#selection;
 		const bundle = ReferenceError.suppress(this.#bundles.get(selection), `Visualization with name '${selection}' is not attached`);
-		bundle.rebuild({ context, audioset, environment });
-		bundle.update({ context, audioset, environment });
+		bundle.rebuild({ context, audioset, environment, lyrics });
+		bundle.update({ context, audioset, environment, lyrics });
 		this.#rebuilt = true;
 	}
 
@@ -66,11 +68,12 @@ class VisualizationWorker extends Controller {
 			const context = this.#context;
 			const audioset = this.#audioset;
 			const environment = this.#environment;
+			const lyrics = this.#lyrics;
 			audioset.sync();
 			environment.tick();
 			const selection = this.#selection;
 			const bundle = ReferenceError.suppress(bundles.get(selection), `Visualization with name '${selection}' is not attached`);
-			bundle.update({ context, audioset, environment });
+			bundle.update({ context, audioset, environment, lyrics });
 			return;
 		}
 
@@ -80,6 +83,16 @@ class VisualizationWorker extends Controller {
 			this.#width = width;
 			this.#height = height;
 			this.#rebuild();
+			return;
+		}
+
+		if (command instanceof LyricsRenderCommand) {
+			const { previous, current, next } = command;
+			if (previous === null && current === null && next === null) {
+				this.#lyrics = null;
+				return;
+			}
+			this.#lyrics = new LyricsWindow(previous, current, next);
 			return;
 		}
 	}

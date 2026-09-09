@@ -72,10 +72,6 @@ class StudioController extends Controller {
 		const bPlaybackTime = divInterface.getElement(HTMLElement, "b#playback-time");
 		const bClipTime = divInterface.getElement(HTMLElement, "b#clip-time");
 		const inputPlaybackTrack = divInterface.getElement(HTMLInputElement, "input#playback-track");
-		const divLyrics = divInterface.getElement(HTMLDivElement, "div#lyrics");
-		const bLyricsPrevious = divLyrics.getElement(HTMLElement, "b#lyrics-previous");
-		const bLyricsCurrent = divLyrics.getElement(HTMLElement, "b#lyrics-current");
-		const bLyricsNext = divLyrics.getElement(HTMLElement, "b#lyrics-next");
 		const dialogConfigurator = body.getElement(HTMLDialogElement, "dialog#configurator");
 		const buttonCloseConfigurator = dialogConfigurator.getElement(HTMLButtonElement, "button#close-configurator");
 		const selectVisualizerVisualization = dialogConfigurator.getElement(HTMLSelectElement, "select#visualizer-visualization");
@@ -86,7 +82,7 @@ class StudioController extends Controller {
 
 		await AudioController.launch(guard, player, audioPlayer, divInterface, buttonPlaybackPrevious, buttonPlaybackNext, bPlaybackTitle, bPlaybackTime, inputPlaybackTrack);
 		await ClipController.launch(guard, visualizer, canvasDisplay, audioPlayer, buttonClipToggle, bClipTime);
-		await LyricsController.launch(cell, player, audioPlayer, divLyrics, bLyricsPrevious, bLyricsCurrent, bLyricsNext, inputLyricsToggle, inputLyricsLookupToggle);
+		await LyricsController.launch(cell, player, audioPlayer, visualizer, inputLyricsToggle, inputLyricsLookupToggle);
 		await VisualizerSettingsController.launch(cell, visualizer, dialogConfigurator, selectVisualizerVisualization);
 		await AIController.launch(cell, visualizer, dialogConfigurator);
 		await PanelController.launch(cell, dialogPlaylist, dialogConfigurator, buttonOpenPlaylist, buttonClosePlaylist, buttonOpenConfigurator, buttonCloseConfigurator);

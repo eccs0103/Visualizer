@@ -20,8 +20,11 @@ Registry.attach("My custom title", class extends Visualization {
 
 	// Called on every frame.
 	update(host: VisualizationHost): void {
-		const { audioset, environment } = host;
+		const { audioset, environment, lyrics } = host;
 		const { delta, isLaunched } = environment;
+		if (lyrics !== null) {
+			const { previous, current, next } = lyrics;
+		}
 	}
 });
 ```
@@ -30,11 +33,12 @@ Registry.attach("My custom title", class extends Visualization {
 
 `host` inside both `rebuild()` and `update()` exposes:
 
-| Property      | Type                                | Description                         |
-| :------------ | :---------------------------------- | :---------------------------------- |
-| `context`     | `OffscreenCanvasRenderingContext2D` | Canvas 2D rendering context.        |
-| `audioset`    | `AudiosetView`                      | Real-time audio analysis snapshot.  |
-| `environment` | `VisualizationEnvironment`          | Engine state for the current frame. |
+| Property      | Type                                | Description                                                                               |
+| :------------ | :---------------------------------- | :---------------------------------------------------------------------------------------- |
+| `context`     | `OffscreenCanvasRenderingContext2D` | Canvas 2D rendering context.                                                              |
+| `audioset`    | `AudiosetView`                      | Real-time audio analysis snapshot.                                                        |
+| `environment` | `VisualizationEnvironment`          | Engine state for the current frame.                                                       |
+| `lyrics`      | `LyricsView \| null`                | Synced lyrics for the current playback point, or `null` if lyrics are off or unavailable. |
 
 ### `audioset` properties
 
@@ -75,6 +79,14 @@ Registry.attach("My custom title", class extends Visualization {
 | `delta`           | `number`  | Seconds elapsed since the last frame.   |
 | `fps`             | `number`  | Current frame rate.                     |
 | `colorBackground` | `Color`   | Current background colour.              |
+
+### `lyrics` properties
+
+| Property   | Type             | Description                                      |
+| :--------- | :--------------- | :----------------------------------------------- |
+| `previous` | `string \| null` | Previous lyric line, or `null` if there is none. |
+| `current`  | `string \| null` | Active lyric line, or `null` if there is none.   |
+| `next`     | `string \| null` | Next lyric line, or `null` if there is none.     |
 
 ---
 

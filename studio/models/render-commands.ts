@@ -1,7 +1,7 @@
 "use strict";
 
 import "adaptive-extender/core";
-import { Deferred, Descendant, Field, Model } from "adaptive-extender/core";
+import { Deferred, Descendant, Field, Model, Nullable } from "adaptive-extender/core";
 
 //#region Shared array buffer portable
 class SharedArrayBufferPortable {
@@ -29,7 +29,7 @@ class OffscreenCanvasPortable {
 //#endregion
 
 //#region Render command
-export interface RenderCommandDiscriminator extends InitializeRenderCommandDiscriminator, TickCommandDiscriminator, RebuildRenderCommandDiscriminator {
+export interface RenderCommandDiscriminator extends InitializeRenderCommandDiscriminator, TickCommandDiscriminator, RebuildRenderCommandDiscriminator, LyricsRenderCommandDiscriminator {
 }
 
 export interface RenderCommandScheme {
@@ -39,6 +39,7 @@ export interface RenderCommandScheme {
 @Descendant(Deferred(_ => InitializeRenderCommand))
 @Descendant(Deferred(_ => TickCommand))
 @Descendant(Deferred(_ => RebuildRenderCommand))
+@Descendant(Deferred(_ => LyricsRenderCommand))
 export abstract class RenderCommand extends Model {
 	constructor() {
 		super();
@@ -129,6 +130,43 @@ export class RebuildRenderCommand extends RenderCommand {
 		this.width = width;
 		this.height = height;
 		this.visualization = visualization;
+	}
+}
+//#endregion
+//#region Lyrics render command
+export interface LyricsRenderCommandDiscriminator {
+	"LyricsRenderCommand": LyricsRenderCommand;
+}
+
+export interface LyricsRenderCommandScheme extends RenderCommandScheme {
+	$type: keyof LyricsRenderCommandDiscriminator;
+	previous: string | null;
+	current: string | null;
+	next: string | null;
+}
+
+export class LyricsRenderCommand extends RenderCommand {
+	@Field(Nullable.Of(String))
+	previous: string | null;
+
+	@Field(Nullable.Of(String))
+	current: string | null;
+
+	@Field(Nullable.Of(String))
+	next: string | null;
+
+	constructor();
+	constructor(previous: string | null, current: string | null, next: string | null);
+	constructor(previous?: string | null, current?: string | null, next?: string | null) {
+		if (previous === undefined || current === undefined || next === undefined) {
+			super();
+			return;
+		}
+
+		super();
+		this.previous = previous;
+		this.current = current;
+		this.next = next;
 	}
 }
 //#endregion
