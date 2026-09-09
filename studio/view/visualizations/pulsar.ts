@@ -159,10 +159,10 @@ Registry.attach("Pulsar", class extends Visualization {
 	}
 
 	#runLyricsDrawing(host: VisualizationHost): void {
-		const { context, lyrics } = host;
+		const { context, lyrics, lyricsShake } = host;
 		const { width, height } = context.canvas;
 
-		LyricsRenderer.draw(context, lyrics, width, height);
+		LyricsRenderer.draw(context, lyrics, width, height, lyricsShake);
 	}
 
 	update(host: VisualizationHost): void {

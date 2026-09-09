@@ -81,7 +81,7 @@ export class ColorDriver {
 //#endregion
 //#region Lyrics renderer
 export class LyricsRenderer {
-	static draw(context: OffscreenCanvasRenderingContext2D, lyrics: LyricsView | null, width: number, height: number): void {
+	static draw(context: OffscreenCanvasRenderingContext2D, lyrics: LyricsView | null, width: number, height: number, shakeIntensity: number): void {
 		if (lyrics === null) return;
 		const { previous, current, next } = lyrics;
 
@@ -90,6 +90,16 @@ export class LyricsRenderer {
 		const y = height * 0.3;
 
 		context.save();
+		const live = context.getTransform();
+		const stableE = width / 2;
+		const stableF = height / 2;
+		const a = 1 + (live.a - 1) * shakeIntensity;
+		const b = live.b * shakeIntensity;
+		const c = live.c * shakeIntensity;
+		const d = 1 + (live.d - 1) * shakeIntensity;
+		const e = stableE + (live.e - stableE) * shakeIntensity;
+		const f = stableF + (live.f - stableF) * shakeIntensity;
+		context.setTransform(a, b, c, d, e, f);
 		context.globalCompositeOperation = "source-over";
 		context.textAlign = "center";
 		context.textBaseline = "middle";

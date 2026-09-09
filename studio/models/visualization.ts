@@ -66,6 +66,7 @@ export interface VisualizationHost {
 	get audioset(): AudiosetView;
 	get environment(): VisualizationEnvironment;
 	get lyrics(): LyricsView | null;
+	get lyricsShake(): number;
 }
 //#endregion
 //#region Visualization

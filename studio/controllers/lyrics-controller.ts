@@ -11,7 +11,7 @@ import { type Track } from "../models/playlist.js";
 import { type Settings } from "../models/settings.js";
 
 //#region Lyrics controller
-export class LyricsController extends Controller<[BufferedCell<typeof Settings>, PlaylistPlayer, HTMLAudioElement, Visualizer, HTMLInputElement, HTMLInputElement]> {
+export class LyricsController extends Controller<[BufferedCell<typeof Settings>, PlaylistPlayer, HTMLAudioElement, Visualizer, HTMLInputElement, HTMLInputElement, HTMLInputElement]> {
 	#player: PlaylistPlayer;
 	#audioPlayer: HTMLAudioElement;
 	#settings: Settings;
@@ -99,7 +99,7 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		if (!this.#audioPlayer.paused && !this.#lyrics.isEmpty) this.#startLoop();
 	}
 
-	async run(cell: BufferedCell<typeof Settings>, player: PlaylistPlayer, audioPlayer: HTMLAudioElement, visualizer: Visualizer, inputLyricsToggle: HTMLInputElement, inputLyricsLookupToggle: HTMLInputElement): Promise<void> {
+	async run(cell: BufferedCell<typeof Settings>, player: PlaylistPlayer, audioPlayer: HTMLAudioElement, visualizer: Visualizer, inputLyricsToggle: HTMLInputElement, inputLyricsShake: HTMLInputElement, inputLyricsLookupToggle: HTMLInputElement): Promise<void> {
 		this.#player = player;
 		this.#audioPlayer = audioPlayer;
 		this.#settings = cell.content;
@@ -119,6 +119,19 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		});
 		inputLyricsToggle.addEventListener("change", async (event) => {
 			this.#settings.lyrics = inputLyricsToggle.checked;
+			await cell.save(500);
+		});
+
+		inputLyricsShake.min = String(0);
+		inputLyricsShake.max = String(1);
+		inputLyricsShake.step = String(0.1);
+		inputLyricsShake.value = String(this.#settings.lyricsShake);
+		visualizer.lyricsShake = this.#settings.lyricsShake;
+		inputLyricsShake.addEventListener("input", (event) => {
+			visualizer.lyricsShake = Number(inputLyricsShake.value);
+		});
+		inputLyricsShake.addEventListener("change", async (event) => {
+			this.#settings.lyricsShake = visualizer.lyricsShake;
 			await cell.save(500);
 		});
 

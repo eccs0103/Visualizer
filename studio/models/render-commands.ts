@@ -29,7 +29,7 @@ class OffscreenCanvasPortable {
 //#endregion
 
 //#region Render command
-export interface RenderCommandDiscriminator extends InitializeRenderCommandDiscriminator, TickCommandDiscriminator, RebuildRenderCommandDiscriminator, LyricsRenderCommandDiscriminator {
+export interface RenderCommandDiscriminator extends InitializeRenderCommandDiscriminator, TickCommandDiscriminator, RebuildRenderCommandDiscriminator, LyricsRenderCommandDiscriminator, LyricsShakeRenderCommandDiscriminator {
 }
 
 export interface RenderCommandScheme {
@@ -40,6 +40,7 @@ export interface RenderCommandScheme {
 @Descendant(Deferred(_ => TickCommand))
 @Descendant(Deferred(_ => RebuildRenderCommand))
 @Descendant(Deferred(_ => LyricsRenderCommand))
+@Descendant(Deferred(_ => LyricsShakeRenderCommand))
 export abstract class RenderCommand extends Model {
 	constructor() {
 		super();
@@ -167,6 +168,33 @@ export class LyricsRenderCommand extends RenderCommand {
 		this.previous = previous;
 		this.current = current;
 		this.next = next;
+	}
+}
+//#endregion
+//#region Lyrics shake render command
+export interface LyricsShakeRenderCommandDiscriminator {
+	"LyricsShakeRenderCommand": LyricsShakeRenderCommand;
+}
+
+export interface LyricsShakeRenderCommandScheme extends RenderCommandScheme {
+	$type: keyof LyricsShakeRenderCommandDiscriminator;
+	value: number;
+}
+
+export class LyricsShakeRenderCommand extends RenderCommand {
+	@Field(Number)
+	value: number;
+
+	constructor();
+	constructor(value: number);
+	constructor(value?: number) {
+		if (value === undefined) {
+			super();
+			return;
+		}
+
+		super();
+		this.value = value;
 	}
 }
 //#endregion

@@ -39,6 +39,7 @@ Registry.attach("My custom title", class extends Visualization {
 | `audioset`    | `AudiosetView`                      | Real-time audio analysis snapshot.                                                        |
 | `environment` | `VisualizationEnvironment`          | Engine state for the current frame.                                                       |
 | `lyrics`      | `LyricsView \| null`                | Synced lyrics for the current playback point, or `null` if lyrics are off or unavailable. |
+| `lyricsShake` | `number`                            | `0`–`1`, how much of the visualization's own motion should affect lyrics text — visualizations may blend their own effects by this amount. |
 
 ### `audioset` properties
 

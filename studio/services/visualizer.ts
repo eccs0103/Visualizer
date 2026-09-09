@@ -7,7 +7,7 @@ import { AudioAnalyzer } from "./audio-analyzer.js";
 import { type VisualizationEnvironment, type LyricsView } from "../models/visualization.js";
 import { Registry } from "./visualization-registry.js";
 import { RenderBridge } from "./render-bridge.js";
-import { RenderCommand, InitializeRenderCommand, TickCommand, RebuildRenderCommand, LyricsRenderCommand } from "../models/render-commands.js";
+import { RenderCommand, InitializeRenderCommand, TickCommand, RebuildRenderCommand, LyricsRenderCommand, LyricsShakeRenderCommand } from "../models/render-commands.js";
 
 const { round } = Math;
 const { baseURI } = document;
@@ -51,6 +51,7 @@ export class Visualizer extends EventTarget {
 	#engine: WebEngine = new FastEngine();
 	#environment: VisualizationEnvironment = new Visualizer.#Environment(this.#engine);
 	#visualization: string;
+	#lyricsShake: number = 0;
 	#canvas: HTMLCanvasElement;
 	#manager: AudiosetManager;
 	#analyzer: AudioAnalyzer;
@@ -150,6 +151,14 @@ export class Visualizer extends EventTarget {
 		if (!Registry.has(value)) throw new Error(`Visualization with name '${value}' is not attached`);
 		this.#visualization = value;
 		this.#rebuild();
+	}
+
+	get lyricsShake(): number { return this.#lyricsShake; }
+
+	set lyricsShake(value: number) {
+		value = value.clamp(0, 1);
+		this.#lyricsShake = value;
+		this.#worker.postMessage(RenderCommand.export(new LyricsShakeRenderCommand(value)));
 	}
 
 	get analyzer(): AudioAnalyzer { return this.#analyzer; }
