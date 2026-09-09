@@ -55,8 +55,8 @@ export class Settings extends Model {
 	@Field(Boolean, { name: "lyrics_lookup" })
 	lookup: boolean = true;
 
-	@Field(Number, { name: "lyrics_shake" })
-	lyricsShake: number = 0;
+	@Field(Number, { name: "shake" })
+	shake: number = 0.2;
 
 	@Field(String, { name: "visualization" })
 	visualization: string = Registry.default;

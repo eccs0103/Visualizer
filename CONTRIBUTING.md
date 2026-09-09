@@ -20,8 +20,8 @@ Registry.attach("My custom title", class extends Visualization {
 
 	// Called on every frame.
 	update(host: VisualizationHost): void {
-		const { audioset, environment, lyrics } = host;
-		const { delta, isLaunched } = environment;
+		const { audioset, environment } = host;
+		const { delta, isLaunched, lyrics } = environment;
 		if (lyrics !== null) {
 			const { previous, current, next } = lyrics;
 		}
@@ -33,13 +33,11 @@ Registry.attach("My custom title", class extends Visualization {
 
 `host` inside both `rebuild()` and `update()` exposes:
 
-| Property      | Type                                | Description                                                                               |
-| :------------ | :---------------------------------- | :---------------------------------------------------------------------------------------- |
-| `context`     | `OffscreenCanvasRenderingContext2D` | Canvas 2D rendering context.                                                              |
-| `audioset`    | `AudiosetView`                      | Real-time audio analysis snapshot.                                                        |
-| `environment` | `VisualizationEnvironment`          | Engine state for the current frame.                                                       |
-| `lyrics`      | `LyricsView \| null`                | Synced lyrics for the current playback point, or `null` if lyrics are off or unavailable. |
-| `lyricsShake` | `number`                            | `0`–`1`, how much of the visualization's own motion should affect lyrics text — visualizations may blend their own effects by this amount. |
+| Property      | Type                                | Description                         |
+| :------------ | :---------------------------------- | :---------------------------------- |
+| `context`     | `OffscreenCanvasRenderingContext2D` | Canvas 2D rendering context.        |
+| `audioset`    | `AudiosetView`                      | Real-time audio analysis snapshot.  |
+| `environment` | `VisualizationEnvironment`          | Engine state for the current frame. |
 
 ### `audioset` properties
 
@@ -74,20 +72,24 @@ Registry.attach("My custom title", class extends Visualization {
 
 ### `environment` properties
 
-| Property          | Type      | Description                             |
-| :---------------- | :-------- | :-------------------------------------- |
-| `isLaunched`      | `boolean` | `false` when the browser tab is hidden. |
-| `delta`           | `number`  | Seconds elapsed since the last frame.   |
-| `fps`             | `number`  | Current frame rate.                     |
-| `colorBackground` | `Color`   | Current background colour.              |
+| Property          | Type                 | Description                                                                               |
+| :---------------- | :------------------- | :---------------------------------------------------------------------------------------- |
+| `isLaunched`      | `boolean`            | `false` when the browser tab is hidden.                                                   |
+| `delta`           | `number`             | Seconds elapsed since the last frame.                                                     |
+| `fps`             | `number`             | Current frame rate.                                                                       |
+| `colorBackground` | `Color`              | Current background colour.                                                                |
+| `lyrics`          | `LyricsView \| null` | Synced lyrics for the current playback point, or `null` if lyrics are off or unavailable. |
 
 ### `lyrics` properties
 
-| Property   | Type             | Description                                      |
-| :--------- | :--------------- | :----------------------------------------------- |
-| `previous` | `string \| null` | Previous lyric line, or `null` if there is none. |
-| `current`  | `string \| null` | Active lyric line, or `null` if there is none.   |
-| `next`     | `string \| null` | Next lyric line, or `null` if there is none.     |
+`environment.lyrics`, when not `null`, exposes:
+
+| Property   | Type             | Description                                                                  |
+| :--------- | :--------------- | :--------------------------------------------------------------------------- |
+| `previous` | `string \| null` | Previous lyric line, or `null` if there is none.                             |
+| `current`  | `string \| null` | Active lyric line, or `null` if there is none.                               |
+| `next`     | `string \| null` | Next lyric line, or `null` if there is none.                                 |
+| `shake`    | `number`         | `0`–`1`, how much of the visualization's own motion should affect this text. |
 
 ---
 

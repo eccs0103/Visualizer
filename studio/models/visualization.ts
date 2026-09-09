@@ -39,6 +39,7 @@ export interface VisualizationEnvironment {
 	get delta(): number;
 	get fps(): number;
 	get colorBackground(): Color;
+	get lyrics(): LyricsView | null;
 }
 //#endregion
 //#region Lyrics view
@@ -46,17 +47,20 @@ export interface LyricsView {
 	get previous(): string | null;
 	get current(): string | null;
 	get next(): string | null;
+	get shake(): number;
 }
 
 export class LyricsWindow implements LyricsView {
 	previous: string | null;
 	current: string | null;
 	next: string | null;
+	shake: number;
 
-	constructor(previous: string | null, current: string | null, next: string | null) {
+	constructor(previous: string | null, current: string | null, next: string | null, shake: number) {
 		this.previous = previous;
 		this.current = current;
 		this.next = next;
+		this.shake = shake;
 	}
 }
 //#endregion
@@ -65,8 +69,6 @@ export interface VisualizationHost {
 	get context(): OffscreenCanvasRenderingContext2D;
 	get audioset(): AudiosetView;
 	get environment(): VisualizationEnvironment;
-	get lyrics(): LyricsView | null;
-	get lyricsShake(): number;
 }
 //#endregion
 //#region Visualization

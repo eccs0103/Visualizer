@@ -4,7 +4,7 @@ import "adaptive-extender/core";
 import { Color } from "adaptive-extender/core";
 import { type LyricsView } from "../models/visualization.js";
 
-const { split, PI, exp, sqrt, asin } = Math;
+const { split, PI, exp, sqrt, asin, min } = Math;
 
 //#region Shaper
 export class Shaper {
@@ -81,24 +81,26 @@ export class ColorDriver {
 //#endregion
 //#region Lyrics renderer
 export class LyricsRenderer {
-	static draw(context: OffscreenCanvasRenderingContext2D, lyrics: LyricsView | null, width: number, height: number, shakeIntensity: number): void {
+	static draw(context: OffscreenCanvasRenderingContext2D, lyrics: LyricsView | null, width: number, height: number): void {
 		if (lyrics === null) return;
-		const { previous, current, next } = lyrics;
+		const { previous, current, next, shake } = lyrics;
 
-		const sizeCurrent = height * 0.045;
-		const sizeSide = height * 0.03;
+		const side = min(width, height);
+		const sizeCurrent = side * 0.045;
+		const sizeSide = side * 0.03;
 		const y = height * 0.3;
+		const maxWidth = width * 0.9;
 
 		context.save();
 		const live = context.getTransform();
-		const stableE = width / 2;
-		const stableF = height / 2;
-		const a = 1 + (live.a - 1) * shakeIntensity;
-		const b = live.b * shakeIntensity;
-		const c = live.c * shakeIntensity;
-		const d = 1 + (live.d - 1) * shakeIntensity;
-		const e = stableE + (live.e - stableE) * shakeIntensity;
-		const f = stableF + (live.f - stableF) * shakeIntensity;
+		const semiWidth = width / 2;
+		const semiHeight = height / 2;
+		const a = 1 + (live.a - 1) * shake;
+		const b = live.b * shake;
+		const c = live.c * shake;
+		const d = 1 + (live.d - 1) * shake;
+		const e = semiWidth + (live.e - semiWidth) * shake;
+		const f = semiHeight + (live.f - semiHeight) * shake;
 		context.setTransform(a, b, c, d, e, f);
 		context.globalCompositeOperation = "source-over";
 		context.textAlign = "center";
@@ -108,12 +110,12 @@ export class LyricsRenderer {
 
 		context.font = `${sizeSide}px sans-serif`;
 		context.fillStyle = "rgba(255, 255, 255, 0.6)";
-		if (previous !== null) context.fillText(previous, 0, y - sizeCurrent);
-		if (next !== null) context.fillText(next, 0, y + sizeCurrent);
+		if (previous !== null) context.fillText(previous, 0, y - sizeCurrent, maxWidth);
+		if (next !== null) context.fillText(next, 0, y + sizeCurrent, maxWidth);
 
 		context.font = `bold ${sizeCurrent}px sans-serif`;
 		context.fillStyle = "white";
-		if (current !== null) context.fillText(current, 0, y);
+		if (current !== null) context.fillText(current, 0, y, maxWidth);
 
 		context.restore();
 	}

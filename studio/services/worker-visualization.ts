@@ -3,7 +3,7 @@
 import "adaptive-extender/worker";
 import { Color } from "adaptive-extender/worker";
 import { AudioFeatures, SabLayout } from "../models/audio-features.js";
-import { type AudiosetView, type VisualizationEnvironment } from "../models/visualization.js";
+import { type AudiosetView, type VisualizationEnvironment, type LyricsView, LyricsWindow } from "../models/visualization.js";
 import { RenderBridge } from "./render-bridge.js";
 
 //#region Worker audioset
@@ -68,9 +68,23 @@ export class WorkerEnvironment implements VisualizationEnvironment {
 	#audioset: WorkerAudioset;
 	#lastTime: number = NaN;
 	#delta: number = NaN;
+	#previous: string | null = null;
+	#current: string | null = null;
+	#next: string | null = null;
+	#shake: number = 0.2;
 
 	constructor(audioset: WorkerAudioset) {
 		this.#audioset = audioset;
+	}
+
+	updateLyrics(previous: string | null, current: string | null, next: string | null): void {
+		this.#previous = previous;
+		this.#current = current;
+		this.#next = next;
+	}
+
+	updateShake(value: number): void {
+		this.#shake = value;
 	}
 
 	tick(): void {
@@ -96,6 +110,14 @@ export class WorkerEnvironment implements VisualizationEnvironment {
 	get colorBackground(): Color {
 		const { colorH, colorS, colorL } = this.#audioset;
 		return Color.fromHSL(colorH, colorS, colorL);
+	}
+
+	get lyrics(): LyricsView | null {
+		const previous = this.#previous;
+		const current = this.#current;
+		const next = this.#next;
+		if (previous === null && current === null && next === null) return null;
+		return new LyricsWindow(previous, current, next, this.#shake);
 	}
 }
 //#endregion

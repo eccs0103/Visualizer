@@ -29,7 +29,7 @@ class OffscreenCanvasPortable {
 //#endregion
 
 //#region Render command
-export interface RenderCommandDiscriminator extends InitializeRenderCommandDiscriminator, TickCommandDiscriminator, RebuildRenderCommandDiscriminator, LyricsRenderCommandDiscriminator, LyricsShakeRenderCommandDiscriminator {
+export interface RenderCommandDiscriminator extends InitializeRenderCommandDiscriminator, TickCommandDiscriminator, RebuildRenderCommandDiscriminator, LyricsRenderCommandDiscriminator, ShakeRenderCommandDiscriminator {
 }
 
 export interface RenderCommandScheme {
@@ -40,7 +40,7 @@ export interface RenderCommandScheme {
 @Descendant(Deferred(_ => TickCommand))
 @Descendant(Deferred(_ => RebuildRenderCommand))
 @Descendant(Deferred(_ => LyricsRenderCommand))
-@Descendant(Deferred(_ => LyricsShakeRenderCommand))
+@Descendant(Deferred(_ => ShakeRenderCommand))
 export abstract class RenderCommand extends Model {
 	constructor() {
 		super();
@@ -171,17 +171,17 @@ export class LyricsRenderCommand extends RenderCommand {
 	}
 }
 //#endregion
-//#region Lyrics shake render command
-export interface LyricsShakeRenderCommandDiscriminator {
-	"LyricsShakeRenderCommand": LyricsShakeRenderCommand;
+//#region Shake render command
+export interface ShakeRenderCommandDiscriminator {
+	"ShakeRenderCommand": ShakeRenderCommand;
 }
 
-export interface LyricsShakeRenderCommandScheme extends RenderCommandScheme {
-	$type: keyof LyricsShakeRenderCommandDiscriminator;
+export interface ShakeRenderCommandScheme extends RenderCommandScheme {
+	$type: keyof ShakeRenderCommandDiscriminator;
 	value: number;
 }
 
-export class LyricsShakeRenderCommand extends RenderCommand {
+export class ShakeRenderCommand extends RenderCommand {
 	@Field(Number)
 	value: number;
 

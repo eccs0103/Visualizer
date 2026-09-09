@@ -6,7 +6,6 @@ import { PlaylistPlayer } from "../services/playlist-player.js";
 import { LyricsFinder } from "../services/lyrics-finder.js";
 import { Visualizer } from "../services/visualizer.js";
 import { Lyrics } from "../models/lyrics.js";
-import { LyricsWindow } from "../models/visualization.js";
 import { type Track } from "../models/playlist.js";
 import { type Settings } from "../models/settings.js";
 
@@ -29,14 +28,14 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 	}
 
 	#render(): void {
-		if (!this.#enabled) { this.#visualizer.updateLyrics(null); return; }
+		if (!this.#enabled) { this.#visualizer.updateLyrics(null, null, null); return; }
 		const lyrics = this.#lyrics;
-		if (lyrics === null || lyrics.isEmpty) { this.#visualizer.updateLyrics(null); return; }
+		if (lyrics === null || lyrics.isEmpty) { this.#visualizer.updateLyrics(null, null, null); return; }
 		const index = this.#index;
 		const previous = this.#lineAt(lyrics, index - 1);
 		const current = this.#lineAt(lyrics, index);
 		const next = this.#lineAt(lyrics, index + 1);
-		this.#visualizer.updateLyrics(new LyricsWindow(previous, current, next));
+		this.#visualizer.updateLyrics(previous, current, next);
 	}
 
 	#sync(): void {
@@ -99,7 +98,7 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		if (!this.#audioPlayer.paused && !this.#lyrics.isEmpty) this.#startLoop();
 	}
 
-	async run(cell: BufferedCell<typeof Settings>, player: PlaylistPlayer, audioPlayer: HTMLAudioElement, visualizer: Visualizer, inputLyricsToggle: HTMLInputElement, inputLyricsShake: HTMLInputElement, inputLyricsLookupToggle: HTMLInputElement): Promise<void> {
+	async run(cell: BufferedCell<typeof Settings>, player: PlaylistPlayer, audioPlayer: HTMLAudioElement, visualizer: Visualizer, inputLyricsToggle: HTMLInputElement, inputShake: HTMLInputElement, inputLyricsLookupToggle: HTMLInputElement): Promise<void> {
 		this.#player = player;
 		this.#audioPlayer = audioPlayer;
 		this.#settings = cell.content;
@@ -122,16 +121,16 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 			await cell.save(500);
 		});
 
-		inputLyricsShake.min = String(0);
-		inputLyricsShake.max = String(1);
-		inputLyricsShake.step = String(0.1);
-		inputLyricsShake.value = String(this.#settings.lyricsShake);
-		visualizer.lyricsShake = this.#settings.lyricsShake;
-		inputLyricsShake.addEventListener("input", (event) => {
-			visualizer.lyricsShake = Number(inputLyricsShake.value);
+		inputShake.min = String(0);
+		inputShake.max = String(1);
+		inputShake.step = String(0.1);
+		inputShake.value = String(this.#settings.shake);
+		visualizer.shake = this.#settings.shake;
+		inputShake.addEventListener("input", (event) => {
+			visualizer.shake = Number(inputShake.value);
 		});
-		inputLyricsShake.addEventListener("change", async (event) => {
-			this.#settings.lyricsShake = visualizer.lyricsShake;
+		inputShake.addEventListener("change", async (event) => {
+			this.#settings.shake = Number(inputShake.value);
 			await cell.save(500);
 		});
 
