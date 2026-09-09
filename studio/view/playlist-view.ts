@@ -73,6 +73,7 @@ export class PlaylistView extends EventTarget {
 		const content = row.appendChild(document.createElement("span"));
 		content.classList.add("content", "flex", "alt-center", "with-gap");
 		DOMBuilder.newTitle(content, track.signature);
+		DOMBuilder.newLyricsMark(content).hidden = !track.lyrics;
 		DOMBuilder.newDuration(content, Timespan.fromComponents(0, 0, track.duration));
 
 		DOMBuilder.newRemoveButton(row);
@@ -84,6 +85,7 @@ export class PlaylistView extends EventTarget {
 		if (isActive) row.dataset["active"] = String.empty;
 		else delete row.dataset["active"];
 		row.getElement(HTMLElement, "span.title").innerText = track.signature;
+		row.getElement(HTMLElement, "span.lyrics-mark").hidden = !track.lyrics;
 		row.getElement(HTMLElement, "b").innerText = TextExpert.formatDuration(Timespan.fromComponents(0, 0, track.duration));
 	}
 

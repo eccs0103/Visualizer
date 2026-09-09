@@ -43,6 +43,18 @@ export class PlaylistPlayer extends EventTarget {
 	get isEmpty(): boolean { return this.#playlist.isEmpty; }
 	get current(): Track | null { return this.#playlist.current; }
 
+	static #lyricsExtensions = new Set([".lrc", ".txt"]);
+
+	static #isLyricsFile(file: File): boolean {
+		const index = file.name.lastIndexOf(".");
+		if (index < 0) return false;
+		return PlaylistPlayer.#lyricsExtensions.has(file.name.slice(index).toLowerCase());
+	}
+
+	static #keyLyrics(id: string): string {
+		return `${id}.lrc`;
+	}
+
 	static async #probeDuration(file: File): Promise<number> {
 		const probe = new Audio();
 		const url = URL.createObjectURL(file);
@@ -134,7 +146,9 @@ export class PlaylistPlayer extends EventTarget {
 
 		const ids = new Set(playlist.tracks.map(track => track.id));
 		for (const key of await store.keys()) {
-			if (ids.has(String(key))) continue;
+			const name = String(key);
+			const id = name.endsWith(".lrc") ? name.slice(0, -".lrc".length) : name;
+			if (ids.has(id)) continue;
 			await store.delete(key);
 		}
 
@@ -143,17 +157,38 @@ export class PlaylistPlayer extends EventTarget {
 		this.#emitChange();
 	}
 
+	async readLyrics(track: Track): Promise<string | null> {
+		const value = await this.#store.get(PlaylistPlayer.#keyLyrics(track.id));
+		if (value === undefined) return null;
+		return String(value);
+	}
+
+	async setLyrics(track: Track, text: string): Promise<void> {
+		await this.#store.put(PlaylistPlayer.#keyLyrics(track.id), text);
+		track.lyrics = !String.isEmpty(text);
+		this.#notify();
+	}
+
 	async add(files: Iterable<File>): Promise<void> {
 		const playlist = this.#playlist;
 		const store = this.#store;
 		const wasEmpty = playlist.isEmpty;
 
+		const lyricsFiles: File[] = [];
 		for (const file of files) {
+			if (PlaylistPlayer.#isLyricsFile(file)) { lyricsFiles.push(file); continue; }
 			const id = crypto.randomUUID();
 			const signature = Track.probeSignature(file.name);
 			const duration = await PlaylistPlayer.#probeDuration(file);
 			await store.put(id, file);
 			playlist.append(new Track(id, signature, duration));
+		}
+
+		for (const file of lyricsFiles) {
+			const signature = Track.probeSignature(file.name);
+			const track = playlist.tracks.find(track => track.signature === signature);
+			if (track === undefined) continue;
+			await this.setLyrics(track, await file.text());
 		}
 
 		const becameNonEmpty = wasEmpty && !playlist.isEmpty;
@@ -173,6 +208,7 @@ export class PlaylistPlayer extends EventTarget {
 		this.#emitChange();
 
 		await this.#store.delete(id);
+		await this.#store.delete(PlaylistPlayer.#keyLyrics(id));
 		if (wasCurrent) await this.#load(playlist.current);
 		void this.#persist();
 	}

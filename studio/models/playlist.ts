@@ -14,6 +14,9 @@ export class Track extends Model {
 	@Field(Number, { name: "duration" })
 	duration: number;
 
+	@Field(Boolean, { name: "lyrics" })
+	lyrics: boolean = false;
+
 	constructor();
 	constructor(id: string, signature: string, duration: number);
 	constructor(id?: string, signature?: string, duration?: number) {

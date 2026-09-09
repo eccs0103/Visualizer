@@ -57,11 +57,16 @@
 			<b id="playback-time">00:00</b>
 			<b id="playback-title"></b>
 		</div>
+		<div id="lyrics" class="flex column center with-gap" hidden>
+			<b id="lyrics-previous" class="description"></b>
+			<b id="lyrics-current" class="font-larger-3"></b>
+			<b id="lyrics-next" class="description"></b>
+		</div>
 		<input id="playback-track" type="range" min="0" max="100" step="0.1" value="0" title="Playback time track">
 	</div>
 	<!-- Playlist -->
 	<dialog id="playlist" class="layer rounded flex column with-gap">
-		<input id="audio-loader" type="file" accept="audio/*" multiple hidden>
+		<input id="audio-loader" type="file" accept="audio/*,.lrc" multiple hidden>
 		<div class="layer with-padding large-padding flex alt-center with-gap">
 			<button id="close-playlist" type="button" class="flex alt-center with-gap">
 				<span class="icon with-padding small-padding">Close playlist</span>
@@ -98,6 +103,22 @@
 				<span class="definition">Enables the neural network. When on, the AI continuously adjusts the visualization parameters to match the music.</span>
 				<input id="auto-correct-toggle" type="checkbox" hidden>
 				<label for="auto-correct-toggle" role="checkbox" class="value depth toggle">
+					<span class="layer knob"></span>
+				</label>
+			</section>
+			<section class="option">
+				<h4 class="title">Lyrics</h4>
+				<span class="definition">Shows synced lyrics over the visualization when the current track has an attached .lrc file.</span>
+				<input id="lyrics-toggle" type="checkbox" hidden>
+				<label for="lyrics-toggle" role="checkbox" class="value depth toggle">
+					<span class="layer knob"></span>
+				</label>
+			</section>
+			<section class="option">
+				<h4 class="title">Lyrics lookup</h4>
+				<span class="definition">When a track has no attached lyrics, looks up synced lyrics online by filename.</span>
+				<input id="lyrics-lookup-toggle" type="checkbox" hidden>
+				<label for="lyrics-lookup-toggle" role="checkbox" class="value depth toggle">
 					<span class="layer knob"></span>
 				</label>
 			</section>

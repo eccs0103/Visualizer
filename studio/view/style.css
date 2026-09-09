@@ -85,6 +85,13 @@ b#playback-title {
 	overflow: hidden;
 }
 
+div#interface > *#lyrics {
+	position: absolute;
+	inset: auto 0 25% 0;
+	text-align: center;
+	pointer-events: none;
+}
+
 div#interface > input#playback-track {
 	grid-area: playback-track-area;
 }
@@ -124,6 +131,10 @@ button#close-playlist > span.icon {
 
 li > button.remove > span.icon {
 	--url: url(../../assets/icons/trash.svg);
+}
+
+li > span.content > span.lyrics-mark > span.icon {
+	--url: url(../../assets/icons/align-left.svg);
 }
 
 dialog#playlist,

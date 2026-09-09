@@ -10,6 +10,7 @@
 		"studio/**/*.ts"
 	],
 	"exclude": [
+		"studio/**/*.test.ts",
 		"environment/controllers/coi-worker.ts",
 		"studio/controllers/audio-analyzer-worker.ts",
 		"studio/controllers/visualization-worker.ts",

@@ -34,6 +34,14 @@ export class DOMBuilder {
 		return itemDuration;
 	}
 
+	static newLyricsMark(content: Element): HTMLElement {
+		const mark = content.appendChild(document.createElement("span"));
+		mark.classList.add("lyrics-mark", "flex", "alt-center");
+		const icon = DOMBuilder.newIcon(mark, "Lyrics attached");
+		icon.classList.add("in-line");
+		return mark;
+	}
+
 	static newRemoveButton(row: HTMLLIElement): HTMLButtonElement {
 		const buttonRemove = row.appendChild(document.createElement("button"));
 		buttonRemove.type = "button";

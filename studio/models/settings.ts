@@ -49,6 +49,12 @@ export class Settings extends Model {
 	@Field(Optional.Of(Boolean), { name: "auto_train" })
 	autoTrain: boolean | undefined;
 
+	@Field(Boolean, { name: "lyrics" })
+	lyrics: boolean = true;
+
+	@Field(Boolean, { name: "lyrics_lookup" })
+	lookup: boolean = true;
+
 	@Field(String, { name: "visualization" })
 	visualization: string = Registry.default;
 
