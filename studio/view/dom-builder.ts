@@ -37,8 +37,7 @@ export class DOMBuilder {
 	static newLyricsMark(content: Element): HTMLElement {
 		const mark = content.appendChild(document.createElement("span"));
 		mark.classList.add("lyrics-mark", "flex", "alt-center");
-		const icon = DOMBuilder.newIcon(mark, "Lyrics attached");
-		icon.classList.add("in-line");
+		DOMBuilder.newIcon(mark, "Lyrics attached");
 		return mark;
 	}
 

@@ -20,6 +20,10 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 	#index: number = -1;
 	#frame: number | null = null;
 	#trackId: string | null = null;
+	#abort: AbortController | null = null;
+
+	static #delays: readonly number[] = [5000, 15000, 40000];
+	static #lifespan = 24 * 60 * 60 * 1000;
 
 	#lineAt(lyrics: Lyrics, index: number): string | null {
 		const line = lyrics.lines[index];
@@ -63,21 +67,55 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		this.#frame = null;
 	}
 
-	async #resolveLyrics(track: Track): Promise<string | null> {
+	async #revalidate(track: Track, stored: string, signal: AbortSignal): Promise<void> {
+		try {
+			const found = await LyricsFinder.find(track.signature, track.duration, signal);
+			if (this.#trackId !== track.id) return;
+
+			let text = found ?? String.empty;
+			if (String.isEmpty(text) && !String.isEmpty(stored)) text = stored;
+			await this.#player.setLyrics(track, text, Date.now());
+			if (text === stored) return;
+
+			this.#lyrics = Lyrics.parse(text);
+			this.#render();
+			if (!this.#audioPlayer.paused && !this.#lyrics.isEmpty) this.#startLoop();
+		} catch {
+			return;
+		}
+	}
+
+	async #resolveLyrics(track: Track, signal: AbortSignal): Promise<string | null> {
 		const player = this.#player;
 		const stored = await player.readLyrics(track);
-		if (stored !== null) return stored;
-		if (!this.#settings.lookup) return null;
+		const isPoisoned = stored !== null && String.isEmpty(stored) && track.checked === null;
+		if (stored !== null && !isPoisoned) {
+			const { checked } = track;
+			if (checked !== null && Date.now() - checked >= LyricsController.#lifespan) void this.#revalidate(track, stored, signal);
+			return stored;
+		}
+		if (!this.#settings.lookup) return stored;
 
-		const found = await LyricsFinder.find(track.signature, track.duration);
-		let text = found;
-		if (text === null) text = String.empty;
-		if (this.#trackId !== track.id) return null;
-		await player.setLyrics(track, text);
-		return text;
+		const delays = LyricsController.#delays;
+		for (let attempt = 0; attempt <= delays.length; attempt++) {
+			if (this.#trackId !== track.id) return null;
+			try {
+				const found = await LyricsFinder.find(track.signature, track.duration, signal);
+				const text = found ?? String.empty;
+				if (this.#trackId !== track.id) return null;
+				await player.setLyrics(track, text, Date.now());
+				return text;
+			} catch {
+				const delay = delays[attempt];
+				if (delay === undefined) return null;
+				await Promise.asTimeout(delay);
+			}
+		}
+		return null;
 	}
 
 	async #onTrack(track: Track | null): Promise<void> {
+		if (this.#abort !== null) this.#abort.abort();
 		let trackId: string | null = null;
 		if (track !== null) trackId = track.id;
 		this.#trackId = trackId;
@@ -86,9 +124,14 @@ export class LyricsController extends Controller<[BufferedCell<typeof Settings>,
 		this.#stopLoop();
 		this.#render();
 
-		if (track === null) return;
+		if (track === null) {
+			this.#abort = null;
+			return;
+		}
 
-		const resolved = await this.#resolveLyrics(track);
+		const abort = new AbortController();
+		this.#abort = abort;
+		const resolved = await this.#resolveLyrics(track, abort.signal);
 		if (this.#trackId !== track.id) return;
 
 		let content = resolved;

@@ -161,12 +161,20 @@ export class PlaylistPlayer extends EventTarget {
 	async readLyrics(track: Track): Promise<string | null> {
 		const value = await this.#store.get(PlaylistPlayer.#keyLyrics(track.id));
 		if (value === undefined) return null;
-		return String(value);
+		const text = String(value);
+		// ponytail: repairs the lyrics badge for rows written before the flag existed, or poisoned by a past failed lookup
+		const hasLyrics = !String.isEmpty(text);
+		if (track.lyrics !== hasLyrics) {
+			track.lyrics = hasLyrics;
+			this.#notify();
+		}
+		return text;
 	}
 
-	async setLyrics(track: Track, text: string): Promise<void> {
+	async setLyrics(track: Track, text: string, checked: number | null): Promise<void> {
 		await this.#store.put(PlaylistPlayer.#keyLyrics(track.id), text);
 		track.lyrics = !String.isEmpty(text);
+		track.checked = checked;
 		this.#notify();
 	}
 
@@ -211,7 +219,7 @@ export class PlaylistPlayer extends EventTarget {
 			const signature = Track.probeSignature(file.name);
 			const track = this.#playlist.tracks.find(track => track.signature === signature);
 			if (track === undefined) continue;
-			await this.setLyrics(track, await file.text());
+			await this.setLyrics(track, await file.text(), null);
 		}
 	}
 

@@ -1,7 +1,7 @@
 "use strict";
 
 import "adaptive-extender/core";
-import { Model, Field, Enum, Random } from "adaptive-extender/core";
+import { Model, Field, Enum, Random, Nullable } from "adaptive-extender/core";
 
 //#region Track
 export class Track extends Model {
@@ -16,6 +16,9 @@ export class Track extends Model {
 
 	@Field(Boolean, { name: "lyrics" })
 	lyrics: boolean = false;
+
+	@Field(Nullable.Of(Number), { name: "lyrics_checked" })
+	checked: number | null = null;
 
 	#isPending: boolean = false;
 
