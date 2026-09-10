@@ -84,6 +84,7 @@ export class PlaylistView extends EventTarget {
 	#syncTrackRow(row: HTMLLIElement, track: Track, isActive: boolean): void {
 		if (isActive) row.dataset["active"] = String.empty;
 		else delete row.dataset["active"];
+		row.ariaDisabled = String(track.isPending);
 		row.getElement(HTMLElement, "span.title").innerText = track.signature;
 		row.getElement(HTMLElement, "span.lyrics-mark").hidden = !track.lyrics;
 		row.getElement(HTMLElement, "b").innerText = TextExpert.formatDuration(Timespan.fromComponents(0, 0, track.duration));

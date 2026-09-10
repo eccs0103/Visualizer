@@ -108,6 +108,7 @@ export class PlaylistPlayer extends EventTarget {
 	}
 
 	async #persist(): Promise<void> {
+		if (this.#playlist.hasPending) return;
 		await this.#cell.save(500);
 	}
 
@@ -169,34 +170,76 @@ export class PlaylistPlayer extends EventTarget {
 		this.#notify();
 	}
 
-	async add(files: Iterable<File>): Promise<void> {
+	#appendPending(files: readonly File[]): Map<Track, File> {
 		const playlist = this.#playlist;
-		const store = this.#store;
-		const wasEmpty = playlist.isEmpty;
-
-		const lyricsFiles: File[] = [];
+		const imports = new Map<Track, File>();
 		for (const file of files) {
-			if (PlaylistPlayer.#isLyricsFile(file)) { lyricsFiles.push(file); continue; }
-			const id = crypto.randomUUID();
-			const signature = Track.probeSignature(file.name);
-			const duration = await PlaylistPlayer.#probeDuration(file);
-			await store.put(id, file);
-			playlist.append(new Track(id, signature, duration));
+			const track = Track.pending(file.name);
+			playlist.append(track);
+			imports.set(track, file);
 		}
+		return imports;
+	}
 
-		for (const file of lyricsFiles) {
+	async #import(track: Track, file: File): Promise<Error | null> {
+		try {
+			const duration = await PlaylistPlayer.#probeDuration(file);
+			await this.#store.put(track.id, file);
+			track.resolve(duration);
+			return null;
+		} catch (reason) {
+			this.#playlist.remove(track.id);
+			return Error.from(reason);
+		} finally {
+			this.#emitChange();
+		}
+	}
+
+	async #drain(imports: ReadonlyMap<Track, File>): Promise<Error | null> {
+		let failure: Error | null = null;
+		for (const [track, file] of imports) {
+			const reason = await this.#import(track, file);
+			if (reason === null) continue;
+			if (failure !== null) continue;
+			failure = reason;
+		}
+		return failure;
+	}
+
+	async #attachLyrics(files: readonly File[]): Promise<void> {
+		for (const file of files) {
 			const signature = Track.probeSignature(file.name);
-			const track = playlist.tracks.find(track => track.signature === signature);
+			const track = this.#playlist.tracks.find(track => track.signature === signature);
 			if (track === undefined) continue;
 			await this.setLyrics(track, await file.text());
 		}
+	}
 
-		const becameNonEmpty = wasEmpty && !playlist.isEmpty;
-		if (becameNonEmpty) playlist.index = 0;
+	async #preselect(wasEmpty: boolean): Promise<void> {
+		if (!wasEmpty) return;
+		const playlist = this.#playlist;
+		if (playlist.isEmpty) return;
+		playlist.index = 0;
+		this.#emitChange();
+		await this.#load(playlist.current);
+	}
+
+	async add(source: Iterable<File>): Promise<void> {
+		const files = Array.from(source);
+		const wasEmpty = this.#playlist.isEmpty;
+
+		const imports = this.#appendPending(files.filter(file => !PlaylistPlayer.#isLyricsFile(file)));
 		this.#emitChange();
 
-		if (becameNonEmpty) await this.#load(playlist.current);
+		const failure = await this.#drain(imports);
+		await this.#attachLyrics(files.filter(file => PlaylistPlayer.#isLyricsFile(file)));
+		await this.#preselect(wasEmpty);
+
+		this.#emitChange();
 		void this.#persist();
+
+		if (failure === null) return;
+		throw failure;
 	}
 
 	async remove(id: string): Promise<void> {

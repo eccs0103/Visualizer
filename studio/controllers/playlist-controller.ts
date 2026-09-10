@@ -13,7 +13,8 @@ export class PlaylistController extends Controller<[PlaylistPlayer, HTMLDialogEl
 	#view: PlaylistView;
 
 	#render(): void {
-		this.#view.render(this.#player.tracks, this.#player.index, this.#player.mode);
+		const player = this.#player;
+		this.#view.render(player.tracks, player.index, player.mode);
 	}
 
 	async #onActivate(event: CustomEvent<number>): Promise<void> {

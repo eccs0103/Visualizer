@@ -17,6 +17,8 @@ export class Track extends Model {
 	@Field(Boolean, { name: "lyrics" })
 	lyrics: boolean = false;
 
+	#isPending: boolean = false;
+
 	constructor();
 	constructor(id: string, signature: string, duration: number);
 	constructor(id?: string, signature?: string, duration?: number) {
@@ -37,8 +39,21 @@ export class Track extends Model {
 		return name.slice(0, index);
 	}
 
+	static pending(name: string): Track {
+		const track = new Track(crypto.randomUUID(), Track.probeSignature(name), 0);
+		track.#isPending = true;
+		return track;
+	}
+
+	get isPending(): boolean { return this.#isPending; }
+
 	matches(id: string): boolean {
 		return this.id === id;
+	}
+
+	resolve(duration: number): void {
+		this.duration = duration;
+		this.#isPending = false;
 	}
 }
 //#endregion
@@ -81,6 +96,10 @@ export class Playlist extends Model {
 
 	get isEmpty(): boolean {
 		return this.tracks.length < 1;
+	}
+
+	get hasPending(): boolean {
+		return this.tracks.some(track => track.isPending);
 	}
 
 	get current(): Track | null {
@@ -134,8 +153,10 @@ export class Playlist extends Model {
 
 	select(index: number): Track | null {
 		if (index < 0 || index >= this.tracks.length) return null;
+		const track = this.tracks[index];
+		if (track.isPending) return null;
 		this.index = index;
-		if (this.#queue !== null) this.#queue.remove(this.tracks[index].id);
+		if (this.#queue !== null) this.#queue.remove(track.id);
 		return this.current;
 	}
 
