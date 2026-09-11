@@ -17,6 +17,7 @@ Registry.attach("Spectrogram", class extends Visualization {
 	#shaperFrequency: Shaper = Shaper.sigmoid(6, 0.55).then(Shaper.smoothstep);
 	#normHeightFactor: number = 0.4;
 	#colorRidgeSeed: Color = Color.fromHSL(0, 100, 50);
+	#colorRidgeMid: Color;
 	#driverRidge: ColorDriver = ColorDriver.rotation;
 	#deltaRotation: number = 360 / 6;
 	#colorShadow: Color = Color.newBlack;
@@ -79,6 +80,7 @@ Registry.attach("Spectrogram", class extends Visualization {
 		const hueBias = spectralCentroid.clamp(0, 0.45).lerp(0, 0.45, -40, 40) + djTilt.lerp(-12, 12, -25, 25);
 		const normLightness = meanGeometric(volume.lerp(0, 1, 0.25, 0.75), spectralCentroid.clamp(0, 0.45).lerp(0, 0.45, 0.3, 0.8));
 		const envelope = meanGeometric(volume.lerp(0, 1, 0.7, 1.3), amplitude.lerp(0, 1, 0.8, 1.2));
+		const colorRidgeMid = this.#colorRidgeMid = new Color(colorRidgeSeed).rotate(hueSpread * 0.5 + hueBias).illuminate(normLightness);
 		const gradientRidge = context.createLinearGradient(-width / 2, 0, width / 2, 0);
 
 		context.beginPath();
@@ -102,12 +104,13 @@ Registry.attach("Spectrogram", class extends Visualization {
 		context.closePath();
 		context.globalCompositeOperation = "source-over";
 		context.fillStyle = gradientRidge;
-		context.shadowOffsetX = 0;
-		context.shadowOffsetY = 0;
-		context.shadowColor = colorRidgeSeed.toString();
-		context.shadowBlur = bassLevel.clamp(0, 0.6).lerp(0, 0.6, lineWidth * 2, lineWidth * 10) * djBoost.lerp(0.25, 1.75, 0.8, 1.2);
+		const blurRidge = trunc(bassLevel.clamp(0, 0.6).lerp(0, 0.6, lineWidth * 2, lineWidth * 10) * djBoost.lerp(0.25, 1.75, 0.8, 1.2) / 2);
+		if (blurRidge >= 1) {
+			context.filter = `blur(${blurRidge}px)`;
+			context.fill();
+			context.filter = "none";
+		}
 		context.fill();
-		context.shadowBlur = 0;
 	}
 
 	#runRidgeRotation(host: VisualizationHost): void {
@@ -120,15 +123,15 @@ Registry.attach("Spectrogram", class extends Visualization {
 	}
 
 	#runBloomDrawing(host: VisualizationHost): void {
-		const colorRidgeSeed = this.#colorRidgeSeed;
+		const colorRidgeMid = this.#colorRidgeMid;
 		const { context, audioset } = host;
 		const { subBass, bass, bassLevel } = audioset;
 		const bloomEnergy = meanGeometric(subBass.clamp(0, 0.8).lerp(0, 0.8, 0, 1), bass.clamp(0, 0.8).lerp(0, 0.8, 0, 1));
 		const radius = this.#side * bloomEnergy.lerp(0, 1, 0.05, 0.22);
 
 		const gradientBloom = context.createRadialGradient(0, 0, 0, 0, 0, radius);
-		gradientBloom.addColorStop(0, colorRidgeSeed.pass(bassLevel.clamp(0, 0.6).lerp(0, 0.6, 0.15, 0.45)).toString());
-		gradientBloom.addColorStop(1, colorRidgeSeed.pass(0).toString());
+		gradientBloom.addColorStop(0, new Color(colorRidgeMid).pass(bassLevel.clamp(0, 0.6).lerp(0, 0.6, 0.15, 0.45)).toString());
+		gradientBloom.addColorStop(1, new Color(colorRidgeMid).pass(0).toString());
 		context.globalCompositeOperation = "lighter";
 		context.fillStyle = gradientBloom;
 		context.beginPath();
@@ -138,7 +141,7 @@ Registry.attach("Spectrogram", class extends Visualization {
 
 	#runThreadDrawing(host: VisualizationHost): void {
 		const count = this.#count;
-		const colorRidgeSeed = this.#colorRidgeSeed;
+		const colorRidgeMid = this.#colorRidgeMid;
 		const { context, audioset } = host;
 		const { dataTemporal, amplitude, spectralFlux, high, highMid, length } = audioset;
 		const { width } = context.canvas;
@@ -159,11 +162,11 @@ Registry.attach("Spectrogram", class extends Visualization {
 			else context.lineTo(position.x, position.y);
 		}
 		context.globalCompositeOperation = "lighter";
-		context.strokeStyle = colorRidgeSeed.pass(shimmer.lerp(0, 1, 0.5, 0.9)).toString();
+		context.strokeStyle = new Color(colorRidgeMid).pass(shimmer.lerp(0, 1, 0.5, 0.9)).toString();
 		context.lineWidth = lineWidth * 0.5;
 		context.shadowOffsetX = 0;
 		context.shadowOffsetY = 0;
-		context.shadowColor = colorRidgeSeed.toString();
+		context.shadowColor = colorRidgeMid.toString();
 		context.shadowBlur = sparkle.lerp(0, 1, 0, lineWidth * 6);
 		context.stroke();
 		context.shadowBlur = 0;

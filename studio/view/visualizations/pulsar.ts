@@ -91,12 +91,13 @@ Registry.attach("Pulsar", class extends Visualization {
 		context.fillStyle = colorHaloInner.toString();
 		context.fill();
 		context.strokeStyle = gradientHalo;
-		context.shadowOffsetX = 0;
-		context.shadowOffsetY = 0;
-		context.shadowColor = colorHaloOuter.toString();
-		context.shadowBlur = bassLevel.clamp(0, 0.6).lerp(0, 0.6, radius >> 6, radius >> 3) * djBoost.lerp(0.25, 1.75, 0.8, 1.2);
+		const blurHalo = trunc(bassLevel.clamp(0, 0.6).lerp(0, 0.6, radius >> 6, radius >> 3) * djBoost.lerp(0.25, 1.75, 0.8, 1.2) / 2);
+		if (blurHalo >= 1) {
+			context.filter = `blur(${blurHalo}px)`;
+			context.stroke();
+			context.filter = "none";
+		}
 		context.stroke();
-		context.shadowBlur = 0;
 	}
 
 	#runHaloRotation(host: VisualizationHost): void {
