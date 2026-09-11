@@ -1,3 +1,12 @@
+## 3.4.0 (11.09.2026)
+- Added synced lyrics — attach a `.lrc` (or `.txt`) file alongside a track and the active visualization draws the current line, with the previous and next lines above and below it. `Pulsar` and `Spectrogram` display them.
+- Added online lyrics lookup — a track with no attached file gets synced lyrics searched by filename, cached per track and rechecked once a day.
+- Added a **Lyrics** section to the configurator: a lyrics toggle, a lookup toggle, and a **Shake** slider (0–1) for how much of the visualization's own motion carries the text.
+- Tracks now appear in the playlist as you add them, disabled until their duration is read, instead of the whole batch landing when the last file finishes. A file that fails to load is dropped from the list.
+- Playlist rows now carry a mark when the track has lyrics.
+- The configurator now nests its options — analysis options under **Type**, the AI's learning and feedback controls under **AI**.
+- Added `environment.lyrics` (`LyricsView | null` with `previous`, `current`, `next`, `shake`) to the contributor API — see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## 3.3.2 (04.08.2026)
 - Added keyboard reordering — focus a track's drag handle and press <kbd>↑</kbd>/<kbd>↓</kbd> to move that track up or down the playlist.
 - The playlist now updates rows in place instead of rebuilding the whole list, so keyboard focus survives track changes and rows no longer flicker on every update.

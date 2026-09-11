@@ -6,7 +6,7 @@ A flexible framework for creating and managing custom visualizations.
 ![Preview](https://repository-images.githubusercontent.com/605233361/ff4e6308-2b43-4ac4-9efb-b1f97760242a)
 
 ## Guide
-Add one or more songs to visualize them. Reorder, drop new files onto the page, or remove tracks from the playlist panel (<kbd>Shift</kbd> + <kbd>Tab</kbd>), and switch between repeat-one, once, loop-all, and shuffle playback modes.
+Add one or more songs to visualize them. Reorder, drop new files onto the page, or remove tracks from the playlist panel (<kbd>Shift</kbd> + <kbd>Tab</kbd>), and switch between repeat-one, once, loop-all, and shuffle playback modes. Drop a `.lrc` file alongside a track to show synced lyrics, or let the configurator look them up online.
 
 Open the configurator with <kbd>Tab</kbd> and the playlist with <kbd>Shift</kbd> + <kbd>Tab</kbd>. Use <kbd>Space</kbd> to play/pause, <kbd>←</kbd>/<kbd>→</kbd> to seek, <kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd> to switch tracks, and <kbd>↑</kbd>/<kbd>↓</kbd> to cycle visualizations. Focus a track's drag handle and use <kbd>↑</kbd>/<kbd>↓</kbd> to reorder it.
 
@@ -35,10 +35,11 @@ Registry.attach("My custom title", class extends Visualization {
 	// Called on every frame.
 	update(host: VisualizationHost): void {
 		const { environment } = host;
-		const { delta, fps, isLaunched } = environment;
+		const { delta, fps, isLaunched, lyrics } = environment;
 		delta;      // Seconds since the last frame.
 		fps;        // Current frame rate.
 		isLaunched; // False when the browser tab is hidden.
+		lyrics;     // LyricsView | null — synced lyrics for the current playback point.
 	}
 });
 ```
