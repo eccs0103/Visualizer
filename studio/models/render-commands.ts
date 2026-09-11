@@ -4,7 +4,7 @@ import "adaptive-extender/core";
 import { Deferred, Descendant, Field, Model, Nullable } from "adaptive-extender/core";
 
 //#region Shared array buffer portable
-class SharedArrayBufferPortable {
+export class SharedArrayBufferPortable {
 	static import(source: unknown, name: string): SharedArrayBuffer {
 		if (source instanceof SharedArrayBuffer) return source;
 		throw new TypeError(`${name} must be a SharedArrayBuffer`);

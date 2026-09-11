@@ -3,19 +3,7 @@
 import "adaptive-extender/core";
 import { Deferred, Descendant, Field, Model } from "adaptive-extender/core";
 import { NNWeights, type NNWeightsScheme } from "./nn-agent.js";
-
-//#region Shared array buffer portable
-class SharedArrayBufferPortable {
-	static import(source: unknown, name: string): SharedArrayBuffer {
-		if (source instanceof SharedArrayBuffer) return source;
-		throw new TypeError(`${name} must be a SharedArrayBuffer`);
-	}
-
-	static export(source: SharedArrayBuffer): SharedArrayBuffer {
-		return source;
-	}
-}
-//#endregion
+import { SharedArrayBufferPortable } from "./render-commands.js";
 
 //#region Command
 export interface CommandDiscriminator extends InitializeCommandDiscriminator, SaveWeightsCommandDiscriminator, LoadWeightsCommandDiscriminator, WeightsCommandDiscriminator, ResetCommandDiscriminator, FeedbackCommandDiscriminator, LearningCommandDiscriminator, ProgressCommandDiscriminator {

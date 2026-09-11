@@ -29,7 +29,6 @@ class FluxStats {
 export class FrameProcessor {
 	static #fluxWindow: number = 43;
 	static #minBeatGap: number = 8;
-	static #beatWindow: number = 6;
 	static #featCount: number = 10;
 	static #histSize: number = 32;
 	static #emaAlpha: number = 0.9995;
@@ -55,8 +54,6 @@ export class FrameProcessor {
 	#rawFeats: Float32Array = new Float32Array(FrameProcessor.#featCount);
 	#normBuf: Float32Array = new Float32Array(FrameProcessor.#featCount);
 	#featHistory: Float32Array = new Float32Array(FrameProcessor.#histSize * FrameProcessor.#featCount);
-	#prevRms: number = 0;
-	#beatActive: number = 0;
 	#lastControlOutput: Float32Array = new Float32Array(NNAgent.sizeControl);
 	#lastValueOutput: Float32Array = new Float32Array(1);
 	#feedbackSign: number = 0;
@@ -66,9 +63,6 @@ export class FrameProcessor {
 	constructor() {
 		this.#emaVar.fill(1);
 	}
-
-	get frameCount(): number { return this.#frameCount; }
-	get lastInputFeatures(): Float32Array { return this.#featHistory; }
 
 	injectFeedback(sign: number): void {
 		if (sign !== this.#feedbackSign) {
@@ -139,15 +133,6 @@ export class FrameProcessor {
 		return energySum > 0.001 ? weightedSum / (energySum * length) : 0;
 	}
 
-	#computeRms(temporal: Float32Array, length: number): number {
-		let sum = 0;
-		for (let sampleIndex = 0; sampleIndex < length; sampleIndex++) {
-			const sample = temporal[sampleIndex] * 2 - 1;
-			sum += sample * sample;
-		}
-		return sqrt(sum / length);
-	}
-
 	#computeFluxStats(): FluxStats {
 		const filled = min(this.#fluxCursor, FrameProcessor.#fluxWindow);
 		let mean = 0;
@@ -164,10 +149,7 @@ export class FrameProcessor {
 	#detectBeat(flux: number, stats: FluxStats): boolean {
 		this.#beatGap++;
 		const detected = flux > stats.onsetThreshold() && this.#beatGap >= FrameProcessor.#minBeatGap;
-		if (detected) {
-			this.#beatGap = 0;
-			this.#beatActive = FrameProcessor.#beatWindow;
-		}
+		if (detected) this.#beatGap = 0;
 		return detected;
 	}
 
@@ -252,7 +234,6 @@ export class FrameProcessor {
 		const bandEnergies = this.#computeBandEnergies(frequencySlice);
 		const zeroCrossingRate = this.#computeZeroCrossingRate(temporalSlice, length);
 		const centroid = this.#computeSpectralCentroid(frequencySlice, length);
-		const currentRms = this.#computeRms(temporalSlice, length);
 
 		const fluxStats = this.#computeFluxStats();
 		const percussiveness = min(1, flux / (fluxStats.mean + 0.001));
@@ -266,9 +247,6 @@ export class FrameProcessor {
 		const dropIntensity = min(1, percussiveness * 3) * bandEnergies[0];
 		const bassLevel = bandEnergies[0] * 0.4 + bandEnergies[1] * 0.6;
 		const distortionLevel = min(1, percussiveness * zeroCrossingRate * 5);
-
-		this.#prevRms = currentRms;
-		if (this.#beatActive > 0) this.#beatActive--;
 
 		output[1] = flux;
 		for (let bandIndex = 0; bandIndex < 6; bandIndex++) output[2 + bandIndex] = bandEnergies[bandIndex];
