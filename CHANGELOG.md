@@ -1,3 +1,7 @@
+## 3.4.1 (12.09.2026)
+- `Pulsar`'s halo and the `Spectrogram`'s ridge now draw their bass glow as a blurred extra pass instead of a canvas shadow, and skip it entirely when the blur would round below a pixel.
+- The `Spectrogram`'s bass bloom and shimmer thread now take their tint from the ridge's current rotated color instead of the fixed red seed, so they recolor along with the ridge.
+
 ## 3.4.0 (11.09.2026)
 - Added synced lyrics — attach a `.lrc` (or `.txt`) file alongside a track and the active visualization draws the current line, with the previous and next lines above and below it. `Pulsar` and `Spectrogram` display them.
 - Added online lyrics lookup — a track with no attached file gets synced lyrics searched by filename, cached per track and rechecked once a day.

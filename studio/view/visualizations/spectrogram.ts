@@ -17,7 +17,7 @@ Registry.attach("Spectrogram", class extends Visualization {
 	#shaperFrequency: Shaper = Shaper.sigmoid(6, 0.55).then(Shaper.smoothstep);
 	#normHeightFactor: number = 0.4;
 	#colorRidgeSeed: Color = Color.fromHSL(0, 100, 50);
-	#colorRidgeMid: Color;
+	#colorRidgeMid: Color = this.#colorRidgeSeed;
 	#driverRidge: ColorDriver = ColorDriver.rotation;
 	#deltaRotation: number = 360 / 6;
 	#colorShadow: Color = Color.newBlack;
